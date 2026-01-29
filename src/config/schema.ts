@@ -284,6 +284,115 @@ const SavingsConfigSchema = z.object({
   storeType: z.enum(['memory', 'database']).default('database'),
 });
 
+// Family configuration
+const FamilyConfigSchema = z.object({
+  enabled: z.boolean().default(true),
+  storeType: z.enum(['memory', 'database']).default('database'),
+  maxFamilyGroupsPerUser: z.number().min(1).default(5),
+  maxMembersPerGroup: z.number().min(2).default(20),
+
+  mealPlanning: z.object({
+    enabled: z.boolean().default(true),
+    defaultServings: z.number().min(1).default(4),
+    enablePriceEstimates: z.boolean().default(false),
+  }).optional(),
+
+  schoolCalendar: z.object({
+    enabled: z.boolean().default(true),
+    syncIntervalMinutes: z.number().min(5).default(60),
+    enableNotifications: z.boolean().default(true),
+    googleCalendarApiKeyEnvVar: z.string().default('GOOGLE_CALENDAR_API_KEY'),
+  }).optional(),
+
+  projects: z.object({
+    enabled: z.boolean().default(true),
+    enableWeeklySummaries: z.boolean().default(true),
+    maxTopicsPerProject: z.number().min(1).default(20),
+    maxNotesPerTopic: z.number().min(1).default(100),
+  }).optional(),
+
+  sharedMemories: z.object({
+    enabled: z.boolean().default(true),
+    requireConsent: z.boolean().default(true),
+    encryptionEnabled: z.boolean().default(true),
+    maxMemoriesPerUser: z.number().min(1).default(1000),
+  }).optional(),
+
+  games: z.object({
+    enabled: z.boolean().default(true),
+    aiProviderApiKeyEnvVar: z.string().default('OPENAI_API_KEY'),
+    maxGamesPerDay: z.number().min(1).default(10),
+    kidSafePrompts: z.boolean().default(true),
+  }).optional(),
+
+  recipes: z.object({
+    enabled: z.boolean().default(true),
+    provider: z.enum(['spoonacular', 'edamam', 'local']).default('local'),
+    apiKeyEnvVar: z.string().default('RECIPE_API_KEY'),
+    maxSuggestions: z.number().min(1).default(10),
+  }).optional(),
+});
+
+// DevTools configuration
+const DevToolsConfigSchema = z.object({
+  enabled: z.boolean().default(true),
+  storeType: z.enum(['memory', 'database']).default('database'),
+
+  agents: z.object({
+    enabled: z.boolean().default(true),
+    defaultTimeout: z.number().min(1000).max(3600000).default(300000),
+    maxConcurrent: z.number().min(1).max(10).default(3),
+    progressReportInterval: z.number().min(1000).max(60000).default(5000),
+    allowedAgentTypes: z.array(z.enum(['claude-code', 'codex', 'custom'])).default(['claude-code']),
+  }).optional(),
+
+  github: z.object({
+    enabled: z.boolean().default(true),
+    tokenEnvVar: z.string().default('GITHUB_TOKEN'),
+    apiBaseUrl: z.string().url().default('https://api.github.com'),
+    defaultOwner: z.string().optional(),
+    rateLimitPerHour: z.number().min(1).max(5000).default(1000),
+    mergeRequiresApproval: z.boolean().default(true),
+    deleteBranchAfterMerge: z.boolean().default(true),
+    defaultMergeMethod: z.enum(['merge', 'squash', 'rebase']).default('squash'),
+    requirePassingChecks: z.boolean().default(true),
+    timeout: z.number().min(1000).max(60000).default(30000),
+  }).optional(),
+
+  deployments: z.object({
+    enabled: z.boolean().default(true),
+    provider: z.enum(['github-actions', 'vercel', 'netlify', 'custom-webhook']).default('github-actions'),
+    productionRequiresApproval: z.boolean().default(true),
+    stagingRequiresApproval: z.boolean().default(false),
+    rollbackRequiresApproval: z.boolean().default(true),
+    webhookUrl: z.string().url().optional(),
+    timeout: z.number().min(1000).max(1800000).default(600000),
+    pollInterval: z.number().min(1000).max(60000).default(10000),
+  }).optional(),
+
+  bugDetection: z.object({
+    enabled: z.boolean().default(true),
+    sources: z.array(z.enum(['logs', 'errors', 'metrics', 'manual'])).default(['errors', 'logs']),
+    severityThreshold: z.enum(['critical', 'high', 'medium', 'low']).default('medium'),
+    autoFixEnabled: z.boolean().default(false),
+    autoFixRequiresApproval: z.boolean().default(true),
+  }).optional(),
+
+  testFixLoop: z.object({
+    enabled: z.boolean().default(true),
+    defaultTestCommand: z.string().default('npm test'),
+    maxIterations: z.number().min(1).max(20).default(5),
+    timeoutPerIteration: z.number().min(10000).max(600000).default(120000),
+  }).optional(),
+
+  issues: z.object({
+    enabled: z.boolean().default(true),
+    defaultLabels: z.array(z.string()).default(['bug', 'auto-created']),
+    includeConversationContext: z.boolean().default(true),
+    maxContextMessages: z.number().min(1).max(50).default(10),
+  }).optional(),
+});
+
 // Root configuration schema
 const BaseConfigSchema = z.object({
   env: NodeEnvSchema,
@@ -297,6 +406,8 @@ const BaseConfigSchema = z.object({
   triggers: TriggerConfigSchema.optional(),
   productivity: ProductivityConfigSchema.optional(),
   savings: SavingsConfigSchema.optional(),
+  devtools: DevToolsConfigSchema.optional(),
+  family: FamilyConfigSchema.optional(),
 });
 
 // Test-compatible ConfigSchema with static validate method
@@ -343,6 +454,8 @@ export type MemoryConfig = z.infer<typeof MemoryConfigSchema>;
 export type TriggerConfig = z.infer<typeof TriggerConfigSchema>;
 export type ProductivityConfig = z.infer<typeof ProductivityConfigSchema>;
 export type SavingsConfig = z.infer<typeof SavingsConfigSchema>;
+export type DevToolsConfig = z.infer<typeof DevToolsConfigSchema>;
+export type FamilyConfig = z.infer<typeof FamilyConfigSchema>;
 
 // Configuration loader with validation (supports both static and instance usage)
 export class ConfigLoader {

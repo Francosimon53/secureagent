@@ -13,4 +13,6 @@ export {
   type TriggerConfig,
   type ProductivityConfig,
   type SavingsConfig,
+  type DevToolsConfig,
+  type FamilyConfig,
 } from './schema.js';
