@@ -205,7 +205,7 @@ export class InventoryService {
    * Get inventory statistics for a user
    */
   async getStats(userId: string): Promise<InventoryStats> {
-    const wines = await this.deps.store.getUserWines(userId);
+    const wines = await this.deps.store.listWines(userId);
     const now = Date.now();
     const alertCutoff = now + (this.config.drinkingWindowAlertDays * 24 * 60 * 60 * 1000);
 
@@ -401,7 +401,7 @@ export class InventoryService {
    * Get all unique storage locations
    */
   async getLocations(userId: string): Promise<string[]> {
-    const wines = await this.deps.store.getUserWines(userId);
+    const wines = await this.deps.store.listWines(userId);
     const locations = new Set<string>();
 
     for (const wine of wines) {

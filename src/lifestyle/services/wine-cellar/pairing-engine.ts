@@ -203,7 +203,7 @@ export class PairingEngine {
           WINE_TYPE_DESCRIPTIONS[type]['default'];
 
         // Find matching wines in cellar
-        const cellarWines = await this.deps.store.searchWines(userId, { type });
+        const cellarWines = await this.deps.store.listWines(userId, { type: [type] });
         const matchingWines = cellarWines.filter(w => {
           // Check if wine has inventory
           return true; // Would need to check inventory store
@@ -223,7 +223,7 @@ export class PairingEngine {
 
     // Get specific wine matches from cellar
     const cellarMatches: Array<{ wine: Wine; matchScore: number }> = [];
-    const allWines = await this.deps.store.getUserWines(userId);
+    const allWines = await this.deps.store.listWines(userId);
 
     for (const wine of allWines) {
       const typeMatch = matchedTypes.get(wine.type);
