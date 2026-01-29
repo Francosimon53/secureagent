@@ -392,6 +392,85 @@ const WellnessConfigSchema = z.object({
   }).optional(),
 });
 
+// Travel configuration
+const TravelConfigSchema = z.object({
+  enabled: z.boolean().default(true),
+  storeType: z.enum(['memory', 'database']).default('database'),
+
+  checkIn: z.object({
+    enabled: z.boolean().default(true),
+    autoCheckInEnabled: z.boolean().default(true),
+    checkInAdvanceMinutes: z.number().min(0).max(60).default(1),
+    maxRetries: z.number().min(1).max(5).default(3),
+    supportedAirlines: z.array(z.string()).default(['united', 'delta', 'southwest']),
+    preferredSeatCategories: z.array(z.enum(['window', 'aisle', 'front', 'exit_row'])).default(['aisle']),
+  }).optional(),
+
+  priceMonitoring: z.object({
+    enabled: z.boolean().default(true),
+    flightCheckIntervalMinutes: z.number().min(60).max(1440).default(360),
+    hotelCheckIntervalMinutes: z.number().min(60).max(1440).default(720),
+    maxAlertsPerUser: z.number().min(1).max(50).default(20),
+  }).optional(),
+
+  carRental: z.object({
+    enabled: z.boolean().default(true),
+    providers: z.array(z.string()).default(['enterprise', 'hertz', 'national']),
+    cacheResultsMinutes: z.number().min(5).max(60).default(15),
+  }).optional(),
+
+  itinerary: z.object({
+    enabled: z.boolean().default(true),
+    defaultReminderMinutes: z.array(z.number()).default([1440, 60, 15]),
+    calendarSyncEnabled: z.boolean().default(true),
+  }).optional(),
+
+  departureAlerts: z.object({
+    enabled: z.boolean().default(true),
+    trafficProvider: z.enum(['google_maps', 'here']).default('google_maps'),
+    checkIntervalMinutes: z.number().min(5).max(60).default(15),
+    startMonitoringHoursBefore: z.number().min(1).max(12).default(4),
+    defaultBufferMinutes: z.object({
+      airport: z.number().default(120),
+      hotel: z.number().default(30),
+      activity: z.number().default(30),
+      car_rental: z.number().default(60),
+    }).default({}),
+  }).optional(),
+
+  trafficApiKeyEnvVar: z.string().default('GOOGLE_MAPS_API_KEY'),
+});
+
+// Lifestyle configuration
+const LifestyleConfigSchema = z.object({
+  enabled: z.boolean().default(true),
+  storeType: z.enum(['memory', 'database']).default('database'),
+
+  wineCellar: z.object({
+    enabled: z.boolean().default(true),
+    lowStockThreshold: z.number().min(0).max(10).default(2),
+    drinkingWindowAlertDays: z.number().min(7).max(365).default(30),
+    enablePairingSearch: z.boolean().default(true),
+  }).optional(),
+
+  entertainment: z.object({
+    enabled: z.boolean().default(true),
+    provider: z.enum(['tmdb', 'tvmaze']).default('tmdb'),
+    episodeCheckIntervalHours: z.number().min(1).max(24).default(6),
+    releaseAlertDays: z.number().min(1).max(30).default(7),
+  }).optional(),
+
+  eventDiscovery: z.object({
+    enabled: z.boolean().default(true),
+    providers: z.array(z.enum(['ticketmaster', 'eventbrite', 'songkick'])).default(['ticketmaster']),
+    checkIntervalHours: z.number().min(1).max(48).default(12),
+    defaultRadius: z.number().min(5).max(200).default(50),
+  }).optional(),
+
+  tmdbApiKeyEnvVar: z.string().default('TMDB_API_KEY'),
+  ticketmasterApiKeyEnvVar: z.string().default('TICKETMASTER_API_KEY'),
+});
+
 // DevTools configuration
 const DevToolsConfigSchema = z.object({
   enabled: z.boolean().default(true),
@@ -468,6 +547,8 @@ const BaseConfigSchema = z.object({
   devtools: DevToolsConfigSchema.optional(),
   family: FamilyConfigSchema.optional(),
   wellness: WellnessConfigSchema.optional(),
+  travel: TravelConfigSchema.optional(),
+  lifestyle: LifestyleConfigSchema.optional(),
 });
 
 // Test-compatible ConfigSchema with static validate method
@@ -517,6 +598,8 @@ export type SavingsConfig = z.infer<typeof SavingsConfigSchema>;
 export type DevToolsConfig = z.infer<typeof DevToolsConfigSchema>;
 export type FamilyConfig = z.infer<typeof FamilyConfigSchema>;
 export type WellnessConfig = z.infer<typeof WellnessConfigSchema>;
+export type TravelConfig = z.infer<typeof TravelConfigSchema>;
+export type LifestyleConfig = z.infer<typeof LifestyleConfigSchema>;
 
 // Configuration loader with validation (supports both static and instance usage)
 export class ConfigLoader {

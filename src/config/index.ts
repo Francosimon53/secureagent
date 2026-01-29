@@ -16,4 +16,6 @@ export {
   type DevToolsConfig,
   type FamilyConfig,
   type WellnessConfig,
+  type TravelConfig,
+  type LifestyleConfig,
 } from './schema.js';
