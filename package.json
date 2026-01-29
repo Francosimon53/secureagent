@@ -1,0 +1,38 @@
+{
+  "name": "secureagent",
+  "version": "1.0.0",
+  "description": "Secure multi-channel agent framework with OWASP Top 10, Zero Trust, and gVisor sandboxing",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "type": "module",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "lint": "eslint src --ext .ts",
+    "test": "vitest",
+    "typecheck": "tsc --noEmit"
+  },
+  "keywords": [
+    "agent",
+    "security",
+    "owasp",
+    "zero-trust",
+    "mcp",
+    "sandbox"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "pino": "^9.0.0",
+    "zod": "^3.23.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "pino-pretty": "^11.0.0",
+    "typescript": "^5.6.0",
+    "vitest": "^2.0.0"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}
