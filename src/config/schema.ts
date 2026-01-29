@@ -471,6 +471,64 @@ const LifestyleConfigSchema = z.object({
   ticketmasterApiKeyEnvVar: z.string().default('TICKETMASTER_API_KEY'),
 });
 
+// Orchestration configuration
+const OrchestrationConfigSchema = z.object({
+  enabled: z.boolean().default(true),
+  storeType: z.enum(['memory', 'database']).default('database'),
+
+  personas: z.object({
+    enablePresets: z.boolean().default(true),
+    customPersonasPath: z.string().optional(),
+    defaultModelTier: z.enum(['fast', 'balanced', 'powerful']).default('balanced'),
+  }).default({}),
+
+  spawner: z.object({
+    maxConcurrentAgents: z.number().min(1).max(50).default(10),
+    agentIdleTimeoutMinutes: z.number().min(5).max(120).default(30),
+    maxSubAgentsPerAgent: z.number().min(1).max(10).default(5),
+    autoTerminateOnCompletion: z.boolean().default(true),
+  }).default({}),
+
+  communication: z.object({
+    maxMessageSizeBytes: z.number().min(1024).max(1048576).default(65536),
+    messageRetentionHours: z.number().min(1).max(168).default(24),
+    maxChannelsPerSession: z.number().min(1).max(10).default(5),
+    enableBroadcast: z.boolean().default(true),
+  }).default({}),
+
+  background: z.object({
+    enabled: z.boolean().default(true),
+    maxQueueSize: z.number().min(10).max(1000).default(100),
+    checkpointIntervalMinutes: z.number().min(1).max(30).default(5),
+    taskTimeoutMinutes: z.number().min(5).max(480).default(60),
+    retryFailedTasks: z.boolean().default(true),
+    maxRetries: z.number().min(0).max(5).default(3),
+  }).default({}),
+
+  overnight: z.object({
+    enabled: z.boolean().default(true),
+    startHour: z.number().min(0).max(23).default(1),
+    endHour: z.number().min(0).max(23).default(6),
+    maxTasksPerNight: z.number().min(1).max(100).default(20),
+    priorityThreshold: z.enum(['low', 'normal', 'high', 'critical']).default('normal'),
+  }).default({}),
+
+  reporting: z.object({
+    enabled: z.boolean().default(true),
+    dailyReportHour: z.number().min(0).max(23).default(8),
+    retentionDays: z.number().min(7).max(365).default(30),
+    includeDetailedMetrics: z.boolean().default(true),
+  }).default({}),
+
+  learning: z.object({
+    enabled: z.boolean().default(true),
+    captureAllErrors: z.boolean().default(true),
+    minConfidenceForPattern: z.number().min(0.1).max(1).default(0.7),
+    autoApplyImprovements: z.boolean().default(false),
+    improvementApprovalRequired: z.boolean().default(true),
+  }).default({}),
+});
+
 // DevTools configuration
 const DevToolsConfigSchema = z.object({
   enabled: z.boolean().default(true),
@@ -549,6 +607,7 @@ const BaseConfigSchema = z.object({
   wellness: WellnessConfigSchema.optional(),
   travel: TravelConfigSchema.optional(),
   lifestyle: LifestyleConfigSchema.optional(),
+  orchestration: OrchestrationConfigSchema.optional(),
 });
 
 // Test-compatible ConfigSchema with static validate method
@@ -600,6 +659,7 @@ export type FamilyConfig = z.infer<typeof FamilyConfigSchema>;
 export type WellnessConfig = z.infer<typeof WellnessConfigSchema>;
 export type TravelConfig = z.infer<typeof TravelConfigSchema>;
 export type LifestyleConfig = z.infer<typeof LifestyleConfigSchema>;
+export type OrchestrationConfig = z.infer<typeof OrchestrationConfigSchema>;
 
 // Configuration loader with validation (supports both static and instance usage)
 export class ConfigLoader {
