@@ -164,6 +164,72 @@ const TriggerConfigSchema = z.object({
   maxTriggersPerEvent: z.number().default(10),
 });
 
+// Productivity configuration
+const ProductivityConfigSchema = z.object({
+  enabled: z.boolean().default(true),
+
+  // API allowlist (deny-by-default)
+  allowedApiDomains: z.array(z.string()).default([
+    'api.openweathermap.org',
+    'www.googleapis.com',
+    'graph.microsoft.com',
+    'newsapi.org',
+  ]),
+
+  weather: z.object({
+    provider: z.enum(['openweathermap', 'weatherapi']).default('openweathermap'),
+    apiKeyEnvVar: z.string().default('WEATHER_API_KEY'),
+    location: z.string().optional(),
+    units: z.enum(['metric', 'imperial']).default('metric'),
+    cacheTTLSeconds: z.number().min(60).max(3600).default(900),
+  }).optional(),
+
+  calendar: z.object({
+    provider: z.enum(['google', 'outlook']).default('google'),
+    credentialsEnvVar: z.string().default('CALENDAR_CREDENTIALS'),
+    lookAheadDays: z.number().min(1).max(30).default(7),
+    includeDeclined: z.boolean().default(false),
+    cacheTTLSeconds: z.number().min(60).max(3600).default(300),
+  }).optional(),
+
+  email: z.object({
+    provider: z.enum(['gmail', 'outlook']).default('gmail'),
+    credentialsEnvVar: z.string().default('EMAIL_CREDENTIALS'),
+    maxEmailsToProcess: z.number().min(10).max(500).default(100),
+    vipSenders: z.array(z.string()).default([]),
+    autoArchiveAfterDays: z.number().min(0).max(90).default(0),
+    cacheTTLSeconds: z.number().min(60).max(1800).default(300),
+  }).optional(),
+
+  taskScoring: z.object({
+    enabled: z.boolean().default(true),
+    weights: z.object({
+      urgency: z.number().min(0).max(1).default(0.3),
+      importance: z.number().min(0).max(1).default(0.3),
+      effort: z.number().min(0).max(1).default(0.15),
+      contextMatch: z.number().min(0).max(1).default(0.15),
+      decay: z.number().min(0).max(1).default(0.1),
+    }).default({}),
+    decayHalfLifeDays: z.number().min(1).max(30).default(7),
+  }).optional(),
+
+  morningBrief: z.object({
+    enabled: z.boolean().default(true),
+    defaultDeliveryTime: z.string().default('07:00'),
+    sections: z.array(z.enum([
+      'weather', 'calendar', 'health', 'email', 'news', 'tasks',
+    ])).default(['weather', 'calendar', 'tasks']),
+  }).optional(),
+
+  weeklyReview: z.object({
+    enabled: z.boolean().default(true),
+    deliveryDay: z.enum(['sunday', 'monday']).default('sunday'),
+    deliveryTime: z.string().default('20:00'),
+  }).optional(),
+
+  storeType: z.enum(['memory', 'database']).default('database'),
+});
+
 // Root configuration schema
 const BaseConfigSchema = z.object({
   env: NodeEnvSchema,
@@ -175,6 +241,7 @@ const BaseConfigSchema = z.object({
   scheduler: SchedulerConfigSchema.optional(),
   memory: MemoryConfigSchema.optional(),
   triggers: TriggerConfigSchema.optional(),
+  productivity: ProductivityConfigSchema.optional(),
 });
 
 // Test-compatible ConfigSchema with static validate method
@@ -219,6 +286,7 @@ export type PersistenceConfig = z.infer<typeof PersistenceConfigSchema>;
 export type SchedulerConfig = z.infer<typeof SchedulerConfigSchema>;
 export type MemoryConfig = z.infer<typeof MemoryConfigSchema>;
 export type TriggerConfig = z.infer<typeof TriggerConfigSchema>;
+export type ProductivityConfig = z.infer<typeof ProductivityConfigSchema>;
 
 // Configuration loader with validation (supports both static and instance usage)
 export class ConfigLoader {

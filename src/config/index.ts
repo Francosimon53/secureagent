@@ -11,4 +11,5 @@ export {
   type SchedulerConfig,
   type MemoryConfig,
   type TriggerConfig,
+  type ProductivityConfig,
 } from './schema.js';

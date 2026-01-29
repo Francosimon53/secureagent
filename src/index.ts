@@ -12,6 +12,7 @@ export {
   type SchedulerConfig,
   type MemoryConfig,
   type TriggerConfig,
+  type ProductivityConfig,
 } from './config/index.js';
 
 // Security - Types
@@ -493,3 +494,68 @@ export {
   type ContextOptions,
   type EncryptedExport,
 } from './agent/memory-manager.js';
+
+// Productivity
+export {
+  // Manager
+  ProductivityManager,
+  initProductivity,
+  getProductivityManager,
+  isProductivityInitialized,
+  // Configuration
+  ProductivityConfigSchema,
+  type ProductivityConfig as ProductivityModuleConfig,
+  type WeatherConfig,
+  type CalendarConfig,
+  type EmailConfig,
+  type NewsConfig,
+  type TaskScoringConfig,
+  type MorningBriefConfig,
+  type InboxZeroConfig,
+  type EmailToTodoConfig,
+  type CalendarConflictsConfig,
+  type WeeklyReviewConfig,
+  // Types
+  type WeatherData,
+  type CalendarEvent,
+  type CalendarConflict,
+  type EmailDigest,
+  type TodoItem,
+  type TaskScore,
+  type MorningBriefData,
+  type WeeklyReviewData,
+  // Stores
+  type TodoStore,
+  type CacheStore,
+  createTodoStore,
+  createCacheStore,
+  InMemoryTodoStore,
+  DatabaseTodoStore,
+  // Providers
+  ProviderRegistry,
+  getProviderRegistry,
+  createWeatherProvider,
+  createCalendarProvider,
+  createEmailProvider,
+  createNewsProvider,
+  // Services
+  TaskScoringService,
+  createTaskScoringService,
+  CalendarConflictService,
+  createCalendarConflictService,
+  InboxZeroService,
+  createInboxZeroService,
+  EmailToTodoService,
+  createEmailToTodoService,
+  MorningBriefService,
+  createMorningBriefService,
+  WeeklyReviewService,
+  createWeeklyReviewService,
+  // Utilities
+  classifyTask,
+  generateEisenhowerSummary,
+  scoreEmailPriority,
+  extractTasksFromEmail,
+  formatMorningBrief,
+  generateReport,
+} from './productivity/index.js';
