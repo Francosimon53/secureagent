@@ -230,6 +230,60 @@ const ProductivityConfigSchema = z.object({
   storeType: z.enum(['memory', 'database']).default('database'),
 });
 
+// Savings configuration
+const SavingsConfigSchema = z.object({
+  enabled: z.boolean().default(true),
+
+  negotiation: z.object({
+    enabled: z.boolean().default(true),
+    emailProvider: z.enum(['smtp', 'sendgrid', 'ses']).default('smtp'),
+  }).optional(),
+
+  shopping: z.object({
+    enabled: z.boolean().default(true),
+    sms2faBridge: z.object({
+      enabled: z.boolean().default(false),
+      provider: z.enum(['twilio', 'vonage']).default('twilio'),
+      sessionTimeoutSeconds: z.number().default(300),
+      requireExplicitConsent: z.boolean().default(true),
+    }).optional(),
+  }).optional(),
+
+  priceMonitoring: z.object({
+    enabled: z.boolean().default(true),
+    checkIntervalMinutes: z.number().default(60),
+    maxAlertsPerUser: z.number().default(50),
+    historyRetentionDays: z.number().default(90),
+  }).optional(),
+
+  insurance: z.object({
+    enabled: z.boolean().default(true),
+    encryptPII: z.boolean().default(true),
+    encryptionKeyEnvVar: z.string().default('INSURANCE_ENCRYPTION_KEY'),
+  }).optional(),
+
+  expenses: z.object({
+    enabled: z.boolean().default(true),
+    defaultCurrency: z.string().default('USD'),
+    splitRequestProvider: z.enum(['email', 'venmo', 'manual']).default('email'),
+  }).optional(),
+
+  bills: z.object({
+    enabled: z.boolean().default(true),
+    defaultReminderDays: z.array(z.number()).default([7, 3, 1]),
+    overdueGraceDays: z.number().default(3),
+  }).optional(),
+
+  subscriptions: z.object({
+    enabled: z.boolean().default(true),
+    detectFromTransactions: z.boolean().default(true),
+    unusedThresholdDays: z.number().default(30),
+    renewalReminderDays: z.number().default(7),
+  }).optional(),
+
+  storeType: z.enum(['memory', 'database']).default('database'),
+});
+
 // Root configuration schema
 const BaseConfigSchema = z.object({
   env: NodeEnvSchema,
@@ -242,6 +296,7 @@ const BaseConfigSchema = z.object({
   memory: MemoryConfigSchema.optional(),
   triggers: TriggerConfigSchema.optional(),
   productivity: ProductivityConfigSchema.optional(),
+  savings: SavingsConfigSchema.optional(),
 });
 
 // Test-compatible ConfigSchema with static validate method
@@ -287,6 +342,7 @@ export type SchedulerConfig = z.infer<typeof SchedulerConfigSchema>;
 export type MemoryConfig = z.infer<typeof MemoryConfigSchema>;
 export type TriggerConfig = z.infer<typeof TriggerConfigSchema>;
 export type ProductivityConfig = z.infer<typeof ProductivityConfigSchema>;
+export type SavingsConfig = z.infer<typeof SavingsConfigSchema>;
 
 // Configuration loader with validation (supports both static and instance usage)
 export class ConfigLoader {

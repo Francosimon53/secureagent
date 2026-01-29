@@ -12,4 +12,5 @@ export {
   type MemoryConfig,
   type TriggerConfig,
   type ProductivityConfig,
+  type SavingsConfig,
 } from './schema.js';
