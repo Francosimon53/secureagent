@@ -23,6 +23,7 @@ const logger = getLogger().child({ module: 'Scheduler' });
 export * from './types.js';
 export * from './cron-parser.js';
 export * from './triggers.js';
+export * from './heartbeat.js';
 
 // ============================================================================
 // Scheduler Implementation

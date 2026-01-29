@@ -454,6 +454,11 @@ export {
   initTriggerManager,
   getTriggerManager,
   isTriggerManagerInitialized,
+  // Heartbeat Engine
+  HeartbeatEngine,
+  initHeartbeatEngine,
+  getHeartbeatEngine,
+  isHeartbeatEngineInitialized,
   // Types
   type JobDefinition,
   type JobHandler,
@@ -469,6 +474,11 @@ export {
   type TriggerActionType,
   type TriggerCondition,
   type TriggerManagerConfig,
+  type HeartbeatConfig,
+  type HeartbeatContext,
+  type HeartbeatMessage,
+  type HeartbeatEvent,
+  type HeartbeatEngineConfig,
 } from './scheduler/index.js';
 
 // Memory Manager

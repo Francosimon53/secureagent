@@ -36,6 +36,8 @@ export interface RememberOptions {
   expiresIn?: number;
   /** Absolute expiration timestamp */
   expiresAt?: number;
+  /** Session/conversation ID for session-scoped memory */
+  sessionId?: string;
   /** Additional metadata */
   metadata?: Record<string, unknown>;
 }
@@ -49,6 +51,10 @@ export interface RecallOptions {
   limit?: number;
   /** Include expired memories */
   includeExpired?: boolean;
+  /** Session/conversation ID for session-scoped recall */
+  sessionId?: string;
+  /** Get only user-level memories (exclude session-scoped) */
+  userLevelOnly?: boolean;
 }
 
 export interface ContextOptions {
@@ -62,6 +68,10 @@ export interface ContextOptions {
   timeRange?: number;
   /** Format as string */
   format?: 'entries' | 'text';
+  /** Session/conversation ID for session-scoped context */
+  sessionId?: string;
+  /** Include both user-level and session memories */
+  includeUserLevel?: boolean;
 }
 
 export interface EncryptedExport {
@@ -164,8 +174,8 @@ export class MemoryManager {
       expiresAt = now + this.config.defaultExpirationMs;
     }
 
-    // Check if memory with this key already exists
-    const existing = await this.store!.getByKey(userId, key);
+    // Check if memory with this key already exists (in same session if specified)
+    const existing = await this.store!.getByKey(userId, key, options.sessionId);
 
     if (existing) {
       // Update existing memory
@@ -178,8 +188,8 @@ export class MemoryManager {
         metadata: { ...existing.metadata, ...options.metadata },
       });
 
-      this.emitEvent('memory.updated', { userId, memoryId: existing.id, key });
-      logger.debug({ userId, key, memoryId: existing.id }, 'Memory updated');
+      this.emitEvent('memory.updated', { userId, memoryId: existing.id, key, sessionId: options.sessionId });
+      logger.debug({ userId, key, memoryId: existing.id, sessionId: options.sessionId }, 'Memory updated');
 
       return existing.id;
     }
@@ -208,25 +218,27 @@ export class MemoryManager {
       key,
       content,
       value,
+      conversationId: options.sessionId,
       type: options.type ?? 'fact',
       importance: options.importance ?? 0.5,
       expiresAt,
       metadata: options.metadata,
     });
 
-    this.emitEvent('memory.created', { userId, memoryId: entry.id, key });
-    logger.debug({ userId, key, memoryId: entry.id }, 'Memory stored');
+    this.emitEvent('memory.created', { userId, memoryId: entry.id, key, sessionId: options.sessionId });
+    logger.debug({ userId, key, memoryId: entry.id, sessionId: options.sessionId }, 'Memory stored');
 
     return entry.id;
   }
 
   /**
    * Recall a specific memory by key
+   * @param sessionId - If provided, looks for session-scoped memory; otherwise looks for user-level
    */
-  async recall(userId: string, key: string): Promise<unknown | null> {
+  async recall(userId: string, key: string, sessionId?: string): Promise<unknown | null> {
     this.ensureInitialized();
 
-    const entry = await this.store!.getByKey(userId, key);
+    const entry = await this.store!.getByKey(userId, key, sessionId);
 
     if (!entry) {
       return null;
@@ -238,7 +250,7 @@ export class MemoryManager {
       return null;
     }
 
-    this.emitEvent('memory.recalled', { userId, memoryId: entry.id, key });
+    this.emitEvent('memory.recalled', { userId, memoryId: entry.id, key, sessionId });
 
     // Return parsed value if available
     return entry.value ?? entry.content;
@@ -254,11 +266,12 @@ export class MemoryManager {
 
   /**
    * Forget (delete) a memory by key
+   * @param sessionId - If provided, deletes session-scoped memory; otherwise deletes user-level
    */
-  async forget(userId: string, key: string): Promise<boolean> {
+  async forget(userId: string, key: string, sessionId?: string): Promise<boolean> {
     this.ensureInitialized();
 
-    const entry = await this.store!.getByKey(userId, key);
+    const entry = await this.store!.getByKey(userId, key, sessionId);
 
     if (!entry) {
       return false;
@@ -267,8 +280,8 @@ export class MemoryManager {
     const deleted = await this.store!.delete(userId, entry.id);
 
     if (deleted) {
-      this.emitEvent('memory.forgotten', { userId, memoryId: entry.id, key });
-      logger.debug({ userId, key }, 'Memory forgotten');
+      this.emitEvent('memory.forgotten', { userId, memoryId: entry.id, key, sessionId });
+      logger.debug({ userId, key, sessionId }, 'Memory forgotten');
     }
 
     return deleted;
@@ -296,6 +309,28 @@ export class MemoryManager {
   }
 
   /**
+   * Forget all memories for a session
+   */
+  async forgetSession(userId: string, sessionId: string): Promise<number> {
+    this.ensureInitialized();
+
+    const count = await this.store!.deleteBySession(userId, sessionId);
+
+    this.emitEvent('memory.session_cleared', { userId, sessionId, count });
+    logger.info({ userId, sessionId, count }, 'Session memories cleared');
+
+    return count;
+  }
+
+  /**
+   * Get all memories for a session
+   */
+  async getSessionMemories(userId: string, sessionId: string): Promise<MemoryEntry[]> {
+    this.ensureInitialized();
+    return this.store!.getSessionMemories(userId, sessionId);
+  }
+
+  /**
    * Search memories with filters
    */
   async search(userId: string, options: RecallOptions = {}): Promise<MemoryEntry[]> {
@@ -306,6 +341,8 @@ export class MemoryManager {
       minImportance: options.minImportance,
       limit: options.limit,
       includeExpired: options.includeExpired,
+      sessionId: options.sessionId,
+      userLevelOnly: options.userLevelOnly,
     };
 
     return this.store!.search(userId, queryOptions);
@@ -313,6 +350,7 @@ export class MemoryManager {
 
   /**
    * Get context for a user (accumulated memories for conversation)
+   * Combines user-level and session-specific memories
    */
   async getContext(userId: string, options: ContextOptions = {}): Promise<MemoryEntry[] | string> {
     this.ensureInitialized();
@@ -328,6 +366,26 @@ export class MemoryManager {
     // Add time filter if specified
     if (options.timeRange) {
       queryOptions.createdAfter = Date.now() - options.timeRange;
+    }
+
+    // Handle session-specific context
+    if (options.sessionId) {
+      if (options.includeUserLevel) {
+        // Get both user-level and session memories, merge and sort
+        const [userMemories, sessionMemories] = await Promise.all([
+          this.store!.search(userId, { ...queryOptions, userLevelOnly: true }),
+          this.store!.search(userId, { ...queryOptions, sessionId: options.sessionId }),
+        ]);
+        const merged = [...userMemories, ...sessionMemories]
+          .sort((a, b) => b.importance - a.importance)
+          .slice(0, options.limit ?? 50);
+
+        if (options.format === 'text') {
+          return this.formatMemoriesAsText(merged);
+        }
+        return merged;
+      }
+      queryOptions.sessionId = options.sessionId;
     }
 
     const memories = await this.store!.search(userId, queryOptions);

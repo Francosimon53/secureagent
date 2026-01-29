@@ -36,6 +36,12 @@ export interface MemoryQueryOptions {
   type?: MemoryEntry['type'];
   types?: MemoryEntry['type'][];
   excludeTypes?: MemoryEntry['type'][];
+  /** Filter by session/conversation ID */
+  sessionId?: string;
+  /** Exclude session-scoped memories (get only user-level) */
+  userLevelOnly?: boolean;
+  /** Get only session-scoped memories */
+  sessionOnly?: boolean;
   minImportance?: number;
   maxAge?: number;
   createdAfter?: number;
@@ -66,16 +72,20 @@ export interface MemoryStore {
   // CRUD operations
   store(userId: string, entry: Omit<MemoryEntry, 'id' | 'createdAt'>): Promise<MemoryEntry>;
   get(userId: string, memoryId: string): Promise<MemoryEntry | null>;
-  getByKey(userId: string, key: string): Promise<MemoryEntry | null>;
+  getByKey(userId: string, key: string, sessionId?: string): Promise<MemoryEntry | null>;
   update(userId: string, memoryId: string, updates: Partial<MemoryEntry>): Promise<boolean>;
   delete(userId: string, memoryId: string): Promise<boolean>;
-  deleteByKey(userId: string, key: string): Promise<boolean>;
+  deleteByKey(userId: string, key: string, sessionId?: string): Promise<boolean>;
 
   // Query operations
   search(userId: string, options?: MemoryQueryOptions): Promise<MemoryEntry[]>;
-  count(userId: string): Promise<number>;
+  count(userId: string, sessionId?: string): Promise<number>;
   getRecent(userId: string, limit?: number): Promise<MemoryEntry[]>;
   getByType(userId: string, type: MemoryEntry['type']): Promise<MemoryEntry[]>;
+
+  // Session operations
+  deleteBySession(userId: string, sessionId: string): Promise<number>;
+  getSessionMemories(userId: string, sessionId: string): Promise<MemoryEntry[]>;
 
   // Maintenance
   deleteExpired(): Promise<number>;
@@ -288,13 +298,18 @@ export class DatabaseMemoryStore implements MemoryStore {
     return this.decryptMemory(result.rows[0], userId);
   }
 
-  async getByKey(userId: string, key: string): Promise<MemoryEntry | null> {
+  async getByKey(userId: string, key: string, sessionId?: string): Promise<MemoryEntry | null> {
     await this.ensureInitialized();
 
-    const result = await this.dbManager.query<StoredMemory>(
-      `SELECT * FROM memories WHERE key = ? AND user_id = ?`,
-      [key, userId]
-    );
+    let query = 'SELECT * FROM memories WHERE key = ? AND user_id = ?';
+    const params: unknown[] = [key, userId];
+
+    if (sessionId) {
+      query += ' AND conversation_id = ?';
+      params.push(sessionId);
+    }
+
+    const result = await this.dbManager.query<StoredMemory>(query, params);
 
     if (result.rows.length === 0) return null;
 
@@ -368,15 +383,35 @@ export class DatabaseMemoryStore implements MemoryStore {
     return result.rowCount > 0;
   }
 
-  async deleteByKey(userId: string, key: string): Promise<boolean> {
+  async deleteByKey(userId: string, key: string, sessionId?: string): Promise<boolean> {
+    await this.ensureInitialized();
+
+    let query = 'DELETE FROM memories WHERE key = ? AND user_id = ?';
+    const params: unknown[] = [key, userId];
+
+    if (sessionId) {
+      query += ' AND conversation_id = ?';
+      params.push(sessionId);
+    }
+
+    const result = await this.dbManager.query(query, params);
+    return result.rowCount > 0;
+  }
+
+  async deleteBySession(userId: string, sessionId: string): Promise<number> {
     await this.ensureInitialized();
 
     const result = await this.dbManager.query(
-      `DELETE FROM memories WHERE key = ? AND user_id = ?`,
-      [key, userId]
+      `DELETE FROM memories WHERE user_id = ? AND conversation_id = ?`,
+      [userId, sessionId]
     );
 
-    return result.rowCount > 0;
+    logger.info({ userId, sessionId, deleted: result.rowCount }, 'Session memories deleted');
+    return result.rowCount;
+  }
+
+  async getSessionMemories(userId: string, sessionId: string): Promise<MemoryEntry[]> {
+    return this.search(userId, { sessionId });
   }
 
   async search(userId: string, options: MemoryQueryOptions = {}): Promise<MemoryEntry[]> {
@@ -400,6 +435,16 @@ export class DatabaseMemoryStore implements MemoryStore {
       const placeholders = options.excludeTypes.map(() => '?').join(',');
       whereClauses.push(`type NOT IN (${placeholders})`);
       params.push(...options.excludeTypes);
+    }
+
+    // Session filtering
+    if (options.sessionId) {
+      whereClauses.push('conversation_id = ?');
+      params.push(options.sessionId);
+    } else if (options.userLevelOnly) {
+      whereClauses.push('conversation_id IS NULL');
+    } else if (options.sessionOnly) {
+      whereClauses.push('conversation_id IS NOT NULL');
     }
 
     if (options.minImportance !== undefined) {
@@ -456,14 +501,18 @@ export class DatabaseMemoryStore implements MemoryStore {
     return Promise.all(result.rows.map(row => this.decryptMemory(row, userId)));
   }
 
-  async count(userId: string): Promise<number> {
+  async count(userId: string, sessionId?: string): Promise<number> {
     await this.ensureInitialized();
 
-    const result = await this.dbManager.query<{ count: number }>(
-      `SELECT COUNT(*) as count FROM memories WHERE user_id = ?`,
-      [userId]
-    );
+    let query = 'SELECT COUNT(*) as count FROM memories WHERE user_id = ?';
+    const params: unknown[] = [userId];
 
+    if (sessionId) {
+      query += ' AND conversation_id = ?';
+      params.push(sessionId);
+    }
+
+    const result = await this.dbManager.query<{ count: number }>(query, params);
     return result.rows[0]?.count ?? 0;
   }
 
@@ -681,8 +730,11 @@ export class InMemoryMemoryStore implements MemoryStore {
     return null;
   }
 
-  async getByKey(userId: string, key: string): Promise<MemoryEntry | null> {
-    return this.getUserMemories(userId).get(key) ?? null;
+  async getByKey(userId: string, key: string, sessionId?: string): Promise<MemoryEntry | null> {
+    const entry = this.getUserMemories(userId).get(key);
+    if (!entry) return null;
+    if (sessionId && entry.conversationId !== sessionId) return null;
+    return entry;
   }
 
   async update(userId: string, memoryId: string, updates: Partial<MemoryEntry>): Promise<boolean> {
@@ -707,8 +759,28 @@ export class InMemoryMemoryStore implements MemoryStore {
     return false;
   }
 
-  async deleteByKey(userId: string, key: string): Promise<boolean> {
-    return this.getUserMemories(userId).delete(key);
+  async deleteByKey(userId: string, key: string, sessionId?: string): Promise<boolean> {
+    const userMems = this.getUserMemories(userId);
+    const entry = userMems.get(key);
+    if (!entry) return false;
+    if (sessionId && entry.conversationId !== sessionId) return false;
+    return userMems.delete(key);
+  }
+
+  async deleteBySession(userId: string, sessionId: string): Promise<number> {
+    const userMems = this.getUserMemories(userId);
+    let count = 0;
+    for (const [key, mem] of userMems) {
+      if (mem.conversationId === sessionId) {
+        userMems.delete(key);
+        count++;
+      }
+    }
+    return count;
+  }
+
+  async getSessionMemories(userId: string, sessionId: string): Promise<MemoryEntry[]> {
+    return this.search(userId, { sessionId });
   }
 
   async search(userId: string, options: MemoryQueryOptions = {}): Promise<MemoryEntry[]> {
@@ -725,6 +797,15 @@ export class InMemoryMemoryStore implements MemoryStore {
 
     if (options.excludeTypes && options.excludeTypes.length > 0) {
       entries = entries.filter(e => !options.excludeTypes!.includes(e.type));
+    }
+
+    // Session filtering
+    if (options.sessionId) {
+      entries = entries.filter(e => e.conversationId === options.sessionId);
+    } else if (options.userLevelOnly) {
+      entries = entries.filter(e => !e.conversationId);
+    } else if (options.sessionOnly) {
+      entries = entries.filter(e => !!e.conversationId);
     }
 
     if (options.minImportance !== undefined) {
@@ -762,8 +843,12 @@ export class InMemoryMemoryStore implements MemoryStore {
     return entries;
   }
 
-  async count(userId: string): Promise<number> {
-    return this.getUserMemories(userId).size;
+  async count(userId: string, sessionId?: string): Promise<number> {
+    const entries = Array.from(this.getUserMemories(userId).values());
+    if (sessionId) {
+      return entries.filter(e => e.conversationId === sessionId).length;
+    }
+    return entries.length;
   }
 
   async getRecent(userId: string, limit: number = 10): Promise<MemoryEntry[]> {
