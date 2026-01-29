@@ -117,6 +117,53 @@ const MCPConfigSchema = z.object({
   }),
 });
 
+// Persistence configuration
+const PersistenceConfigSchema = z.object({
+  database: z.object({
+    type: z.enum(['memory', 'sqlite', 'postgresql']).default('sqlite'),
+    filename: z.string().default('./data/secureagent.db'),
+    journalMode: z.enum(['wal', 'delete', 'truncate', 'memory', 'off']).default('wal'),
+    synchronous: z.enum(['off', 'normal', 'full', 'extra']).default('normal'),
+    busyTimeout: z.number().default(5000),
+    cacheSize: z.number().default(-64000), // 64MB
+    foreignKeys: z.boolean().default(true),
+  }),
+
+  encryption: z.object({
+    enabled: z.boolean().default(true),
+    masterKeyEnvVar: z.string().default('SECUREAGENT_MASTER_KEY'),
+    saltLength: z.number().default(16),
+    ivLength: z.number().default(12),
+  }),
+});
+
+// Scheduler configuration
+const SchedulerConfigSchema = z.object({
+  enabled: z.boolean().default(true),
+  tickInterval: z.number().min(100).max(60000).default(1000),
+  maxConcurrentJobs: z.number().min(1).max(100).default(10),
+  defaultTimeoutMs: z.number().default(300000), // 5 minutes
+  defaultRetryCount: z.number().default(0),
+  defaultRetryDelayMs: z.number().default(60000), // 1 minute
+});
+
+// Memory manager configuration
+const MemoryConfigSchema = z.object({
+  enabled: z.boolean().default(true),
+  maxMemoriesPerUser: z.number().min(10).max(10000).default(1000),
+  defaultExpirationMs: z.number().default(0), // 0 = never
+  enableSummarization: z.boolean().default(true),
+  summarizationThreshold: z.number().default(100),
+  storeType: z.enum(['memory', 'database']).default('database'),
+});
+
+// Trigger manager configuration
+const TriggerConfigSchema = z.object({
+  enabled: z.boolean().default(true),
+  defaultCooldownMs: z.number().default(1000),
+  maxTriggersPerEvent: z.number().default(10),
+});
+
 // Root configuration schema
 const BaseConfigSchema = z.object({
   env: NodeEnvSchema,
@@ -124,6 +171,10 @@ const BaseConfigSchema = z.object({
   sandbox: SandboxConfigSchema,
   observability: ObservabilityConfigSchema,
   mcp: MCPConfigSchema,
+  persistence: PersistenceConfigSchema.optional(),
+  scheduler: SchedulerConfigSchema.optional(),
+  memory: MemoryConfigSchema.optional(),
+  triggers: TriggerConfigSchema.optional(),
 });
 
 // Test-compatible ConfigSchema with static validate method
@@ -164,6 +215,10 @@ export type SecurityConfig = z.infer<typeof SecurityConfigSchema>;
 export type SandboxConfig = z.infer<typeof SandboxConfigSchema>;
 export type ObservabilityConfig = z.infer<typeof ObservabilityConfigSchema>;
 export type MCPConfig = z.infer<typeof MCPConfigSchema>;
+export type PersistenceConfig = z.infer<typeof PersistenceConfigSchema>;
+export type SchedulerConfig = z.infer<typeof SchedulerConfigSchema>;
+export type MemoryConfig = z.infer<typeof MemoryConfigSchema>;
+export type TriggerConfig = z.infer<typeof TriggerConfigSchema>;
 
 // Configuration loader with validation (supports both static and instance usage)
 export class ConfigLoader {

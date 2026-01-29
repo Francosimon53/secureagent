@@ -8,6 +8,10 @@ export {
   type SandboxConfig as AppSandboxConfig,
   type ObservabilityConfig,
   type MCPConfig,
+  type PersistenceConfig,
+  type SchedulerConfig,
+  type MemoryConfig,
+  type TriggerConfig,
 } from './config/index.js';
 
 // Security - Types
@@ -154,11 +158,36 @@ export {
   DatabaseManager,
   MemoryDatabaseAdapter,
   getDatabase,
+  getDatabaseManager,
+  isDatabaseInitialized,
   initDatabase,
   type DatabaseConfig,
   type DatabaseAdapter,
   type QueryResult,
   type Transaction,
+  // SQLite
+  SQLiteDatabaseAdapter,
+  type SQLiteConfig,
+  // Encryption
+  EncryptionService,
+  encrypt,
+  decrypt,
+  deriveUserKey,
+  generateSalt,
+  generateMasterKey,
+  initEncryption,
+  initEncryptionFromEnv,
+  getEncryptionService,
+  isEncryptionInitialized,
+  type EncryptionConfig,
+  type EncryptedData,
+  type EncryptedDataWithSalt,
+  // Memory Store
+  DatabaseMemoryStore,
+  InMemoryMemoryStore,
+  createMemoryStore,
+  type MemoryStore,
+  type MemoryQueryOptions,
   // Session Store
   DatabaseSessionStore,
   MemorySessionStore,
@@ -405,3 +434,52 @@ export {
   type SagaResult,
   type DomainEvent,
 } from './events/index.js';
+
+// Scheduler
+export {
+  // Scheduler
+  Scheduler,
+  initScheduler,
+  getScheduler,
+  isSchedulerInitialized,
+  // Cron Parser
+  parseCron,
+  getNextCronTime,
+  isValidCron,
+  isInterval,
+  parseInterval,
+  describeCron,
+  // Triggers
+  TriggerManager,
+  initTriggerManager,
+  getTriggerManager,
+  isTriggerManagerInitialized,
+  // Types
+  type JobDefinition,
+  type JobHandler,
+  type JobContext,
+  type JobResult,
+  type JobStatus,
+  type SchedulerConfig as JobSchedulerConfig,
+  type TriggerDefinition,
+  type TriggerContext,
+  type TriggerResult,
+  type TriggerType,
+  type TriggerAction,
+  type TriggerActionType,
+  type TriggerCondition,
+  type TriggerManagerConfig,
+} from './scheduler/index.js';
+
+// Memory Manager
+export {
+  MemoryManager,
+  initMemoryManager,
+  getMemoryManager,
+  isMemoryManagerInitialized,
+  type MemoryManagerConfig,
+  type RememberOptions,
+  type RecallOptions,
+  type ContextOptions,
+  type EncryptedExport,
+} from './agent/memory-manager.js';

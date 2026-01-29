@@ -7,4 +7,8 @@ export {
   type SandboxConfig,
   type ObservabilityConfig,
   type MCPConfig,
+  type PersistenceConfig,
+  type SchedulerConfig,
+  type MemoryConfig,
+  type TriggerConfig,
 } from './schema.js';

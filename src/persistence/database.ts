@@ -1,5 +1,6 @@
 import { EventEmitter } from 'events';
 import { getLogger } from '../observability/logger.js';
+import { SQLiteDatabaseAdapter, SQLiteConfig } from './sqlite-adapter.js';
 
 const logger = getLogger().child({ module: 'Database' });
 
@@ -427,7 +428,7 @@ export class DatabaseManager extends EventEmitter {
   /**
    * Initialize database connection
    */
-  async initialize(config: DatabaseConfig): Promise<void> {
+  async initialize(config: DatabaseConfig | SQLiteConfig): Promise<void> {
     if (this.adapter?.isConnected()) {
       await this.disconnect();
     }
@@ -439,9 +440,7 @@ export class DatabaseManager extends EventEmitter {
         this.adapter = new MemoryDatabaseAdapter();
         break;
       case 'sqlite':
-        // SQLite adapter would be implemented separately
-        this.adapter = new MemoryDatabaseAdapter(); // Fallback for now
-        logger.warn('SQLite adapter not implemented, using memory adapter');
+        this.adapter = new SQLiteDatabaseAdapter(config as SQLiteConfig);
         break;
       case 'postgresql':
         // PostgreSQL adapter would be implemented separately
@@ -527,9 +526,23 @@ export function getDatabase(): DatabaseManager {
 }
 
 /**
+ * Get the database manager instance (alias for getDatabase)
+ */
+export function getDatabaseManager(): DatabaseManager {
+  return DatabaseManager.getInstance();
+}
+
+/**
+ * Check if database is initialized and connected
+ */
+export function isDatabaseInitialized(): boolean {
+  return DatabaseManager.getInstance().isConnected();
+}
+
+/**
  * Initialize database with configuration
  */
-export async function initDatabase(config: DatabaseConfig): Promise<DatabaseManager> {
+export async function initDatabase(config: DatabaseConfig | SQLiteConfig): Promise<DatabaseManager> {
   const db = getDatabase();
   await db.initialize(config);
   return db;
