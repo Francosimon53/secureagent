@@ -15,4 +15,5 @@ export {
   type SavingsConfig,
   type DevToolsConfig,
   type FamilyConfig,
+  type WellnessConfig,
 } from './schema.js';

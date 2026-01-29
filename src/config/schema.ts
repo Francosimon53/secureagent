@@ -333,6 +333,65 @@ const FamilyConfigSchema = z.object({
   }).optional(),
 });
 
+// Wellness configuration (health tracking)
+const WellnessConfigSchema = z.object({
+  enabled: z.boolean().default(true),
+  storeType: z.enum(['memory', 'database']).default('database'),
+
+  bloodwork: z.object({
+    enabled: z.boolean().default(true),
+    pdfParserLibrary: z.enum(['pdf-parse', 'pdf2json']).default('pdf-parse'),
+    maxFileSizeMB: z.number().min(1).max(50).default(10),
+    enableTrendAnalysis: z.boolean().default(true),
+  }).optional(),
+
+  whoop: z.object({
+    enabled: z.boolean().default(true),
+    clientIdEnvVar: z.string().default('WHOOP_CLIENT_ID'),
+    clientSecretEnvVar: z.string().default('WHOOP_CLIENT_SECRET'),
+    baseUrl: z.string().url().default('https://api.prod.whoop.com'),
+    syncIntervalMinutes: z.number().min(15).max(1440).default(60),
+    lowRecoveryThreshold: z.number().min(0).max(100).default(33),
+  }).optional(),
+
+  garmin: z.object({
+    enabled: z.boolean().default(true),
+    consumerKeyEnvVar: z.string().default('GARMIN_CONSUMER_KEY'),
+    consumerSecretEnvVar: z.string().default('GARMIN_CONSUMER_SECRET'),
+    syncIntervalMinutes: z.number().min(15).max(1440).default(60),
+    includeGPSData: z.boolean().default(true),
+  }).optional(),
+
+  appleHealth: z.object({
+    enabled: z.boolean().default(true),
+    supportedFormats: z.array(z.enum(['xml', 'csv'])).default(['xml', 'csv']),
+    maxImportFileSizeMB: z.number().min(1).max(500).default(100),
+  }).optional(),
+
+  sleepMonitoring: z.object({
+    enabled: z.boolean().default(true),
+    preferredSource: z.enum(['whoop', 'garmin', 'apple_health', 'auto']).default('auto'),
+    targetSleepMinutes: z.number().min(240).max(720).default(480),
+    targetBedtime: z.string().regex(/^([01]\d|2[0-3]):([0-5]\d)$/).default('22:30'),
+    enableAlerts: z.boolean().default(true),
+  }).optional(),
+
+  medications: z.object({
+    enabled: z.boolean().default(true),
+    defaultReminderMinutesBefore: z.number().min(0).max(60).default(5),
+    snoozeIntervalMinutes: z.number().min(5).max(60).default(10),
+    missedWindowMinutes: z.number().min(30).max(360).default(120),
+    refillReminderDays: z.number().min(1).max(30).default(7),
+    lowAdherenceThreshold: z.number().min(0).max(100).default(80),
+  }).optional(),
+
+  sync: z.object({
+    enabled: z.boolean().default(true),
+    defaultIntervalMinutes: z.number().min(15).max(1440).default(60),
+    retryAttempts: z.number().min(1).max(5).default(3),
+  }).optional(),
+});
+
 // DevTools configuration
 const DevToolsConfigSchema = z.object({
   enabled: z.boolean().default(true),
@@ -408,6 +467,7 @@ const BaseConfigSchema = z.object({
   savings: SavingsConfigSchema.optional(),
   devtools: DevToolsConfigSchema.optional(),
   family: FamilyConfigSchema.optional(),
+  wellness: WellnessConfigSchema.optional(),
 });
 
 // Test-compatible ConfigSchema with static validate method
@@ -456,6 +516,7 @@ export type ProductivityConfig = z.infer<typeof ProductivityConfigSchema>;
 export type SavingsConfig = z.infer<typeof SavingsConfigSchema>;
 export type DevToolsConfig = z.infer<typeof DevToolsConfigSchema>;
 export type FamilyConfig = z.infer<typeof FamilyConfigSchema>;
+export type WellnessConfig = z.infer<typeof WellnessConfigSchema>;
 
 // Configuration loader with validation (supports both static and instance usage)
 export class ConfigLoader {
