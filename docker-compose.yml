@@ -1,0 +1,209 @@
+# =============================================================================
+# SecureAgent Docker Compose Configuration
+# =============================================================================
+# Usage:
+#   Development:  docker-compose up -d
+#   Local AI:     docker-compose --profile local-ai up -d
+#   Production:   docker-compose --profile production up -d
+# =============================================================================
+
+services:
+  # ---------------------------------------------------------------------------
+  # SecureAgent Application
+  # ---------------------------------------------------------------------------
+  secureagent:
+    build:
+      context: .
+      target: production
+    image: secureagent:latest
+    container_name: secureagent
+    restart: unless-stopped
+    ports:
+      - "${PORT:-3000}:3000"
+    environment:
+      - NODE_ENV=${NODE_ENV:-production}
+      - PORT=3000
+      - HOST=0.0.0.0
+      - DATABASE_PATH=/app/data/secureagent.db
+      - REDIS_URL=redis://redis:6379
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - AI_DAILY_BUDGET_CENTS=${AI_DAILY_BUDGET_CENTS:-10000}
+      - AI_MONTHLY_BUDGET_CENTS=${AI_MONTHLY_BUDGET_CENTS:-200000}
+      - ENCRYPTION_KEY=${ENCRYPTION_KEY}
+      - JWT_SECRET=${JWT_SECRET}
+      - LOG_LEVEL=${LOG_LEVEL:-info}
+      - LOG_FORMAT=${LOG_FORMAT:-json}
+    volumes:
+      - secureagent-data:/app/data
+    depends_on:
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    networks:
+      - secureagent-network
+
+  # ---------------------------------------------------------------------------
+  # SecureAgent Development Mode
+  # ---------------------------------------------------------------------------
+  secureagent-dev:
+    build:
+      context: .
+      target: development
+    container_name: secureagent-dev
+    ports:
+      - "${PORT:-3000}:3000"
+    environment:
+      - NODE_ENV=development
+      - PORT=3000
+      - HOST=0.0.0.0
+      - DEBUG=true
+      - DATABASE_PATH=/app/data/secureagent.db
+      - REDIS_URL=redis://redis:6379
+    env_file:
+      - .env
+    volumes:
+      - ./src:/app/src:ro
+      - ./tests:/app/tests:ro
+      - ./tsconfig.json:/app/tsconfig.json:ro
+      - secureagent-data:/app/data
+    depends_on:
+      - redis
+    networks:
+      - secureagent-network
+    profiles:
+      - development
+
+  # ---------------------------------------------------------------------------
+  # Redis (Caching & Sessions)
+  # ---------------------------------------------------------------------------
+  redis:
+    image: redis:7-alpine
+    container_name: secureagent-redis
+    restart: unless-stopped
+    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    networks:
+      - secureagent-network
+
+  # ---------------------------------------------------------------------------
+  # Ollama (Local AI Models)
+  # ---------------------------------------------------------------------------
+  ollama:
+    image: ollama/ollama:latest
+    container_name: secureagent-ollama
+    restart: unless-stopped
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama-data:/root/.ollama
+    environment:
+      - OLLAMA_HOST=0.0.0.0
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    networks:
+      - secureagent-network
+    profiles:
+      - local-ai
+
+  # ---------------------------------------------------------------------------
+  # Nginx (Reverse Proxy - Production)
+  # ---------------------------------------------------------------------------
+  nginx:
+    image: nginx:alpine
+    container_name: secureagent-nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./certs:/etc/nginx/certs:ro
+    depends_on:
+      - secureagent
+    networks:
+      - secureagent-network
+    profiles:
+      - production
+
+  # ---------------------------------------------------------------------------
+  # Prometheus (Metrics - Production)
+  # ---------------------------------------------------------------------------
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: secureagent-prometheus
+    restart: unless-stopped
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus-data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--storage.tsdb.retention.time=30d'
+    networks:
+      - secureagent-network
+    profiles:
+      - production
+      - monitoring
+
+  # ---------------------------------------------------------------------------
+  # Grafana (Dashboards - Production)
+  # ---------------------------------------------------------------------------
+  grafana:
+    image: grafana/grafana:latest
+    container_name: secureagent-grafana
+    restart: unless-stopped
+    ports:
+      - "3001:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD:-admin}
+      - GF_USERS_ALLOW_SIGN_UP=false
+    volumes:
+      - grafana-data:/var/lib/grafana
+    depends_on:
+      - prometheus
+    networks:
+      - secureagent-network
+    profiles:
+      - production
+      - monitoring
+
+# =============================================================================
+# Networks
+# =============================================================================
+networks:
+  secureagent-network:
+    driver: bridge
+
+# =============================================================================
+# Volumes
+# =============================================================================
+volumes:
+  secureagent-data:
+    driver: local
+  redis-data:
+    driver: local
+  ollama-data:
+    driver: local
+  prometheus-data:
+    driver: local
+  grafana-data:
+    driver: local
