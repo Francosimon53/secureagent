@@ -36,6 +36,10 @@
       "dest": "/api/telegram.ts"
     },
     {
+      "src": "/api/heartbeat",
+      "dest": "/api/heartbeat.ts"
+    },
+    {
       "src": "/api/(.*)",
       "dest": "/api/index.ts"
     },
@@ -46,5 +50,11 @@
   ],
   "env": {
     "NODE_ENV": "production"
-  }
+  },
+  "crons": [
+    {
+      "path": "/api/heartbeat",
+      "schedule": "0 7,12,18 * * *"
+    }
+  ]
 }

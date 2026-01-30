@@ -58,6 +58,14 @@ export default function handler(req: VercelRequest, res: VercelResponse) {
           webhook: '/api/telegram (POST)',
           status: '/api/telegram (GET)',
         },
+        heartbeat: {
+          cron: '/api/heartbeat (GET - triggered by Vercel Cron)',
+          trigger: '/api/heartbeat?action=trigger (POST)',
+          subscribe: '/api/heartbeat?action=subscribe (POST)',
+          unsubscribe: '/api/heartbeat?action=unsubscribe (POST)',
+          preferences: '/api/heartbeat?action=preferences (GET/POST)',
+          status: '/api/heartbeat?action=status (GET)',
+        },
       },
       modules: [
         'agent',
