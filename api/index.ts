@@ -29,6 +29,7 @@ export default function handler(req: VercelRequest, res: VercelResponse) {
       endpoints: {
         health: '/api/health',
         info: '/api',
+        chat: '/api/chat (POST)',
       },
       modules: [
         'agent',
