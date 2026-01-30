@@ -43,3 +43,22 @@ export {
   type MessageHandler,
   type AgentOptions,
 } from './agent.js';
+
+// LLM Handlers
+export {
+  // Anthropic/Claude
+  AnthropicHandler,
+  createAnthropicHandler,
+  createClaudeSonnetHandler,
+  createClaudeOpusHandler,
+  createClaudeHaikuHandler,
+  type AnthropicHandlerConfig,
+  type AnthropicModel,
+  // OpenAI/GPT
+  OpenAIHandler,
+  createOpenAIHandler,
+  createGPT4oHandler,
+  createGPT4oMiniHandler,
+  type OpenAIHandlerConfig,
+  type OpenAIModel,
+} from './handlers/index.js';
