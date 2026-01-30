@@ -37,6 +37,7 @@ export default function handler(req: VercelRequest, res: VercelResponse) {
           execute: '/api/skill/execute (POST)',
           delete: '/api/skill?name=<name> (DELETE)',
         },
+        enterprise: '/api/enterprise (GET for docs)',
       },
       modules: [
         'agent',

@@ -20,6 +20,10 @@
       "dest": "/api/skill.ts"
     },
     {
+      "src": "/api/enterprise",
+      "dest": "/api/enterprise.ts"
+    },
+    {
       "src": "/api/(.*)",
       "dest": "/api/index.ts"
     },
