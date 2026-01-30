@@ -20,4 +20,5 @@ export {
   type LifestyleConfig,
   type OrchestrationConfig,
   type ContentCreatorConfig,
+  type FinanceConfig,
 } from './schema.js';

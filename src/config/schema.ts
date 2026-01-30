@@ -471,6 +471,138 @@ const LifestyleConfigSchema = z.object({
   ticketmasterApiKeyEnvVar: z.string().default('TICKETMASTER_API_KEY'),
 });
 
+// Finance configuration
+const FinanceConfigSchema = z.object({
+  enabled: z.boolean().default(true),
+  storeType: z.enum(['memory', 'database']).default('database'),
+
+  // API domain allowlist (deny-by-default)
+  allowedApiDomains: z.array(z.string()).default([
+    'api.coinbase.com',
+    'api.pro.coinbase.com',
+    'api.exchange.coinbase.com',
+    'api.kraken.com',
+    'api.binance.com',
+    'api.binance.us',
+    'api.etherscan.io',
+    'api.blockcypher.com',
+    'api.coingecko.com',
+    'pro-api.coinmarketcap.com',
+    'api.twitter.com',
+    'oauth.reddit.com',
+    'newsapi.org',
+  ]),
+
+  exchanges: z.object({
+    coinbase: z.object({
+      enabled: z.boolean().default(false),
+      apiKeyEnvVar: z.string().default('COINBASE_API_KEY'),
+      apiSecretEnvVar: z.string().default('COINBASE_API_SECRET'),
+      passphraseEnvVar: z.string().default('COINBASE_PASSPHRASE'),
+      sandbox: z.boolean().default(true),
+    }).optional(),
+    kraken: z.object({
+      enabled: z.boolean().default(false),
+      apiKeyEnvVar: z.string().default('KRAKEN_API_KEY'),
+      apiSecretEnvVar: z.string().default('KRAKEN_API_SECRET'),
+    }).optional(),
+    binance: z.object({
+      enabled: z.boolean().default(false),
+      apiKeyEnvVar: z.string().default('BINANCE_API_KEY'),
+      apiSecretEnvVar: z.string().default('BINANCE_API_SECRET'),
+      sandbox: z.boolean().default(true),
+    }).optional(),
+  }).default({}),
+
+  riskManagement: z.object({
+    enabled: z.boolean().default(true),
+    maxPositionSizePercent: z.number().min(1).max(100).default(10),
+    maxDailyLossPercent: z.number().min(1).max(50).default(5),
+    maxDrawdownPercent: z.number().min(1).max(50).default(15),
+    maxOpenPositions: z.number().min(1).max(100).default(10),
+    requireStopLoss: z.boolean().default(true),
+    maxLeverageRatio: z.number().min(1).max(10).default(1),
+    cooldownMinutesAfterLoss: z.number().min(0).max(1440).default(30),
+  }).optional(),
+
+  sentiment: z.object({
+    enabled: z.boolean().default(true),
+    twitter: z.object({
+      enabled: z.boolean().default(false),
+      apiKeyEnvVar: z.string().default('TWITTER_API_KEY'),
+      bearerTokenEnvVar: z.string().default('TWITTER_BEARER_TOKEN'),
+    }).optional(),
+    reddit: z.object({
+      enabled: z.boolean().default(false),
+      clientIdEnvVar: z.string().default('REDDIT_CLIENT_ID'),
+      clientSecretEnvVar: z.string().default('REDDIT_CLIENT_SECRET'),
+      subreddits: z.array(z.string()).default(['cryptocurrency', 'bitcoin', 'ethereum']),
+    }).optional(),
+    news: z.object({
+      enabled: z.boolean().default(false),
+      apiKeyEnvVar: z.string().default('NEWS_API_KEY'),
+    }).optional(),
+    aggregationIntervalMinutes: z.number().min(1).max(60).default(15),
+    signalThresholdStrength: z.number().min(0).max(1).default(0.6),
+  }).optional(),
+
+  portfolio: z.object({
+    enabled: z.boolean().default(true),
+    defaultCurrency: z.enum(['USD', 'EUR', 'GBP', 'JPY', 'CAD', 'AUD', 'CHF']).default('USD'),
+    rebalanceThresholdPercent: z.number().min(1).max(50).default(5),
+    snapshotIntervalHours: z.number().min(1).max(24).default(6),
+    performanceCalculationMethod: z.enum(['twrr', 'mwrr', 'simple']).default('twrr'),
+  }).optional(),
+
+  walletMonitoring: z.object({
+    enabled: z.boolean().default(true),
+    ethereum: z.object({
+      enabled: z.boolean().default(false),
+      apiKeyEnvVar: z.string().default('ETHERSCAN_API_KEY'),
+    }).optional(),
+    bitcoin: z.object({
+      enabled: z.boolean().default(false),
+      apiKeyEnvVar: z.string().default('BLOCKCYPHER_API_KEY'),
+    }).optional(),
+    solana: z.object({
+      enabled: z.boolean().default(false),
+      rpcUrlEnvVar: z.string().default('SOLANA_RPC_URL'),
+    }).optional(),
+    pollIntervalMinutes: z.number().min(1).max(60).default(5),
+    gasPriceAlertThreshold: z.number().min(1).default(100),
+    largeTransactionThresholdUsd: z.number().min(100).default(10000),
+  }).optional(),
+
+  invoicing: z.object({
+    enabled: z.boolean().default(true),
+    defaultCurrency: z.enum(['USD', 'EUR', 'GBP', 'JPY', 'CAD', 'AUD', 'CHF']).default('USD'),
+    defaultTaxRate: z.number().min(0).max(100).default(0),
+    defaultPaymentTermsDays: z.number().min(1).max(365).default(30),
+    invoiceNumberPrefix: z.string().default('INV-'),
+    overdueReminderDays: z.array(z.number()).default([1, 7, 14, 30]),
+  }).optional(),
+
+  tradeLearning: z.object({
+    enabled: z.boolean().default(true),
+    minTradesForPattern: z.number().min(3).max(100).default(10),
+    minPatternConfidence: z.number().min(0).max(1).default(0.6),
+    patternDecayDays: z.number().min(1).max(365).default(90),
+    maxPatternsStored: z.number().min(10).max(10000).default(1000),
+    autoLearnFromTrades: z.boolean().default(true),
+  }).optional(),
+
+  tradingBot: z.object({
+    enabled: z.boolean().default(false),
+    paperTrading: z.boolean().default(true),
+    defaultExchange: z.enum(['coinbase', 'kraken', 'binance']).optional(),
+    maxConcurrentStrategies: z.number().min(1).max(10).default(3),
+    minAggregatedConfidence: z.number().min(0).max(1).default(0.7),
+  }).optional(),
+
+  priceDataProvider: z.enum(['coingecko', 'coinmarketcap', 'exchange']).default('coingecko'),
+  priceUpdateIntervalSeconds: z.number().min(10).max(3600).default(60),
+});
+
 // Content Creator configuration
 const ContentCreatorConfigSchema = z.object({
   enabled: z.boolean().default(true),
@@ -749,6 +881,7 @@ const BaseConfigSchema = z.object({
   lifestyle: LifestyleConfigSchema.optional(),
   orchestration: OrchestrationConfigSchema.optional(),
   contentCreator: ContentCreatorConfigSchema.optional(),
+  finance: FinanceConfigSchema.optional(),
 });
 
 // Test-compatible ConfigSchema with static validate method
@@ -802,6 +935,7 @@ export type TravelConfig = z.infer<typeof TravelConfigSchema>;
 export type LifestyleConfig = z.infer<typeof LifestyleConfigSchema>;
 export type OrchestrationConfig = z.infer<typeof OrchestrationConfigSchema>;
 export type ContentCreatorConfig = z.infer<typeof ContentCreatorConfigSchema>;
+export type FinanceConfig = z.infer<typeof FinanceConfigSchema>;
 
 // Configuration loader with validation (supports both static and instance usage)
 export class ConfigLoader {
