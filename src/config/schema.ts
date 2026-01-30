@@ -603,6 +603,139 @@ const FinanceConfigSchema = z.object({
   priceUpdateIntervalSeconds: z.number().min(10).max(3600).default(60),
 });
 
+// Health ABA configuration
+const HealthABAConfigSchema = z.object({
+  enabled: z.boolean().default(true),
+  storeType: z.enum(['memory', 'database']).default('database'),
+
+  hipaa: z.object({
+    auditLogRetentionDays: z.number().min(365).max(7300).default(2190),
+    patientRecordRetentionYears: z.number().min(1).max(20).default(7),
+    requireMFA: z.boolean().default(true),
+    sessionTimeoutMinutes: z.number().min(5).max(60).default(15),
+    allowedIpRanges: z.array(z.string()).optional(),
+    logPHIAccess: z.boolean().default(true),
+    encryptAtRest: z.boolean().default(true),
+    minPasswordLength: z.number().min(8).max(32).default(12),
+    requirePasswordComplexity: z.boolean().default(true),
+    accountLockoutThreshold: z.number().min(3).max(10).default(5),
+    accountLockoutDurationMinutes: z.number().min(5).max(60).default(30),
+  }).default({}),
+
+  appointments: z.object({
+    reminderIntervals: z.array(z.number()).default([1440, 120]),
+    defaultDuration: z.number().min(15).max(480).default(60),
+    noShowGracePeriod: z.number().min(5).max(60).default(15),
+    allowSelfScheduling: z.boolean().default(false),
+    minAdvanceBookingHours: z.number().min(0).max(168).default(24),
+    maxAdvanceBookingDays: z.number().min(1).max(365).default(90),
+    enableWaitlist: z.boolean().default(true),
+    autoConfirmOnResponse: z.boolean().default(true),
+    cancellationFee: z.number().min(0).max(200).default(50),
+    lateCancellationWindowHours: z.number().min(1).max(72).default(24),
+  }).default({}),
+
+  authorization: z.object({
+    alertThresholdsDays: z.array(z.number()).default([30, 14, 7]),
+    unitsAlertThresholds: z.array(z.number()).default([0.2, 0.1]),
+    autoRenewalReminder: z.boolean().default(true),
+    renewalLeadTimeDays: z.number().min(14).max(90).default(45),
+    autoTrackUnits: z.boolean().default(true),
+    alertOnDenied: z.boolean().default(true),
+    defaultAuthDurationDays: z.number().min(30).max(365).default(180),
+  }).default({}),
+
+  notifications: z.object({
+    sms: z.object({
+      enabled: z.boolean().default(true),
+      provider: z.enum(['twilio', 'vonage', 'aws-sns']).default('twilio'),
+      accountSidEnvVar: z.string().default('TWILIO_ACCOUNT_SID'),
+      authTokenEnvVar: z.string().default('TWILIO_AUTH_TOKEN'),
+      fromNumberEnvVar: z.string().default('TWILIO_FROM_NUMBER'),
+      rateLimitPerMinute: z.number().min(1).max(100).default(30),
+    }).optional(),
+    email: z.object({
+      enabled: z.boolean().default(true),
+      provider: z.enum(['smtp', 'sendgrid', 'ses', 'mailgun']).default('sendgrid'),
+      apiKeyEnvVar: z.string().default('SENDGRID_API_KEY'),
+      fromEmail: z.string().email().optional(),
+      fromName: z.string().optional(),
+      rateLimitPerMinute: z.number().min(1).max(100).default(50),
+    }).optional(),
+    voice: z.object({
+      enabled: z.boolean().default(false),
+      provider: z.enum(['twilio', 'vonage']).default('twilio'),
+      accountSidEnvVar: z.string().default('TWILIO_ACCOUNT_SID'),
+      authTokenEnvVar: z.string().default('TWILIO_AUTH_TOKEN'),
+      fromNumberEnvVar: z.string().default('TWILIO_FROM_NUMBER'),
+      rateLimitPerMinute: z.number().min(1).max(30).default(10),
+    }).optional(),
+    defaultChannel: z.enum(['sms', 'email', 'voice']).default('sms'),
+    fallbackChannels: z.array(z.enum(['sms', 'email', 'voice'])).default(['email']),
+    quietHoursStart: z.string().regex(/^([01]\d|2[0-3]):([0-5]\d)$/).optional(),
+    quietHoursEnd: z.string().regex(/^([01]\d|2[0-3]):([0-5]\d)$/).optional(),
+    respectQuietHours: z.boolean().default(true),
+  }).default({}),
+
+  chatbot: z.object({
+    enabled: z.boolean().default(true),
+    escalationThreshold: z.number().min(0).max(1).default(0.3),
+    maxResponseTimeMs: z.number().min(1000).max(30000).default(5000),
+    supportedLanguages: z.array(z.string()).default(['en', 'es']),
+    defaultLanguage: z.string().default('en'),
+    maxMessagesPerSession: z.number().min(10).max(200).default(50),
+    sessionTimeoutMinutes: z.number().min(5).max(120).default(30),
+    enableAutoGreeting: z.boolean().default(true),
+    enableSatisfactionSurvey: z.boolean().default(true),
+    useAIEnhancement: z.boolean().default(false),
+  }).default({}),
+
+  progressReports: z.object({
+    enabled: z.boolean().default(true),
+    defaultPeriodDays: z.number().min(7).max(180).default(90),
+    requireSupervisorApproval: z.boolean().default(true),
+    autoGenerateForRenewal: z.boolean().default(true),
+    renewalLeadTimeDays: z.number().min(7).max(60).default(30),
+    includeGraphs: z.boolean().default(true),
+    defaultExportFormat: z.enum(['pdf', 'docx', 'html']).default('pdf'),
+  }).default({}),
+
+  scheduling: z.object({
+    enabled: z.boolean().default(true),
+    considerTravelTime: z.boolean().default(true),
+    defaultTravelTimeMinutes: z.number().min(0).max(60).default(15),
+    maxRBTHoursPerWeek: z.number().min(20).max(60).default(40),
+    enableOvertimeAlerts: z.boolean().default(true),
+    overtimeThresholdHours: z.number().min(1).max(20).default(5),
+    autoDetectConflicts: z.boolean().default(true),
+    enableOptimizationSuggestions: z.boolean().default(true),
+  }).default({}),
+
+  payers: z.object({
+    availity: z.object({
+      enabled: z.boolean().default(false),
+      apiKeyEnvVar: z.string().optional(),
+      apiSecretEnvVar: z.string().optional(),
+      baseUrl: z.string().url().optional(),
+      sandbox: z.boolean().default(true),
+    }).optional(),
+    changeHealthcare: z.object({
+      enabled: z.boolean().default(false),
+      apiKeyEnvVar: z.string().optional(),
+      apiSecretEnvVar: z.string().optional(),
+      baseUrl: z.string().url().optional(),
+      sandbox: z.boolean().default(true),
+    }).optional(),
+  }).default({}),
+
+  allowedApiDomains: z.array(z.string()).default([
+    'api.twilio.com',
+    'api.sendgrid.com',
+    'api.availity.com',
+    'api.changehealthcare.com',
+  ]),
+});
+
 // Content Creator configuration
 const ContentCreatorConfigSchema = z.object({
   enabled: z.boolean().default(true),
@@ -882,6 +1015,7 @@ const BaseConfigSchema = z.object({
   orchestration: OrchestrationConfigSchema.optional(),
   contentCreator: ContentCreatorConfigSchema.optional(),
   finance: FinanceConfigSchema.optional(),
+  healthABA: HealthABAConfigSchema.optional(),
 });
 
 // Test-compatible ConfigSchema with static validate method
@@ -936,6 +1070,7 @@ export type LifestyleConfig = z.infer<typeof LifestyleConfigSchema>;
 export type OrchestrationConfig = z.infer<typeof OrchestrationConfigSchema>;
 export type ContentCreatorConfig = z.infer<typeof ContentCreatorConfigSchema>;
 export type FinanceConfig = z.infer<typeof FinanceConfigSchema>;
+export type HealthABAConfig = z.infer<typeof HealthABAConfigSchema>;
 
 // Configuration loader with validation (supports both static and instance usage)
 export class ConfigLoader {
