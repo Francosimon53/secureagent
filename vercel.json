@@ -32,6 +32,10 @@
       "dest": "/api/browser.ts"
     },
     {
+      "src": "/api/telegram",
+      "dest": "/api/telegram.ts"
+    },
+    {
       "src": "/api/(.*)",
       "dest": "/api/index.ts"
     },

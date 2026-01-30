@@ -54,6 +54,10 @@ export default function handler(req: VercelRequest, res: VercelResponse) {
           query: '/api/browser?action=query (POST)',
           docs: '/api/browser (GET)',
         },
+        telegram: {
+          webhook: '/api/telegram (POST)',
+          status: '/api/telegram (GET)',
+        },
       },
       modules: [
         'agent',
