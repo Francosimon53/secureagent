@@ -105,14 +105,17 @@ export class Bulkhead extends EventEmitter {
 
   constructor(config: BulkheadConfig) {
     super();
+    const maxQueueSizeValue = config.maxQueued ?? config.maxQueueSize ?? 100;
+    const queueTimeoutValue = config.timeout ?? config.queueTimeout ?? 30000;
     this.config = {
       name: config.name ?? 'default',
       maxConcurrent: config.maxConcurrent ?? 10,
-      // Support maxQueued as alias for maxQueueSize
-      maxQueueSize: config.maxQueued ?? config.maxQueueSize ?? 100,
-      // Support timeout as alias for queueTimeout
-      queueTimeout: config.timeout ?? config.queueTimeout ?? 30000,
+      maxQueueSize: maxQueueSizeValue,
+      queueTimeout: queueTimeoutValue,
       fairQueuing: config.fairQueuing ?? true,
+      // Aliases - keep in sync with canonical values
+      maxQueued: maxQueueSizeValue,
+      timeout: queueTimeoutValue,
     };
   }
 

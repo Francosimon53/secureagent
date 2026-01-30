@@ -571,9 +571,9 @@ export function retryable(config: RetryConfig = {}): MethodDecorator & ((target:
   ): PropertyDescriptor | ((...args: unknown[]) => unknown) {
     // New-style decorator (TypeScript 5.0+)
     if (typeof targetOrDescriptor === 'function' && propertyKeyOrContext && typeof propertyKeyOrContext === 'object' && 'kind' in propertyKeyOrContext) {
-      const originalMethod = targetOrDescriptor as (...args: unknown[]) => unknown;
+      const originalMethod = targetOrDescriptor as (...args: unknown[]) => Promise<unknown>;
       return async function (this: unknown, ...args: unknown[]) {
-        return retry(() => originalMethod.apply(this, args), config);
+        return retry(() => originalMethod.apply(this, args) as Promise<unknown>, config);
       };
     }
 

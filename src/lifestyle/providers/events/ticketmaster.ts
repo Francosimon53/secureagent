@@ -276,7 +276,7 @@ export class TicketmasterProvider extends BaseLifestyleProvider implements Event
 
     // Prefer 16:9 ratio images at reasonable resolution
     const preferred = images.find(
-      i => i.ratio === '16_9' && i.width >= 640 && i.width <= 1024
+      i => i.ratio === '16_9' && (i.width ?? 0) >= 640 && (i.width ?? 0) <= 1024
     );
 
     if (preferred) return preferred.url;

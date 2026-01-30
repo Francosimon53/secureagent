@@ -7,7 +7,7 @@ import {
   ApprovalResponse,
   AgentEvent,
 } from './types.js';
-import { ToolExecutionResult, ToolExecutionError, ToolExecutionContext } from '../security/types.js';
+import { ToolExecutionResult, ToolExecutionError, ToolNotAllowedError, ToolValidationError, ToolExecutionContext, AuthorizationError } from '../security/types.js';
 import { ToolRegistry } from '../tools/index.js';
 import { validateToolInput, ToolValidationResult } from '../validation/index.js';
 import { ResiliencePolicy, policy } from '../resilience/index.js';
@@ -412,11 +412,11 @@ export class ToolExecutor extends EventEmitter {
     });
 
     // Sanitize output if enabled
-    if (this.config.sanitizeOutput && result.value.output) {
-      result.value.output = this.sanitizeOutput(result.value.output);
+    if (this.config.sanitizeOutput && result.output) {
+      result.output = this.sanitizeOutput(result.output);
     }
 
-    return result.value;
+    return result;
   }
 
   /**
@@ -590,10 +590,11 @@ export function createToolExecutor(
   options: Partial<ToolExecutorConfig> = {}
 ): ToolExecutor {
   // Handle test-compatible config with tools array
-  if ('tools' in configOrRegistry && Array.isArray(configOrRegistry.tools)) {
+  if ('tools' in configOrRegistry && Array.isArray((configOrRegistry as TestExecutorConfig).tools)) {
+    const testConfig = configOrRegistry as TestExecutorConfig;
     // Create a simple in-memory registry-like object
     const toolsMap = new Map<string, TestToolDefinition>();
-    for (const tool of configOrRegistry.tools) {
+    for (const tool of testConfig.tools) {
       toolsMap.set(tool.name, tool);
     }
 
@@ -611,7 +612,7 @@ export function createToolExecutor(
 
     return new TestCompatibleToolExecutor({
       toolRegistry: mockRegistry,
-      tools: configOrRegistry.tools,
+      tools: testConfig.tools,
       ...options,
     });
   }
@@ -641,19 +642,36 @@ class TestCompatibleToolExecutor extends ToolExecutor {
   }
 
   /**
-   * Override execute to return test-compatible format
+   * Override execute to return PendingToolCall format with test-compatible top-level properties
    */
   async execute(
-    request: ToolCallRequest,
+    request: ToolCallRequest & { parameters?: Record<string, unknown> },
     context: ExecutionContext
-  ): Promise<{ success: boolean; result?: unknown; error?: { message: string } }> {
-    const tool = this.testTools.get(request.name);
+  ): Promise<PendingToolCall & { success?: boolean; error?: { message: string }; result?: unknown }> {
+    // Normalize: accept both 'parameters' (test compat) and 'arguments' (standard)
+    const args = request.arguments ?? request.parameters ?? {};
+    const normalizedRequest: ToolCallRequest = {
+      ...request,
+      arguments: args,
+      timestamp: request.timestamp ?? Date.now(),
+    };
+
+    const tool = this.testTools.get(normalizedRequest.name);
 
     // Check if tool exists
     if (!tool) {
+      const error = new ToolNotAllowedError(normalizedRequest.name, `Tool '${normalizedRequest.name}' not found`);
       return {
+        ...normalizedRequest,
+        status: 'failed' as const,
+        result: {
+          success: false,
+          error,
+          metrics: { durationMs: 0 },
+        },
+        // Test-compatible top-level properties
         success: false,
-        error: { message: `Tool '${request.name}' not found` },
+        error: { message: error.message },
       };
     }
 
@@ -661,10 +679,19 @@ class TestCompatibleToolExecutor extends ToolExecutor {
     const schema = tool.parameters as { required?: string[]; properties?: Record<string, unknown> };
     if (schema.required) {
       for (const required of schema.required) {
-        if (!(required in (request.parameters ?? {}))) {
+        if (!(required in args)) {
+          const error = new ToolValidationError(normalizedRequest.name, [`Missing required parameter: ${required}`]);
           return {
+            ...normalizedRequest,
+            status: 'failed' as const,
+            result: {
+              success: false,
+              error,
+              metrics: { durationMs: 0 },
+            },
+            // Test-compatible top-level properties
             success: false,
-            error: { message: `Missing required parameter: ${required}` },
+            error: { message: error.message },
           };
         }
       }
@@ -675,9 +702,9 @@ class TestCompatibleToolExecutor extends ToolExecutor {
       const approvalRequest: ApprovalRequest = {
         conversationId: context.conversationId,
         turnId: context.turnId ?? '',
-        toolCallId: request.id,
-        toolName: request.name,
-        arguments: request.parameters ?? {},
+        toolCallId: normalizedRequest.id,
+        toolName: normalizedRequest.name,
+        arguments: args,
         requestedAt: Date.now(),
         expiresAt: Date.now() + 300000,
         userId: context.userId,
@@ -686,24 +713,47 @@ class TestCompatibleToolExecutor extends ToolExecutor {
       const approval = await this.testApprovalHandler(approvalRequest);
 
       if (!approval.approved) {
+        const error = new AuthorizationError(`Approval denied: ${approval.reason ?? 'No reason provided'}`);
         return {
+          ...normalizedRequest,
+          status: 'denied' as const,
+          deniedReason: approval.reason ?? 'No reason provided',
+          result: {
+            success: false,
+            error,
+            metrics: { durationMs: 0 },
+          },
+          // Test-compatible top-level properties
           success: false,
-          error: { message: `Approval denied: ${approval.reason ?? 'No reason provided'}` },
+          error: { message: error.message },
         };
       }
     }
 
     // Execute the tool
+    const startTime = Date.now();
     try {
-      const result = await tool.execute(request.parameters ?? {});
+      const output = await tool.execute(args);
       return {
+        ...normalizedRequest,
+        status: 'executed' as const,
+        result: output as unknown as ToolExecutionResult,
+        // Test-compatible top-level properties
         success: true,
-        result,
       };
-    } catch (error) {
+    } catch (err) {
+      const error = new ToolExecutionError(normalizedRequest.name, err instanceof Error ? err.message : String(err));
       return {
+        ...normalizedRequest,
+        status: 'failed' as const,
+        result: {
+          success: false,
+          error,
+          metrics: { durationMs: Date.now() - startTime },
+        },
+        // Test-compatible top-level properties
         success: false,
-        error: { message: error instanceof Error ? error.message : String(error) },
+        error: { message: error.message },
       };
     }
   }

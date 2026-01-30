@@ -67,11 +67,9 @@ export class InventoryService {
     }
   ): Promise<InventoryAddResult> {
     // Check if wine already exists
-    const existingWines = await this.deps.store.searchWines(wineData.userId, {
-      name: wineData.name,
-      producer: wineData.producer,
-      vintage: wineData.vintage,
-    });
+    const searchQuery = `${wineData.name} ${wineData.producer} ${wineData.vintage}`;
+    const existingWines = (await this.deps.store.searchWines(wineData.userId, searchQuery))
+      .filter(w => w.name === wineData.name && w.producer === wineData.producer && w.vintage === wineData.vintage);
 
     let wine: Wine;
     let isNewWine = false;
@@ -84,12 +82,12 @@ export class InventoryService {
       }
     } else {
       // Create new wine entry
-      wine = await this.deps.store.addWine(wineData);
+      wine = await this.deps.store.createWine(wineData);
       isNewWine = true;
     }
 
     // Add inventory
-    const inventory = await this.deps.store.addInventory({
+    const inventory = await this.deps.store.addToInventory({
       wineId: wine.id,
       userId: wineData.userId,
       ...inventoryData,
@@ -111,7 +109,7 @@ export class InventoryService {
       occasion?: string;
     }
   ): Promise<{ success: boolean; remainingQuantity: number; consumption?: WineConsumption }> {
-    const inventory = await this.deps.store.getInventory(inventoryId);
+    const inventory = await this.deps.store.getInventoryItem(inventoryId);
     if (!inventory) {
       return { success: false, remainingQuantity: 0 };
     }
@@ -122,7 +120,7 @@ export class InventoryService {
 
     // Update inventory
     const newQuantity = inventory.quantity - quantity;
-    await this.deps.store.updateInventory(inventoryId, { quantity: newQuantity });
+    await this.deps.store.updateInventoryItem(inventoryId, { quantity: newQuantity });
 
     // Record consumption if it was consumed
     let consumption: WineConsumption | undefined;
@@ -141,7 +139,7 @@ export class InventoryService {
 
     // Delete inventory if empty
     if (newQuantity === 0) {
-      await this.deps.store.deleteInventory(inventoryId);
+      await this.deps.store.deleteInventoryItem(inventoryId);
     }
 
     return { success: true, remainingQuantity: newQuantity, consumption };
@@ -155,7 +153,7 @@ export class InventoryService {
     quantity: number,
     newLocation: string
   ): Promise<{ sourceInventory: WineInventory; targetInventory: WineInventory } | null> {
-    const sourceInventory = await this.deps.store.getInventory(inventoryId);
+    const sourceInventory = await this.deps.store.getInventoryItem(inventoryId);
     if (!sourceInventory || sourceInventory.quantity < quantity) {
       return null;
     }
@@ -168,12 +166,12 @@ export class InventoryService {
 
     if (targetInventory) {
       // Add to existing inventory at target location
-      updatedTarget = (await this.deps.store.updateInventory(targetInventory.id, {
+      updatedTarget = (await this.deps.store.updateInventoryItem(targetInventory.id, {
         quantity: targetInventory.quantity + quantity,
       }))!;
     } else {
       // Create new inventory at target location
-      updatedTarget = await this.deps.store.addInventory({
+      updatedTarget = await this.deps.store.addToInventory({
         wineId: sourceInventory.wineId,
         userId: sourceInventory.userId,
         quantity,
@@ -190,10 +188,10 @@ export class InventoryService {
     let updatedSource: WineInventory;
 
     if (newSourceQuantity === 0) {
-      await this.deps.store.deleteInventory(inventoryId);
+      await this.deps.store.deleteInventoryItem(inventoryId);
       updatedSource = { ...sourceInventory, quantity: 0 };
     } else {
-      updatedSource = (await this.deps.store.updateInventory(inventoryId, {
+      updatedSource = (await this.deps.store.updateInventoryItem(inventoryId, {
         quantity: newSourceQuantity,
       }))!;
     }
@@ -276,10 +274,10 @@ export class InventoryService {
    * Get wines ready to drink
    */
   async getReadyToDrink(userId: string): Promise<Array<{ wine: Wine; inventory: WineInventory[] }>> {
-    const wines = await this.deps.store.getWinesInDrinkingWindow(userId);
+    const winesWithInventory = await this.deps.store.getWinesInDrinkingWindow(userId);
     const result: Array<{ wine: Wine; inventory: WineInventory[] }> = [];
 
-    for (const wine of wines) {
+    for (const { wine } of winesWithInventory) {
       const inventories = await this.deps.store.getInventoryByWine(wine.id);
       const activeInventories = inventories.filter(i => i.quantity > 0);
       if (activeInventories.length > 0) {
@@ -294,12 +292,12 @@ export class InventoryService {
    * Get wines expiring soon
    */
   async getExpiringSoon(userId: string): Promise<Array<{ wine: Wine; inventory: WineInventory; daysRemaining: number }>> {
-    const wines = await this.deps.store.getWinesExpiringSoon(userId, this.config.drinkingWindowAlertDays);
+    const winesWithInventory = await this.deps.store.getWinesExpiringSoon(userId, this.config.drinkingWindowAlertDays);
     const result: Array<{ wine: Wine; inventory: WineInventory; daysRemaining: number }> = [];
     const now = Date.now();
     const msPerDay = 24 * 60 * 60 * 1000;
 
-    for (const wine of wines) {
+    for (const { wine } of winesWithInventory) {
       const inventories = await this.deps.store.getInventoryByWine(wine.id);
 
       for (const inv of inventories) {
@@ -345,7 +343,20 @@ export class InventoryService {
       limit?: number;
     }
   ): Promise<WineConsumption[]> {
-    return this.deps.store.getConsumptionHistory(userId, options);
+    let results = await this.deps.store.getConsumptionHistory(userId, options?.limit);
+
+    // Apply additional filters in memory
+    if (options?.startDate) {
+      results = results.filter(c => c.consumedAt >= options.startDate!);
+    }
+    if (options?.endDate) {
+      results = results.filter(c => c.consumedAt <= options.endDate!);
+    }
+    if (options?.wineId) {
+      results = results.filter(c => c.wineId === options.wineId);
+    }
+
+    return results;
   }
 
   /**
@@ -363,13 +374,22 @@ export class InventoryService {
       inDrinkingWindow?: boolean;
     }
   ): Promise<Array<{ wine: Wine; inventory: WineInventory[] }>> {
-    const wines = await this.deps.store.searchWines(userId, {
-      name: filters.query,
-      type: filters.type,
-      country: filters.country,
-      region: filters.region,
-      minRating: filters.minRating,
-    });
+    // Search by query string
+    let wines = await this.deps.store.searchWines(userId, filters.query ?? '');
+
+    // Apply additional filters in memory
+    if (filters.type) {
+      wines = wines.filter(w => w.type === filters.type);
+    }
+    if (filters.country) {
+      wines = wines.filter(w => w.country === filters.country);
+    }
+    if (filters.region) {
+      wines = wines.filter(w => w.region === filters.region);
+    }
+    if (filters.minRating !== undefined) {
+      wines = wines.filter(w => (w.rating ?? 0) >= filters.minRating!);
+    }
 
     const result: Array<{ wine: Wine; inventory: WineInventory[] }> = [];
     const now = Date.now();

@@ -23,6 +23,8 @@ export interface HealthCheckResult {
   timestamp: number;
   /** Additional metadata */
   metadata?: Record<string, unknown>;
+  /** Test-compatible alias for metadata */
+  details?: Record<string, unknown>;
 }
 
 /**

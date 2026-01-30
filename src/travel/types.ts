@@ -563,5 +563,7 @@ export interface DepartureAlertServiceConfig extends TravelServiceConfig {
     airport?: number;
     hotel?: number;
     activity?: number;
+    car_rental?: number;
+    flight?: number;
   };
 }

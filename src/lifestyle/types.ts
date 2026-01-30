@@ -77,7 +77,7 @@ export interface WineInventory {
   drinkingWindowStart?: number;
   drinkingWindowEnd?: number;
   peakYear?: number;
-  status: WineInventoryStatus;
+  status?: WineInventoryStatus;
   notes?: string;
   createdAt: number;
   updatedAt: number;
@@ -185,11 +185,12 @@ export interface WatchlistItem {
   totalEpisodes?: number;
   network?: string;
   streamingPlatforms?: string[];
-  addedAt: number;
+  addedAt?: number;
   watchedAt?: number;
   notes?: string;
   priority?: number;
   tags?: string[];
+  lastEpisodeCheck?: number;
   createdAt: number;
   updatedAt: number;
 }
@@ -198,24 +199,24 @@ export interface TVShowProgress {
   id: string;
   watchlistItemId: string;
   userId: string;
-  showTitle: string;
-  currentSeason: number;
-  currentEpisode: number;
+  showTitle?: string;
+  currentSeason?: number;
+  currentEpisode?: number;
   lastWatchedSeason: number;
   lastWatchedEpisode: number;
   lastWatchedAt?: number;
   nextEpisode?: EpisodeInfo;
   isUpToDate: boolean;
-  totalWatchedEpisodes: number;
+  totalWatchedEpisodes?: number;
   percentComplete?: number;
-  createdAt: number;
+  createdAt?: number;
   updatedAt: number;
 }
 
 export interface EpisodeInfo {
   seasonNumber: number;
   episodeNumber: number;
-  title: string;
+  title?: string;
   overview?: string;
   runtime?: number;
   airDate?: number;
@@ -241,9 +242,10 @@ export interface NewEpisodeAlert {
   episode: EpisodeInfo;
   alertType: EpisodeAlertType;
   scheduledFor: number;
-  sent: boolean;
+  sent?: boolean;
   sentAt?: number;
-  channels: string[];
+  channels?: string[];
+  createdAt?: number;
 }
 
 export type EpisodeAlertType = 'new_episode' | 'season_premiere' | 'season_finale' | 'series_finale';
@@ -296,21 +298,22 @@ export interface DiscoveredEvent {
   performers?: Performer[];
   ageRestriction?: string;
   isSoldOut: boolean;
-  isOnSale: boolean;
+  isOnSale?: boolean;
   onSaleDate?: number;
   tags?: string[];
-  fetchedAt: number;
+  fetchedAt?: number;
+  discoveredAt?: number;
 }
 
 export interface Venue {
   id?: string;
   name: string;
-  address: string;
-  city: string;
+  address?: string;
+  city?: string;
   state?: string;
-  country: string;
+  country?: string;
   postalCode?: string;
-  location: {
+  location?: {
     lat: number;
     lng: number;
   };
@@ -335,6 +338,7 @@ export interface PriceRange {
 export interface UserEventPreference {
   id: string;
   userId: string;
+  name?: string;
   categories?: EventCategory[];
   genres?: string[];
   artists?: string[];
@@ -343,7 +347,7 @@ export interface UserEventPreference {
   location: {
     lat: number;
     lng: number;
-    radius: number;
+    radiusKm: number;
   };
   maxPrice?: number;
   currency?: string;
@@ -376,13 +380,13 @@ export interface SavedEvent {
   id: string;
   userId: string;
   eventId: string;
-  event: DiscoveredEvent;
-  status: SavedEventStatus;
+  event?: DiscoveredEvent;
+  status?: SavedEventStatus;
   notes?: string;
-  reminderSet: boolean;
+  reminderSet?: boolean;
   reminderTime?: number;
   savedAt: number;
-  updatedAt: number;
+  updatedAt?: number;
 }
 
 export type SavedEventStatus = 'interested' | 'going' | 'maybe' | 'not_going' | 'attended';
@@ -480,7 +484,7 @@ export interface EventQueryOptions {
   location?: {
     lat: number;
     lng: number;
-    radius: number;
+    radiusKm: number;
   };
   maxPrice?: number;
   isSoldOut?: boolean;

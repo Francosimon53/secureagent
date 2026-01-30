@@ -1526,7 +1526,7 @@ export {
   type EnterpriseUserCreateInput,
   type EnterpriseUserUpdateInput,
   type EnterpriseRole,
-  type Subscription,
+  type Subscription as EnterpriseSubscription,
   type SubscriptionTier,
   type SubscriptionStatus,
   type SubscriptionInterval,

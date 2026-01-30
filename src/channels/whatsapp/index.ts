@@ -114,12 +114,14 @@ export class WhatsAppChannel extends BaseChannel {
   constructor(config: WhatsAppConfig) {
     super('whatsapp');
 
+    const verifyTokenValue = config.verifyToken ?? config.webhookVerifyToken ?? '';
     this.config = {
       phoneNumberId: config.phoneNumberId,
       accessToken: config.accessToken,
       appSecret: config.appSecret ?? '',
       // Support both verifyToken and webhookVerifyToken
-      verifyToken: config.verifyToken ?? config.webhookVerifyToken ?? '',
+      verifyToken: verifyTokenValue,
+      webhookVerifyToken: verifyTokenValue,
       apiVersion: config.apiVersion ?? 'v18.0',
       baseUrl: config.baseUrl ?? 'https://graph.facebook.com',
       rateLimit: {

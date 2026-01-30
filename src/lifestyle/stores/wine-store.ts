@@ -715,7 +715,7 @@ export class InMemoryWineStore implements WineStore {
 
   async listInventory(userId: string, options: WineInventoryQueryOptions = {}): Promise<WineInventory[]> {
     let items = Array.from(this.inventory.values()).filter(i => i.userId === userId);
-    if (options.status?.length) items = items.filter(i => options.status!.includes(i.status));
+    if (options.status?.length) items = items.filter(i => i.status && options.status!.includes(i.status));
     if (options.location) items = items.filter(i => i.location === options.location);
     if (options.offset) items = items.slice(options.offset);
     if (options.limit) items = items.slice(0, options.limit);

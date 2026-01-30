@@ -155,12 +155,17 @@ export class LifestyleManager {
       return;
     }
 
-    const storeType = dbAdapter ? 'database' : 'memory';
-
     // Initialize stores
-    this.wineStore = createWineStore(storeType as 'memory', dbAdapter as never);
-    this.watchlistStore = createWatchlistStore(storeType as 'memory', dbAdapter as never);
-    this.eventStore = createEventStore(storeType as 'memory', dbAdapter as never);
+    if (dbAdapter) {
+      // Cast adapters - they have compatible interfaces but slightly different type signatures
+      this.wineStore = createWineStore('database', dbAdapter as never);
+      this.watchlistStore = createWatchlistStore('database', dbAdapter as never);
+      this.eventStore = createEventStore('database', dbAdapter as never);
+    } else {
+      this.wineStore = createWineStore('memory');
+      this.watchlistStore = createWatchlistStore('memory');
+      this.eventStore = createEventStore('memory');
+    }
 
     await Promise.all([
       this.wineStore.initialize(),

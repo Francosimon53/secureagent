@@ -277,7 +277,7 @@ export class EpisodeTracker {
           watchlistItemId: alert.watchlistItemId,
           showTitle: alert.showTitle,
           episode: alert.episode,
-          alertType: alert.alertType,
+          alertType: alert.alertType as 'new_episode' | 'season_premiere' | 'season_finale',
         });
       }
 

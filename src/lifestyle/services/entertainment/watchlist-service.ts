@@ -68,20 +68,22 @@ export class WatchlistService {
       if (provider) {
         try {
           if (mediaType === 'movie' || mediaType === 'documentary') {
-            details = await provider.getMovieDetails(externalId) ?? undefined;
-            if (details) {
-              itemTitle = details.title;
-              posterUrl = details.posterUrl;
-              releaseDate = details.releaseDate;
+            const movieDetails = await provider.getMovieDetails(externalId) ?? undefined;
+            if (movieDetails) {
+              details = movieDetails;
+              itemTitle = movieDetails.title;
+              posterUrl = movieDetails.posterUrl;
+              releaseDate = movieDetails.releaseDate;
             }
           } else if (mediaType === 'tv_show') {
-            details = await provider.getTVShowDetails(externalId) ?? undefined;
-            if (details) {
-              itemTitle = (details as TVShowDetails).title;
-              posterUrl = details.posterUrl;
-              releaseDate = (details as TVShowDetails).firstAirDate;
-              totalSeasons = (details as TVShowDetails).totalSeasons;
-              totalEpisodes = (details as TVShowDetails).totalEpisodes;
+            const tvDetails = await provider.getTVShowDetails(externalId) ?? undefined;
+            if (tvDetails) {
+              details = tvDetails;
+              itemTitle = tvDetails.title;
+              posterUrl = tvDetails.posterUrl;
+              releaseDate = tvDetails.firstAirDate;
+              totalSeasons = tvDetails.totalSeasons;
+              totalEpisodes = tvDetails.totalEpisodes;
             }
           }
         } catch (error) {

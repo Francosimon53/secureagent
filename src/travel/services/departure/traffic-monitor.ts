@@ -25,6 +25,7 @@ export interface TrafficMonitorConfig {
     hotel: number;
     activity: number;
     car_rental: number;
+    flight: number;
   };
   notificationChannels: string[];
 }
@@ -450,6 +451,7 @@ export function createTrafficMonitor(
       hotel: config.defaultBufferMinutes?.hotel ?? 30,
       activity: config.defaultBufferMinutes?.activity ?? 30,
       car_rental: config.defaultBufferMinutes?.car_rental ?? 60,
+      flight: config.defaultBufferMinutes?.flight ?? 120,
     },
     notificationChannels: config.notificationChannels ?? ['push', 'sms'],
   };

@@ -204,7 +204,7 @@ interface RegisteredTool {
 }
 
 export class MCPProtocolHandler {
-  private readonly config: MCPServerConfig | null;
+  private readonly config: MCPServerConfig;
   private readonly sessions = new Map<string, {
     token: AccessToken;
     initialized: boolean;
@@ -239,8 +239,21 @@ export class MCPProtocolHandler {
       // Initialize scope manager (use provided or create default)
       this.scopeManager = config.scopeManager ?? new ScopeManager();
     } else {
-      // Test-compatible empty config
-      this.config = null;
+      // Test-compatible empty config - use minimal defaults
+      this.config = {
+        name: 'test-server',
+        version: '1.0.0',
+        oauth: undefined as unknown as OAuthAuthorizationServer,
+        toolRegistry: undefined as unknown as ToolRegistry,
+        capabilities: {
+          tools: true,
+          resources: true,
+          prompts: true,
+          logging: true,
+        },
+        resources: [],
+        prompts: [],
+      };
       this.rateLimiter = new MCPRateLimiter();
       this.scopeManager = new ScopeManager();
     }

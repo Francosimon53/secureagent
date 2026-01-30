@@ -76,6 +76,7 @@ export const DepartureAlertsConfigSchema = z.object({
     hotel: z.number().min(10).max(120).default(30),
     activity: z.number().min(10).max(120).default(30),
     car_rental: z.number().min(15).max(180).default(60),
+    flight: z.number().min(30).max(240).default(120),
   }).default({}),
   startMonitoringHoursBefore: z.number().min(1).max(24).default(4),
   maxActiveAlerts: z.number().min(1).max(20).default(10),

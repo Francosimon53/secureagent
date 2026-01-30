@@ -198,7 +198,7 @@ export class ResiliencePolicy<T> {
         onFallback: () => {
           usedFallback = true;
         },
-      });
+      }) as { value: T };
       value = result.value;
     } else {
       value = await wrappedOperation();

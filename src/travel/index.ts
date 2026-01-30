@@ -189,13 +189,18 @@ export class TravelManager {
       return;
     }
 
-    const storeType = dbAdapter ? 'database' : 'memory';
-
     // Initialize stores
-    this.tripStore = createTripStore(storeType as 'memory', dbAdapter as never);
-    this.bookingStore = createBookingStore(storeType as 'memory', dbAdapter as never);
-    this.priceAlertStore = createTravelPriceAlertStore(storeType as 'memory', dbAdapter as never);
-    this.checkInStore = createCheckInStore(storeType as 'memory', dbAdapter as never);
+    if (dbAdapter) {
+      this.tripStore = createTripStore('database', dbAdapter as never);
+      this.bookingStore = createBookingStore('database', dbAdapter as never);
+      this.priceAlertStore = createTravelPriceAlertStore('database', dbAdapter as never);
+      this.checkInStore = createCheckInStore('database', dbAdapter as never);
+    } else {
+      this.tripStore = createTripStore('memory');
+      this.bookingStore = createBookingStore('memory');
+      this.priceAlertStore = createTravelPriceAlertStore('memory');
+      this.checkInStore = createCheckInStore('memory');
+    }
 
     await Promise.all([
       this.tripStore.initialize(),

@@ -129,17 +129,19 @@ export class CircuitBreaker extends EventEmitter {
 
   constructor(config: CircuitBreakerConfig) {
     super();
+    const successThresholdValue = config.halfOpenMaxAttempts ?? config.successThreshold ?? 3;
     this.config = {
       name: config.name ?? 'default',
       failureThreshold: config.failureThreshold ?? 5,
-      // Support halfOpenMaxAttempts as alias for successThreshold
-      successThreshold: config.halfOpenMaxAttempts ?? config.successThreshold ?? 3,
+      successThreshold: successThresholdValue,
       resetTimeout: config.resetTimeout ?? 30000,
       failureWindow: config.failureWindow ?? 60000,
       operationTimeout: config.operationTimeout ?? 0,
       isFailure: config.isFailure ?? (() => true),
       enableHalfOpen: config.enableHalfOpen ?? true,
       halfOpenMaxConcurrent: config.halfOpenMaxConcurrent ?? 1,
+      // Alias - keep in sync with successThreshold
+      halfOpenMaxAttempts: successThresholdValue,
     };
   }
 

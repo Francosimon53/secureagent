@@ -6,7 +6,7 @@
 
 export {
   type WineStore,
-  type WineDatabaseAdapter,
+  type DatabaseAdapter as WineDatabaseAdapter,
   DatabaseWineStore,
   InMemoryWineStore,
   createWineStore,
@@ -32,6 +32,7 @@ export {
  * Common database adapter interface for lifestyle stores
  */
 export interface LifestyleDatabaseAdapter {
-  query<T>(sql: string, params?: unknown[]): Promise<T[]>;
+  query<T>(sql: string, params?: unknown[]): Promise<T[] | { rows: T[] }>;
   run(sql: string, params?: unknown[]): Promise<{ lastID: number; changes: number }>;
+  execute?(sql: string, params?: unknown[]): Promise<{ changes: number }>;
 }

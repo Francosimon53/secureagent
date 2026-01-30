@@ -63,7 +63,7 @@ export class TMDBProvider extends BaseLifestyleProvider implements Entertainment
       language: this.language,
     });
 
-    return data.results.map(m => this.mapToMovieResult(m));
+    return data.results.map(m => this.mapToMovieResult(m as TMDBMovie));
   }
 
   async getMovieDetails(externalId: string): Promise<MovieDetails | null> {
@@ -85,7 +85,7 @@ export class TMDBProvider extends BaseLifestyleProvider implements Entertainment
       language: this.language,
     });
 
-    return data.results.map(s => this.mapToTVShowResult(s));
+    return data.results.map(s => this.mapToTVShowResult(s as TMDBTVShow));
   }
 
   async getTVShowDetails(externalId: string): Promise<TVShowDetails | null> {
@@ -155,7 +155,7 @@ export class TMDBProvider extends BaseLifestyleProvider implements Entertainment
       language: this.language,
     });
 
-    return data.results.map(m => this.mapToMovieResult(m));
+    return data.results.map(m => this.mapToMovieResult(m as TMDBMovie));
   }
 
   async getTrendingTVShows(): Promise<TVShowSearchResult[]> {
@@ -163,7 +163,7 @@ export class TMDBProvider extends BaseLifestyleProvider implements Entertainment
       language: this.language,
     });
 
-    return data.results.map(s => this.mapToTVShowResult(s));
+    return data.results.map(s => this.mapToTVShowResult(s as TMDBTVShow));
   }
 
   private async request<T>(endpoint: string, params: Record<string, string> = {}): Promise<T> {
