@@ -22,4 +22,5 @@ export {
   type ContentCreatorConfig,
   type FinanceConfig,
   type HealthABAConfig,
+  type EnterpriseConfig,
 } from './schema.js';

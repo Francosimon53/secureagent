@@ -994,6 +994,87 @@ const DevToolsConfigSchema = z.object({
   }).optional(),
 });
 
+// Enterprise configuration
+const EnterpriseConfigSchema = z.object({
+  enabled: z.boolean().default(true),
+  storeType: z.enum(['memory', 'database']).default('database'),
+
+  // Base URL for callbacks and webhooks
+  baseUrl: z.string().url().default('http://localhost:3000'),
+
+  // Trial configuration
+  trialPeriodDays: z.number().min(0).max(90).default(14),
+
+  // Stripe billing
+  stripe: z.object({
+    enabled: z.boolean().default(false),
+    secretKeyEnvVar: z.string().default('STRIPE_SECRET_KEY'),
+    publishableKeyEnvVar: z.string().default('STRIPE_PUBLISHABLE_KEY'),
+    webhookSecretEnvVar: z.string().default('STRIPE_WEBHOOK_SECRET'),
+    priceIds: z.object({
+      pro: z.object({
+        monthly: z.string().optional(),
+        yearly: z.string().optional(),
+      }).optional(),
+      business: z.object({
+        monthly: z.string().optional(),
+        yearly: z.string().optional(),
+      }).optional(),
+      enterprise: z.object({
+        monthly: z.string().optional(),
+        yearly: z.string().optional(),
+      }).optional(),
+    }).optional(),
+  }).optional(),
+
+  // SSO providers
+  sso: z.object({
+    google: z.object({
+      enabled: z.boolean().default(false),
+      clientIdEnvVar: z.string().default('GOOGLE_SSO_CLIENT_ID'),
+      clientSecretEnvVar: z.string().default('GOOGLE_SSO_CLIENT_SECRET'),
+    }).optional(),
+    microsoft: z.object({
+      enabled: z.boolean().default(false),
+      clientIdEnvVar: z.string().default('MICROSOFT_SSO_CLIENT_ID'),
+      clientSecretEnvVar: z.string().default('MICROSOFT_SSO_CLIENT_SECRET'),
+      tenantIdEnvVar: z.string().default('MICROSOFT_SSO_TENANT_ID'),
+    }).optional(),
+    saml: z.object({
+      enabled: z.boolean().default(false),
+    }).optional(),
+  }).optional(),
+
+  // Multi-tenancy
+  tenancy: z.object({
+    requireTenant: z.boolean().default(false),
+    allowSubdomain: z.boolean().default(true),
+    baseDomain: z.string().optional(),
+    tenantHeader: z.string().default('x-tenant-id'),
+  }).optional(),
+
+  // Rate limiting
+  rateLimiting: z.object({
+    enabled: z.boolean().default(true),
+    skipPaths: z.array(z.string()).default(['/health', '/api/health']),
+  }).optional(),
+
+  // Monitoring
+  monitoring: z.object({
+    alertsEnabled: z.boolean().default(true),
+    checkIntervalMinutes: z.number().min(1).max(60).default(5),
+    usageWarningThreshold: z.number().min(50).max(99).default(80),
+    usageCriticalThreshold: z.number().min(80).max(100).default(95),
+  }).optional(),
+
+  // API allowlist (deny-by-default)
+  allowedApiDomains: z.array(z.string()).default([
+    'api.stripe.com',
+    'accounts.google.com',
+    'login.microsoftonline.com',
+  ]),
+});
+
 // Root configuration schema
 const BaseConfigSchema = z.object({
   env: NodeEnvSchema,
@@ -1016,6 +1097,7 @@ const BaseConfigSchema = z.object({
   contentCreator: ContentCreatorConfigSchema.optional(),
   finance: FinanceConfigSchema.optional(),
   healthABA: HealthABAConfigSchema.optional(),
+  enterprise: EnterpriseConfigSchema.optional(),
 });
 
 // Test-compatible ConfigSchema with static validate method
@@ -1071,6 +1153,7 @@ export type OrchestrationConfig = z.infer<typeof OrchestrationConfigSchema>;
 export type ContentCreatorConfig = z.infer<typeof ContentCreatorConfigSchema>;
 export type FinanceConfig = z.infer<typeof FinanceConfigSchema>;
 export type HealthABAConfig = z.infer<typeof HealthABAConfigSchema>;
+export type EnterpriseConfig = z.infer<typeof EnterpriseConfigSchema>;
 
 // Configuration loader with validation (supports both static and instance usage)
 export class ConfigLoader {
