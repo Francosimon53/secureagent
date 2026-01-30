@@ -34,37 +34,123 @@ SecureAgent is a comprehensive, security-first AI assistant platform designed fo
 
 ## Installation
 
-### Prerequisites
+### One-Line Install (Recommended)
 
-- Node.js 20+
-- npm or pnpm
-- Docker (optional, for containerized deployment)
-
-### Quick Start
+Get SecureAgent running on your machine in under 5 minutes:
 
 ```bash
+curl -fsSL https://raw.githubusercontent.com/Francosimon53/secureagent/main/install.sh | bash
+```
+
+This will:
+- Detect your OS (macOS, Linux, Windows WSL)
+- Install Node.js if needed
+- Clone the repository
+- Install dependencies
+- Create a `.env` template
+- Set up the CLI
+
+After installation:
+```bash
+cd ~/secureagent
+nano .env  # Add your ANTHROPIC_API_KEY
+./start.sh
+```
+
+### Docker Install
+
+```bash
+# Clone the repo
+git clone https://github.com/Francosimon53/secureagent.git
+cd secureagent
+
+# Create .env file
+cp .env.example .env
+nano .env  # Add your API keys
+
+# Start with Docker
+docker-compose up -d
+
+# View logs
+docker-compose logs -f secureagent
+```
+
+### Manual Install
+
+```bash
+# Prerequisites: Node.js 20+, npm
+
 # Clone the repository
-git clone https://github.com/yourusername/secureagent.git
+git clone https://github.com/Francosimon53/secureagent.git
 cd secureagent
 
 # Install dependencies
-npm install
+npm install --legacy-peer-deps
 
 # Copy environment template
 cp .env.example .env
 
 # Configure your API keys in .env
-# At minimum, set ANTHROPIC_API_KEY or OPENAI_API_KEY
-
-# Build the project
-npm run build
-
-# Run tests
-npm test
+nano .env
 
 # Start the application
-npm start
+npm run dev
 ```
+
+### Guided Setup
+
+For an interactive setup experience:
+
+```bash
+git clone https://github.com/Francosimon53/secureagent.git
+cd secureagent
+./scripts/setup-local.sh
+```
+
+### Raspberry Pi / ARM Devices
+
+SecureAgent works on Raspberry Pi 4+ and other ARM64 devices:
+
+```bash
+# Install Node.js 20 on Raspberry Pi
+curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+sudo apt-get install -y nodejs
+
+# Install SecureAgent
+curl -fsSL https://raw.githubusercontent.com/Francosimon53/secureagent/main/install.sh | bash
+```
+
+### VPS Deployment (DigitalOcean, Linode, etc.)
+
+```bash
+# SSH into your VPS
+ssh root@your-server-ip
+
+# Install SecureAgent
+curl -fsSL https://raw.githubusercontent.com/Francosimon53/secureagent/main/install.sh | bash
+
+# Configure
+cd ~/secureagent
+nano .env
+
+# Start with systemd (auto-restart)
+sudo cp scripts/secureagent.service /etc/systemd/system/
+sudo systemctl enable secureagent
+sudo systemctl start secureagent
+
+# View logs
+sudo journalctl -u secureagent -f
+```
+
+### Environment Variables
+
+| Variable | Required | Description |
+|----------|----------|-------------|
+| `ANTHROPIC_API_KEY` | Yes | Your Anthropic API key |
+| `TELEGRAM_BOT_TOKEN` | No | Telegram bot token from @BotFather |
+| `PORT` | No | Server port (default: 3000) |
+| `NODE_ENV` | No | Environment (development/production) |
+| `LOG_LEVEL` | No | Logging level (debug/info/warn/error) |
 
 ### Development Mode
 

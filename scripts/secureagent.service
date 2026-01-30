@@ -1,0 +1,29 @@
+[Unit]
+Description=SecureAgent AI Assistant
+Documentation=https://github.com/Francosimon53/secureagent
+After=network.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/root/secureagent
+ExecStart=/usr/bin/npm run start
+Restart=on-failure
+RestartSec=10
+
+# Environment
+Environment=NODE_ENV=production
+Environment=PORT=3000
+
+# Logging
+StandardOutput=append:/root/secureagent/logs/secureagent.log
+StandardError=append:/root/secureagent/logs/secureagent-error.log
+
+# Security hardening
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=read-only
+ReadWritePaths=/root/secureagent/data /root/secureagent/logs
+
+[Install]
+WantedBy=multi-user.target
