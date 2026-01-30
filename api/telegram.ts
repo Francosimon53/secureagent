@@ -332,7 +332,18 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     try {
-      const update = req.body as TelegramUpdate;
+      // Parse body if it's a string
+      let update: TelegramUpdate;
+      if (typeof req.body === 'string') {
+        try {
+          update = JSON.parse(req.body);
+        } catch {
+          console.error('Failed to parse request body');
+          return res.status(200).json({ ok: true });
+        }
+      } else {
+        update = req.body as TelegramUpdate;
+      }
 
       // Process message
       const message = update.message ?? update.edited_message;
