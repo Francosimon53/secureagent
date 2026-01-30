@@ -5,6 +5,8 @@
  * Codes are NEVER stored - they are passed through immediately.
  */
 
+import { randomUUID } from 'crypto';
+
 /**
  * 2FA method type
  */
@@ -198,7 +200,7 @@ export class TwoFactorSessionManager {
     }
 
     const session: TwoFactorSession = {
-      id: crypto.randomUUID(),
+      id: randomUUID(),
       shoppingSessionId,
       userId,
       method,
