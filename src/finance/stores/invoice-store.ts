@@ -1174,7 +1174,7 @@ export class InMemoryInvoiceStore implements InvoiceStore {
     let totalPaid = 0;
     let totalOutstanding = 0;
     let totalOverdue = 0;
-    let invoiceCount = invoices.length;
+    const invoiceCount = invoices.length;
     let paidCount = 0;
     let overdueCount = 0;
     let totalPaymentDays = 0;

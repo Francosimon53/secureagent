@@ -299,7 +299,7 @@ export class GarminProvider
   async syncRecovery(userId: string, since?: number): Promise<SyncResult> {
     const syncedAt = Date.now();
     let recordsCreated = 0;
-    let recordsUpdated = 0;
+    const recordsUpdated = 0;
 
     try {
       const startDate = since
@@ -365,7 +365,7 @@ export class GarminProvider
   async syncStrain(userId: string, since?: number): Promise<SyncResult> {
     const syncedAt = Date.now();
     let recordsCreated = 0;
-    let recordsUpdated = 0;
+    const recordsUpdated = 0;
 
     try {
       const startDate = since
@@ -433,7 +433,7 @@ export class GarminProvider
   async syncSleep(userId: string, since?: number): Promise<SyncResult> {
     const syncedAt = Date.now();
     let recordsCreated = 0;
-    let recordsUpdated = 0;
+    const recordsUpdated = 0;
 
     try {
       const startDate = since
@@ -505,7 +505,7 @@ export class GarminProvider
   async syncActivities(userId: string, since?: number): Promise<SyncResult> {
     const syncedAt = Date.now();
     let recordsCreated = 0;
-    let recordsUpdated = 0;
+    const recordsUpdated = 0;
 
     try {
       const startDate = since ?? Date.now() - 7 * 24 * 60 * 60 * 1000;

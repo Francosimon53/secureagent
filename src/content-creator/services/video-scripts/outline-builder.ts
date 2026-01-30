@@ -246,7 +246,7 @@ DURATION: [seconds]`;
       voiceProfile,
     });
 
-    let newSection: OutlineSection = {
+    const newSection: OutlineSection = {
       id: crypto.randomUUID(),
       order: position,
       title: sectionTopic,
@@ -337,7 +337,7 @@ DURATION: [seconds]`;
       promotional: 'persuasive, benefit-focused, clear value',
     };
 
-    let prompt = `Create a detailed video outline for:
+    const prompt = `Create a detailed video outline for:
 
 TOPIC: ${options.topic}
 TARGET DURATION: ${options.targetDuration} seconds (about ${Math.round(options.targetDuration / 60)} minutes)

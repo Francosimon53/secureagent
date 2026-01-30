@@ -383,8 +383,8 @@ export class BillReminderService {
     let onTimePayments = 0;
     let latePayments = 0;
     let totalLateFees = 0;
-    let totalDelay = 0;
-    let delayCount = 0;
+    const totalDelay = 0;
+    const delayCount = 0;
 
     for (const bill of bills) {
       for (const payment of bill.paymentHistory) {

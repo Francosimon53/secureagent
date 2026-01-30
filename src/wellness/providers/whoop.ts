@@ -291,7 +291,7 @@ export class WhoopProvider
   async syncRecovery(userId: string, since?: number): Promise<SyncResult> {
     const syncedAt = Date.now();
     let recordsCreated = 0;
-    let recordsUpdated = 0;
+    const recordsUpdated = 0;
 
     try {
       const params = new URLSearchParams({ limit: '25' });
@@ -369,7 +369,7 @@ export class WhoopProvider
   async syncStrain(userId: string, since?: number): Promise<SyncResult> {
     const syncedAt = Date.now();
     let recordsCreated = 0;
-    let recordsUpdated = 0;
+    const recordsUpdated = 0;
 
     try {
       const params = new URLSearchParams({ limit: '25' });
@@ -446,7 +446,7 @@ export class WhoopProvider
   async syncSleep(userId: string, since?: number): Promise<SyncResult> {
     const syncedAt = Date.now();
     let recordsCreated = 0;
-    let recordsUpdated = 0;
+    const recordsUpdated = 0;
 
     try {
       const params = new URLSearchParams({ limit: '25' });
@@ -534,7 +534,7 @@ export class WhoopProvider
   async syncActivities(userId: string, since?: number): Promise<SyncResult> {
     const syncedAt = Date.now();
     let recordsCreated = 0;
-    let recordsUpdated = 0;
+    const recordsUpdated = 0;
 
     try {
       const params = new URLSearchParams({ limit: '25' });

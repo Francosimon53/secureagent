@@ -90,10 +90,10 @@ export class KeywordSuggesterService {
 
     // Analyze focus keyword if provided
     let keywordDensity = 0;
-    let keywordInTitle = false;
+    const keywordInTitle = false;
     let keywordInHeadings = false;
     let keywordInFirstParagraph = false;
-    let keywordInMetaDescription = false;
+    const keywordInMetaDescription = false;
 
     if (focusKeyword) {
       const focusLower = focusKeyword.toLowerCase();

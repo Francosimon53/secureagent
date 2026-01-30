@@ -44,9 +44,9 @@ export interface BulkheadStats {
  * Queued call entry (uses any for internal queue storage)
  */
 interface QueueEntry {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   operation: () => Promise<any>;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   resolve: (value: any) => void;
   reject: (error: Error) => void;
   timestamp: number;

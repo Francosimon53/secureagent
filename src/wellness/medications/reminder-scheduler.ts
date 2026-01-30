@@ -73,7 +73,7 @@ export class ReminderScheduler extends EventEmitter {
     const doses: MedicationDose[] = [];
     const scheduleTimes = this.getScheduleTimes(medication);
 
-    let currentDate = new Date(startDate);
+    const currentDate = new Date(startDate);
     currentDate.setHours(0, 0, 0, 0);
     const end = new Date(endDate);
 

@@ -181,7 +181,7 @@ export class AvailabilityManager extends EventEmitter {
     const timeOff = await this.scheduleStore.getTimeOff(rbtId, startDate, endDate);
 
     // Iterate through each day
-    let currentDate = new Date(startDate);
+    const currentDate = new Date(startDate);
     currentDate.setHours(0, 0, 0, 0);
 
     const end = new Date(endDate);

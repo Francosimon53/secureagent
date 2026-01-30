@@ -528,7 +528,7 @@ export class DealFinder {
     const wishlist = this.getUserWishlist(userId);
     const wishlistCategories = new Set(wishlist.map(i => i.category).filter(Boolean));
 
-    let deals = Array.from(this.deals.values()).filter(d => {
+    const deals = Array.from(this.deals.values()).filter(d => {
       // Active deals only
       if (d.expiresAt && d.expiresAt < Date.now()) return false;
       return d.score >= this.config.minDealScore;

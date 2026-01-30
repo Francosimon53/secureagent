@@ -269,7 +269,7 @@ export class TradeLearningServiceImpl extends EventEmitter implements TradeLearn
     this.ensureInitialized();
 
     let patternsCreated = 0;
-    let patternsUpdated = 0;
+    const patternsUpdated = 0;
 
     // Prune old patterns
     const pruned = await this.store!.pruneOldPatterns(
@@ -334,7 +334,7 @@ export class TradeLearningServiceImpl extends EventEmitter implements TradeLearn
   }
 
   private evaluatePatternMatch(trade: Trade, pattern: TradePattern): PatternMatch {
-    let matchedConditions: PatternCondition[] = [];
+    const matchedConditions: PatternCondition[] = [];
     let totalWeight = 0;
     let matchedWeight = 0;
 

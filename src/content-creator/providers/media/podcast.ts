@@ -409,7 +409,7 @@ export class PodcastProvider extends BaseContentProvider<PodcastProviderConfig> 
       }
 
       // Get episode image
-      let episodeImage = getAttribute('itunes:image', 'href', itemContent);
+      const episodeImage = getAttribute('itunes:image', 'href', itemContent);
 
       // Parse season and episode numbers
       const season = parseInt(getTagContent('itunes:season', itemContent), 10) || undefined;

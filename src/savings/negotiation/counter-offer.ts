@@ -193,7 +193,7 @@ export class CounterOfferEngine {
   ): { target: number; floor: number; ceiling: number } {
     let target = currentPrice * 0.85; // Default 15% reduction
     let floor = currentPrice * 0.7; // Maximum 30% reduction
-    let ceiling = currentPrice * 0.95; // Minimum 5% reduction
+    const ceiling = currentPrice * 0.95; // Minimum 5% reduction
 
     // Adjust based on competitor data
     if (marketData?.competitorPrices && marketData.competitorPrices.length > 0) {

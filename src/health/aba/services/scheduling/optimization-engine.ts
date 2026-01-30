@@ -261,7 +261,7 @@ export class OptimizationEngine extends EventEmitter {
 
     // Calculate sessions per week based on authorization
     let sessionsPerWeek = 3; // Default
-    let sessionDurationMinutes = 120; // Default 2 hours
+    const sessionDurationMinutes = 120; // Default 2 hours
 
     if (primaryAuth) {
       // Estimate based on total units and authorization period
@@ -585,7 +585,7 @@ export class OptimizationEngine extends EventEmitter {
   ): OptimizationMetrics {
     let totalSessions = 0;
     let totalMinutes = 0;
-    let totalTravelTime = 0;
+    const totalTravelTime = 0;
     let preferencesMetCount = 0;
     let preferencesTotalCount = 0;
     const hoursPerRbt: number[] = [];

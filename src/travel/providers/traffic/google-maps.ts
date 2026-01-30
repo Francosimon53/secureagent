@@ -255,7 +255,7 @@ export class GoogleMapsProvider
   ): Promise<{ departureTime: number; travelTime: number; trafficCondition: TrafficResult['trafficCondition'] }> {
     // Start checking from target arrival time minus a generous buffer
     const estimatedMaxTravelTime = 4 * 60 * 60 * 1000; // 4 hours
-    let checkTime = targetArrivalTime - estimatedMaxTravelTime;
+    const checkTime = targetArrivalTime - estimatedMaxTravelTime;
 
     // Binary search to find optimal departure time
     let low = checkTime;

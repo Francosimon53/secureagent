@@ -100,7 +100,7 @@ export class CurationEngineService {
 
     try {
       // Filter by categories
-      let filtered = this.filterByCategories(candidates, opts);
+      const filtered = this.filterByCategories(candidates, opts);
 
       // Score all content
       const scored = await this.scoreContent(filtered, opts);

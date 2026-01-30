@@ -187,7 +187,7 @@ export class WeeklyReviewGenerator {
     let tasksOverdue = 0;
     let meetingsAttended = 0;
     let meetingHours = 0;
-    let emailsSent = 0;
+    const emailsSent = 0;
     let emailsReceived = 0;
     let focusHours = 0;
 

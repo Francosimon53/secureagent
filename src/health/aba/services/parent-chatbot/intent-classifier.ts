@@ -378,7 +378,7 @@ export class IntentClassifier {
 
     // Weight recent messages more heavily
     let bestIntent = intents[intents.length - 1];
-    let bestScore = bestIntent.confidence;
+    const bestScore = bestIntent.confidence;
 
     for (let i = 0; i < intents.length - 1; i++) {
       const weight = (i + 1) / intents.length;

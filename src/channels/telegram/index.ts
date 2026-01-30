@@ -379,7 +379,7 @@ export class TelegramChannel extends BaseChannel {
 
   private telegramToMessage(msg: TelegramMessage, edited: boolean): Message {
     let content = msg.text ?? msg.caption ?? '';
-    let metadata: Record<string, unknown> = {
+    const metadata: Record<string, unknown> = {
       edited,
       chatType: msg.chat.type,
       chatTitle: msg.chat.title,

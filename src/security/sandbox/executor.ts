@@ -77,8 +77,8 @@ class MockSandbox {
     // Simulate code execution in isolated environment
     let stdout = '';
     let stderr = '';
-    let success = true;
-    let timedOut = false;
+    const success = true;
+    const timedOut = false;
     let error: string | undefined;
 
     // Check for infinite loop pattern (for timeout test)

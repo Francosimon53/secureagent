@@ -233,7 +233,7 @@ export function sanitizeString(value: string, options: SanitizeOptions): string 
   }
 
   if (options.stripControlChars) {
-    // eslint-disable-next-line no-control-regex
+     
     result = result.replace(/[\x00-\x1F\x7F]/g, '');
   }
 
@@ -675,7 +675,7 @@ export class SchemaValidator {
     path: string
   ): { value: unknown[]; errors: ValidationError[] } {
     const errors: ValidationError[] = [];
-    let processedValue = [...value];
+    const processedValue = [...value];
 
     if (schema.minItems !== undefined && value.length < schema.minItems) {
       errors.push({

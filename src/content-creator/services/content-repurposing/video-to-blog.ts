@@ -253,7 +253,7 @@ Your writing should:
     const prefix = prefixes[style] ?? '';
 
     // Clean up common video title patterns
-    let cleanTitle = videoTitle
+    const cleanTitle = videoTitle
       .replace(/^\[.*?\]\s*/, '') // Remove bracketed prefixes
       .replace(/\s*\|.*$/, '') // Remove pipe-separated suffixes
       .replace(/\s*-\s*YouTube$/, '') // Remove YouTube suffix
