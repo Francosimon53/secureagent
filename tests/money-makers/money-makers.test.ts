@@ -792,12 +792,16 @@ describe('BillReminderManager', () => {
     });
 
     it('should detect due today status', () => {
+      // Set due date to end of today (23:59:59.999) to avoid timezone/midnight issues
+      const now = new Date();
+      const endOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999).getTime();
+
       const bill = manager.addBill({
         userId: 'user-1',
         name: 'Test Bill',
         payee: 'Test',
         amount: createTestMoney(50),
-        dueDate: Date.now(), // Due now
+        dueDate: endOfToday,
         frequency: 'one_time',
       });
 
@@ -1387,19 +1391,35 @@ describe('MoneyMakers', () => {
 
   describe('savings opportunities', () => {
     it('should identify savings opportunities', () => {
-      moneyMakers.subscriptions.addSubscription({
+      // Add a subscription that should definitely trigger a cancel recommendation:
+      // - priority: 'unused' → valueScore = 10
+      // - usageFrequency: 'never' → usageScore = 0
+      // - combinedScore = (0 + 10) / 2 = 5, which is < 30 (cancel threshold)
+      const sub = moneyMakers.subscriptions.addSubscription({
         userId: 'user-1',
         name: 'Unused Sub',
         provider: 'Test',
         amount: createTestMoney(20),
         frequency: 'monthly',
         priority: 'unused',
-        usageFrequency: 'never', // Add this to ensure low score
+        usageFrequency: 'never',
       });
 
-      const opportunities = moneyMakers.getSavingsOpportunities('user-1');
+      // Verify subscription was added correctly
+      expect(sub.priority).toBe('unused');
+      expect(sub.usageFrequency).toBe('never');
+      expect(sub.isActive).toBe(true);
 
+      // Verify ROI calculation recommends cancel
+      const roi = moneyMakers.subscriptions.calculateROI(sub.id);
+      expect(roi.usageScore).toBe(0);
+      expect(roi.valueScore).toBe(10);
+      expect(roi.recommendation).toBe('cancel');
+
+      // Now verify getSavingsOpportunities returns it
+      const opportunities = moneyMakers.getSavingsOpportunities('user-1');
       expect(opportunities.subscriptionsToCancel.length).toBeGreaterThan(0);
+      expect(opportunities.subscriptionsToCancel[0].name).toBe('Unused Sub');
     });
   });
 });
