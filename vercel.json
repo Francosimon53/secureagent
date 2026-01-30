@@ -12,6 +12,14 @@
       "dest": "/api/chat.ts"
     },
     {
+      "src": "/api/skill/execute",
+      "dest": "/api/skill.ts?path=execute"
+    },
+    {
+      "src": "/api/skill",
+      "dest": "/api/skill.ts"
+    },
+    {
       "src": "/api/(.*)",
       "dest": "/api/index.ts"
     },

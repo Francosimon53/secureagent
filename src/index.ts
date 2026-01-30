@@ -1775,3 +1775,55 @@ export {
   // Monitoring
   AlertEngine as HealthAlertEngine,
 } from './health/aba/index.js';
+
+// Skills (Dynamic Tool Creation)
+export {
+  // Types
+  type Skill,
+  type SkillMetadata,
+  type SkillParameter,
+  type SkillExecutionContext,
+  type SkillExecutionResult,
+  type SkillCreateInput,
+  type SkillUpdateInput,
+  type SkillErrorCode,
+  SkillError,
+  SKILL_DEFAULTS,
+  SKILL_EVENTS,
+  BLOCKED_PATTERNS,
+  SANDBOX_GLOBALS,
+  // Registry
+  type SkillRegistry,
+  InMemorySkillRegistry,
+  DatabaseSkillRegistry,
+  createSkillRegistry,
+  // Executor
+  type SkillExecutorConfig,
+  SkillExecutor,
+  createSkillExecutor,
+  validateSkillCode,
+  // Loader
+  type SkillFile,
+  type SkillLoaderConfig,
+  SkillLoader,
+  createSkillLoader,
+  // Creator
+  type SkillCreatorConfig,
+  SkillCreator,
+  createSkillCreator,
+  // Tools
+  type ToolDefinition,
+  type ToolCallResult,
+  SkillToolHandler,
+  createSkillToolHandler,
+  SKILL_TOOLS,
+  CREATE_SKILL_TOOL,
+  LIST_SKILLS_TOOL,
+  RUN_SKILL_TOOL,
+  GET_SKILL_TOOL,
+  DELETE_SKILL_TOOL,
+  // System
+  type SkillSystem,
+  type SkillSystemConfig,
+  createSkillSystem,
+} from './skills/index.js';

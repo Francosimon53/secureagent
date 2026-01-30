@@ -30,6 +30,13 @@ export default function handler(req: VercelRequest, res: VercelResponse) {
         health: '/api/health',
         info: '/api',
         chat: '/api/chat (POST)',
+        skill: {
+          create: '/api/skill (POST)',
+          list: '/api/skill (GET)',
+          get: '/api/skill?name=<name> (GET)',
+          execute: '/api/skill/execute (POST)',
+          delete: '/api/skill?name=<name> (DELETE)',
+        },
       },
       modules: [
         'agent',
@@ -51,6 +58,7 @@ export default function handler(req: VercelRequest, res: VercelResponse) {
         'family',
         'orchestration',
         'content-creator',
+        'skills',
       ],
     });
   }
