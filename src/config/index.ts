@@ -19,4 +19,5 @@ export {
   type TravelConfig,
   type LifestyleConfig,
   type OrchestrationConfig,
+  type ContentCreatorConfig,
 } from './schema.js';

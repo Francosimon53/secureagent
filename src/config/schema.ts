@@ -471,6 +471,146 @@ const LifestyleConfigSchema = z.object({
   ticketmasterApiKeyEnvVar: z.string().default('TICKETMASTER_API_KEY'),
 });
 
+// Content Creator configuration
+const ContentCreatorConfigSchema = z.object({
+  enabled: z.boolean().default(true),
+  storeType: z.enum(['memory', 'database']).default('database'),
+
+  // API allowlist (deny-by-default)
+  allowedApiDomains: z.array(z.string()).default([
+    'api.twitter.com',
+    'api.linkedin.com',
+    'api.reddit.com',
+    'hacker-news.firebaseio.com',
+    'api.wordpress.org',
+    'ghost.org',
+    'bearblog.dev',
+    'www.googleapis.com',
+    'api.openai.com',
+    'api.anthropic.com',
+    'api.assemblyai.com',
+  ]),
+
+  twitter: z.object({
+    enabled: z.boolean().default(true),
+    apiKeyEnvVar: z.string().default('TWITTER_API_KEY'),
+    apiSecretEnvVar: z.string().default('TWITTER_API_SECRET'),
+    accessTokenEnvVar: z.string().default('TWITTER_ACCESS_TOKEN'),
+    accessSecretEnvVar: z.string().default('TWITTER_ACCESS_SECRET'),
+    rateLimitPerHour: z.number().min(1).max(500).default(100),
+  }).optional(),
+
+  linkedin: z.object({
+    enabled: z.boolean().default(true),
+    clientIdEnvVar: z.string().default('LINKEDIN_CLIENT_ID'),
+    clientSecretEnvVar: z.string().default('LINKEDIN_CLIENT_SECRET'),
+    accessTokenEnvVar: z.string().default('LINKEDIN_ACCESS_TOKEN'),
+    rateLimitPerHour: z.number().min(1).max(100).default(50),
+  }).optional(),
+
+  trendMonitoring: z.object({
+    enabled: z.boolean().default(true),
+    refreshIntervalMinutes: z.number().min(5).max(1440).default(30),
+    maxTrendsPerSource: z.number().min(5).max(100).default(25),
+    sources: z.object({
+      twitter: z.object({ enabled: z.boolean().default(true) }).optional(),
+      reddit: z.object({ enabled: z.boolean().default(true) }).optional(),
+      hackernews: z.object({ enabled: z.boolean().default(true) }).optional(),
+    }).optional(),
+    alerting: z.object({
+      enabled: z.boolean().default(true),
+      minRelevanceScore: z.number().min(0).max(1).default(0.5),
+    }).optional(),
+    caching: z.object({
+      ttlMinutes: z.number().min(5).max(1440).default(30),
+    }).optional(),
+  }).optional(),
+
+  blogPublishing: z.object({
+    enabled: z.boolean().default(true),
+    defaultPlatform: z.enum(['wordpress', 'ghost', 'bearblog']).default('wordpress'),
+    wordpress: z.object({
+      siteUrl: z.string().url().optional(),
+      username: z.string().optional(),
+      applicationPasswordEnvVar: z.string().default('WORDPRESS_APP_PASSWORD'),
+    }).optional(),
+    ghost: z.object({
+      siteUrl: z.string().url().optional(),
+      apiKeyEnvVar: z.string().default('GHOST_API_KEY'),
+    }).optional(),
+    bearblog: z.object({
+      siteUrl: z.string().url().optional(),
+      apiKeyEnvVar: z.string().default('BEARBLOG_API_KEY'),
+    }).optional(),
+  }).optional(),
+
+  seoAudit: z.object({
+    enabled: z.boolean().default(true),
+    minWordCount: z.number().min(100).max(10000).default(500),
+    targetReadabilityScore: z.number().min(0).max(100).default(60),
+    keywordDensity: z.object({
+      min: z.number().min(0).max(1).default(0.01),
+      max: z.number().min(0).max(1).default(0.03),
+    }).optional(),
+  }).optional(),
+
+  aiGeneration: z.object({
+    enabled: z.boolean().default(true),
+    provider: z.enum(['openai', 'anthropic']).default('openai'),
+    apiKeyEnvVar: z.string().default('OPENAI_API_KEY'),
+    defaultModel: z.string().default('gpt-4o-mini'),
+    maxTokensPerGeneration: z.number().min(100).max(16000).default(2000),
+    temperature: z.number().min(0).max(2).default(0.7),
+  }).optional(),
+
+  voiceProfile: z.object({
+    enabled: z.boolean().default(true),
+    minSamplesForTraining: z.number().min(1).max(50).default(5),
+    maxSamplesPerProfile: z.number().min(10).max(500).default(100),
+  }).optional(),
+
+  transcription: z.object({
+    enabled: z.boolean().default(true),
+    provider: z.enum(['whisper', 'assemblyai', 'deepgram']).default('whisper'),
+    apiKeyEnvVar: z.string().default('OPENAI_API_KEY'),
+    language: z.string().default('en'),
+    enableSpeakerDiarization: z.boolean().default(true),
+    maxDurationMinutes: z.number().min(1).max(480).default(120),
+  }).optional(),
+
+  videoScripts: z.object({
+    enabled: z.boolean().default(true),
+    wordsPerMinute: z.number().min(100).max(200).default(150),
+    includeBRollSuggestions: z.boolean().default(true),
+  }).optional(),
+
+  newsletterDigest: z.object({
+    enabled: z.boolean().default(true),
+    defaultFormat: z.enum(['html', 'markdown', 'text']).default('html'),
+    maxItemsPerDigest: z.number().min(5).max(50).default(15),
+  }).optional(),
+
+  presentationGenerator: z.object({
+    enabled: z.boolean().default(true),
+    defaultSlidesPerPresentation: z.number().min(3).max(50).default(10),
+    includeVisualSuggestions: z.boolean().default(true),
+  }).optional(),
+
+  youtube: z.object({
+    enabled: z.boolean().default(true),
+    apiKeyEnvVar: z.string().default('YOUTUBE_API_KEY'),
+    fetchCaptions: z.boolean().default(true),
+    maxVideoLengthMinutes: z.number().min(1).max(480).default(120),
+  }).optional(),
+
+  podcast: z.object({
+    enabled: z.boolean().default(true),
+    maxEpisodeLengthMinutes: z.number().min(1).max(480).default(180),
+    generateShowNotes: z.boolean().default(true),
+    extractTimestamps: z.boolean().default(true),
+  }).optional(),
+});
+
 // Orchestration configuration
 const OrchestrationConfigSchema = z.object({
   enabled: z.boolean().default(true),
@@ -608,6 +748,7 @@ const BaseConfigSchema = z.object({
   travel: TravelConfigSchema.optional(),
   lifestyle: LifestyleConfigSchema.optional(),
   orchestration: OrchestrationConfigSchema.optional(),
+  contentCreator: ContentCreatorConfigSchema.optional(),
 });
 
 // Test-compatible ConfigSchema with static validate method
@@ -660,6 +801,7 @@ export type WellnessConfig = z.infer<typeof WellnessConfigSchema>;
 export type TravelConfig = z.infer<typeof TravelConfigSchema>;
 export type LifestyleConfig = z.infer<typeof LifestyleConfigSchema>;
 export type OrchestrationConfig = z.infer<typeof OrchestrationConfigSchema>;
+export type ContentCreatorConfig = z.infer<typeof ContentCreatorConfigSchema>;
 
 // Configuration loader with validation (supports both static and instance usage)
 export class ConfigLoader {
