@@ -38,6 +38,12 @@ export default function handler(req: VercelRequest, res: VercelResponse) {
           delete: '/api/skill?name=<name> (DELETE)',
         },
         enterprise: '/api/enterprise (GET for docs)',
+        agent: {
+          chat: '/api/agent?action=chat (POST)',
+          tool: '/api/agent?action=tool (POST)',
+          tools: '/api/agent?action=tools (GET)',
+          conversation: '/api/agent?action=conversation&id=<id> (GET)',
+        },
       },
       modules: [
         'agent',

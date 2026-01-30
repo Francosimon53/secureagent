@@ -66,6 +66,31 @@ export {
   dataTools,
 } from './data-tools.js';
 
+// Browser tools
+export {
+  BrowserTools,
+  BrowserManager,
+  createBrowserTools,
+  getBrowserTools,
+  type BrowserToolConfig,
+  type BrowserSession,
+  type NavigateResult,
+  type ScreenshotResult,
+  type ClickResult,
+  type TypeResult,
+  type ExtractResult,
+  type QueryResult,
+  type ElementInfo,
+  BrowserNavigateSchema,
+  BrowserScreenshotSchema,
+  BrowserClickSchema,
+  BrowserTypeSchema,
+  BrowserExtractSchema,
+  BrowserQuerySchema,
+  BrowserEvalSchema,
+  BrowserWaitSchema,
+} from './browser-tools.js';
+
 // Import tool arrays for aggregation
 import { fileTools } from './file-tools.js';
 import { httpTools } from './http-tools.js';

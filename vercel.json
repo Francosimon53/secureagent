@@ -24,6 +24,10 @@
       "dest": "/api/enterprise.ts"
     },
     {
+      "src": "/api/agent",
+      "dest": "/api/agent.ts"
+    },
+    {
       "src": "/api/(.*)",
       "dest": "/api/index.ts"
     },
