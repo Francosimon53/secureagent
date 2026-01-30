@@ -28,6 +28,10 @@
       "dest": "/api/agent.ts"
     },
     {
+      "src": "/api/browser",
+      "dest": "/api/browser.ts"
+    },
+    {
       "src": "/api/(.*)",
       "dest": "/api/index.ts"
     },

@@ -123,6 +123,79 @@ const AVAILABLE_TOOLS: Anthropic.Tool[] = [
       required: [],
     },
   },
+  // Browser tools (HIGH risk - web automation)
+  {
+    name: 'browser_navigate',
+    description: 'Navigate browser to a URL and return page title',
+    input_schema: {
+      type: 'object' as const,
+      properties: {
+        url: { type: 'string', description: 'URL to navigate to' },
+        waitUntil: { type: 'string', enum: ['load', 'domcontentloaded', 'networkidle0', 'networkidle2'], description: 'When to consider navigation complete' },
+      },
+      required: ['url'],
+    },
+  },
+  {
+    name: 'browser_screenshot',
+    description: 'Take a screenshot of the current page',
+    input_schema: {
+      type: 'object' as const,
+      properties: {
+        fullPage: { type: 'boolean', description: 'Capture full page' },
+        selector: { type: 'string', description: 'CSS selector of element to screenshot' },
+      },
+      required: [],
+    },
+  },
+  {
+    name: 'browser_click',
+    description: 'Click an element on the page',
+    input_schema: {
+      type: 'object' as const,
+      properties: {
+        selector: { type: 'string', description: 'CSS selector of element to click' },
+      },
+      required: ['selector'],
+    },
+  },
+  {
+    name: 'browser_type',
+    description: 'Type text into an input field',
+    input_schema: {
+      type: 'object' as const,
+      properties: {
+        selector: { type: 'string', description: 'CSS selector of input element' },
+        text: { type: 'string', description: 'Text to type' },
+        clear: { type: 'boolean', description: 'Clear field before typing' },
+      },
+      required: ['selector', 'text'],
+    },
+  },
+  {
+    name: 'browser_extract',
+    description: 'Extract text content from page or element',
+    input_schema: {
+      type: 'object' as const,
+      properties: {
+        selector: { type: 'string', description: 'CSS selector (default: entire page)' },
+        type: { type: 'string', enum: ['text', 'html'], description: 'Extract text or HTML' },
+      },
+      required: [],
+    },
+  },
+  {
+    name: 'browser_query',
+    description: 'Query elements on the page and get their info',
+    input_schema: {
+      type: 'object' as const,
+      properties: {
+        selector: { type: 'string', description: 'CSS selector to query' },
+        limit: { type: 'number', description: 'Max elements to return (default: 10)' },
+      },
+      required: ['selector'],
+    },
+  },
 ];
 
 // Tool execution handlers
@@ -207,6 +280,19 @@ async function executeHttpTool(name: string, args: Record<string, unknown>): Pro
 // Skill system integration
 import { createSkillSystem, type SkillSystem } from '../src/skills/index.js';
 
+// Browser automation
+import { PuppeteerBrowser } from '../src/tools/browser.js';
+
+// Shared browser instance for agent
+let agentBrowser: PuppeteerBrowser | null = null;
+
+async function getAgentBrowser(): Promise<PuppeteerBrowser> {
+  if (!agentBrowser) {
+    agentBrowser = new PuppeteerBrowser();
+  }
+  return agentBrowser;
+}
+
 let skillSystem: SkillSystem | null = null;
 
 async function getSkillSystem(): Promise<SkillSystem> {
@@ -239,6 +325,39 @@ async function executeSkillTool(name: string, args: Record<string, unknown>): Pr
   throw new Error(`Unknown skill tool: ${name}`);
 }
 
+async function executeBrowserTool(name: string, args: Record<string, unknown>): Promise<unknown> {
+  const browser = await getAgentBrowser();
+
+  switch (name) {
+    case 'browser_navigate':
+      return browser.navigate(
+        args.url as string,
+        (args.waitUntil as 'load' | 'domcontentloaded' | 'networkidle0' | 'networkidle2') || 'load'
+      );
+    case 'browser_screenshot':
+      return browser.screenshot({
+        fullPage: args.fullPage as boolean,
+        selector: args.selector as string,
+      });
+    case 'browser_click':
+      return browser.click(args.selector as string);
+    case 'browser_type':
+      return browser.type(
+        args.selector as string,
+        args.text as string,
+        { clear: args.clear as boolean }
+      );
+    case 'browser_extract':
+      return args.type === 'html'
+        ? browser.extractHtml(args.selector as string)
+        : browser.extractText(args.selector as string);
+    case 'browser_query':
+      return browser.query(args.selector as string, (args.limit as number) || 10);
+    default:
+      throw new Error(`Unknown browser tool: ${name}`);
+  }
+}
+
 // Main tool execution router
 async function executeTool(name: string, args: Record<string, unknown>): Promise<unknown> {
   // Data tools
@@ -254,6 +373,11 @@ async function executeTool(name: string, args: Record<string, unknown>): Promise
   // Skill tools
   if (['run_skill', 'list_skills'].includes(name)) {
     return executeSkillTool(name, args);
+  }
+
+  // Browser tools
+  if (name.startsWith('browser_')) {
+    return executeBrowserTool(name, args);
   }
 
   throw new Error(`Unknown tool: ${name}`);
@@ -375,12 +499,19 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         response = await client.messages.create({
           model: 'claude-sonnet-4-20250514',
           max_tokens: 4096,
-          system: `You are SecureAgent, a helpful AI assistant with access to tools for data processing, HTTP requests, and custom skills. Use tools when appropriate to help the user. Be concise and helpful.
+          system: `You are SecureAgent, a helpful AI assistant with access to tools for data processing, HTTP requests, browser automation, and custom skills. Use tools when appropriate to help the user. Be concise and helpful.
 
 Available tools:
 - Data tools: json_parse, base64_encode, base64_decode, compute_hash, generate_uuid, get_timestamp
 - HTTP tools: http_request (for fetching data from public APIs)
+- Browser tools: browser_navigate, browser_screenshot, browser_click, browser_type, browser_extract, browser_query (for web automation)
 - Skill tools: run_skill, list_skills (for running custom skills)
+
+When using browser tools:
+1. First navigate to a URL with browser_navigate
+2. Use browser_query to find elements by CSS selector
+3. Use browser_click and browser_type to interact
+4. Use browser_extract to get page content
 
 When using tools, explain what you're doing briefly.`,
           messages,

@@ -44,6 +44,16 @@ export default function handler(req: VercelRequest, res: VercelResponse) {
           tools: '/api/agent?action=tools (GET)',
           conversation: '/api/agent?action=conversation&id=<id> (GET)',
         },
+        browser: {
+          navigate: '/api/browser?action=navigate (POST)',
+          screenshot: '/api/browser?action=screenshot (POST)',
+          click: '/api/browser?action=click (POST)',
+          type: '/api/browser?action=type (POST)',
+          extract: '/api/browser?action=extract (POST)',
+          fill: '/api/browser?action=fill (POST)',
+          query: '/api/browser?action=query (POST)',
+          docs: '/api/browser (GET)',
+        },
       },
       modules: [
         'agent',
