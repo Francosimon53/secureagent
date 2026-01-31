@@ -55,16 +55,18 @@ const features = [
   },
 ];
 
-// Comparison data
+// Comparison data - AI Agent Platforms
 const comparison = [
-  { feature: 'Multi-channel support', secureAgent: true, chatgpt: false, claude: false },
-  { feature: 'Browser automation', secureAgent: true, chatgpt: false, claude: false },
-  { feature: 'Self-hosted option', secureAgent: true, chatgpt: false, claude: false },
-  { feature: 'Enterprise security', secureAgent: true, chatgpt: true, claude: true },
-  { feature: 'Custom tools/skills', secureAgent: true, chatgpt: true, claude: true },
-  { feature: 'API access', secureAgent: true, chatgpt: true, claude: true },
-  { feature: 'Conversation memory', secureAgent: true, chatgpt: true, claude: true },
-  { feature: 'White-label option', secureAgent: true, chatgpt: false, claude: false },
+  { feature: 'Multi-channel (Telegram, Discord, Slack, Teams)', secureAgent: true, openclaw: true, autogpt: false, langchain: false },
+  { feature: 'Enterprise security (OWASP, Zero Trust)', secureAgent: true, openclaw: false, autogpt: false, langchain: false },
+  { feature: 'Browser automation', secureAgent: true, openclaw: true, autogpt: true, langchain: true },
+  { feature: 'Voice activation', secureAgent: true, openclaw: false, autogpt: false, langchain: false },
+  { feature: 'Self-hosted option', secureAgent: true, openclaw: true, autogpt: true, langchain: true },
+  { feature: 'No-code setup', secureAgent: true, openclaw: true, autogpt: false, langchain: false },
+  { feature: 'Multi-agent routing', secureAgent: true, openclaw: false, autogpt: true, langchain: true },
+  { feature: 'Built-in billing/subscriptions', secureAgent: true, openclaw: false, autogpt: false, langchain: false },
+  { feature: 'Production ready', secureAgent: true, openclaw: true, autogpt: false, langchain: false },
+  { feature: 'Active support & docs', secureAgent: true, openclaw: true, autogpt: true, langchain: true },
 ];
 
 // Pricing data - aligned with dedicated pricing page
@@ -425,7 +427,7 @@ export default function Home() {
 
       {/* Comparison Section */}
       <section className="py-20 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-4xl mx-auto">
+        <div className="max-w-5xl mx-auto">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -436,7 +438,7 @@ export default function Home() {
               Why SecureAgent?
             </h2>
             <p className="text-lg text-gray-400 max-w-2xl mx-auto">
-              See how we compare to other AI assistants.
+              See how we compare to other AI agent platforms.
             </p>
           </motion.div>
 
@@ -444,16 +446,17 @@ export default function Home() {
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            className="bg-white/5 border border-white/10 rounded-2xl overflow-hidden"
+            className="bg-white/5 border border-white/10 rounded-2xl overflow-hidden overflow-x-auto"
           >
-            <div className="grid grid-cols-4 gap-4 p-4 bg-white/5 border-b border-white/10 text-sm font-medium">
+            <div className="grid grid-cols-5 gap-2 sm:gap-4 p-4 bg-white/5 border-b border-white/10 text-xs sm:text-sm font-medium min-w-[600px]">
               <div className="text-gray-400">Feature</div>
               <div className="text-center text-white">SecureAgent</div>
-              <div className="text-center text-gray-400">ChatGPT</div>
-              <div className="text-center text-gray-400">Claude</div>
+              <div className="text-center text-gray-400">OpenClaw</div>
+              <div className="text-center text-gray-400">AutoGPT</div>
+              <div className="text-center text-gray-400">LangChain</div>
             </div>
             {comparison.map((row, index) => (
-              <div key={row.feature} className={`grid grid-cols-4 gap-4 p-4 text-sm ${index !== comparison.length - 1 ? 'border-b border-white/5' : ''}`}>
+              <div key={row.feature} className={`grid grid-cols-5 gap-2 sm:gap-4 p-4 text-xs sm:text-sm min-w-[600px] ${index !== comparison.length - 1 ? 'border-b border-white/5' : ''}`}>
                 <div className="text-gray-300">{row.feature}</div>
                 <div className="text-center">
                   {row.secureAgent ? (
@@ -463,14 +466,21 @@ export default function Home() {
                   )}
                 </div>
                 <div className="text-center">
-                  {row.chatgpt ? (
+                  {row.openclaw ? (
                     <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-green-500/20 text-green-400">✓</span>
                   ) : (
                     <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-red-500/20 text-red-400">✗</span>
                   )}
                 </div>
                 <div className="text-center">
-                  {row.claude ? (
+                  {row.autogpt ? (
+                    <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-green-500/20 text-green-400">✓</span>
+                  ) : (
+                    <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-red-500/20 text-red-400">✗</span>
+                  )}
+                </div>
+                <div className="text-center">
+                  {row.langchain ? (
                     <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-green-500/20 text-green-400">✓</span>
                   ) : (
                     <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-red-500/20 text-red-400">✗</span>
@@ -479,6 +489,14 @@ export default function Home() {
               </div>
             ))}
           </motion.div>
+
+          {/* Legend */}
+          <div className="mt-6 flex flex-wrap justify-center gap-4 text-xs text-gray-500">
+            <span><strong className="text-blue-400">SecureAgent:</strong> Enterprise-ready, secure</span>
+            <span><strong className="text-gray-400">OpenClaw:</strong> Most channels</span>
+            <span><strong className="text-gray-400">AutoGPT:</strong> Autonomous agents</span>
+            <span><strong className="text-gray-400">LangChain:</strong> Developer flexibility</span>
+          </div>
         </div>
       </section>
 
