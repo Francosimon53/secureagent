@@ -30,6 +30,12 @@ const channels = [
 // Features data
 const features = [
   {
+    icon: '🤖',
+    title: 'Multi-Model Support',
+    description: 'Choose from OpenAI, Anthropic, Google, Meta Llama, DeepSeek, and 100+ models via OpenRouter. Switch models per agent or conversation.',
+    gradient: 'from-violet-500 to-purple-500',
+  },
+  {
     icon: '🌐',
     title: 'Browser Automation',
     description: 'Navigate websites, fill forms, extract data, and take screenshots. Your AI can browse the web just like you do.',
@@ -48,6 +54,12 @@ const features = [
     gradient: 'from-blue-500 to-cyan-500',
   },
   {
+    icon: '💰',
+    title: 'Cost Control',
+    description: 'Real-time cost estimation, budget limits, usage tracking, and intelligent model routing to optimize spend.',
+    gradient: 'from-amber-500 to-orange-500',
+  },
+  {
     icon: '⚡',
     title: 'Real-time Tools',
     description: 'HTTP requests, JSON processing, data transformation, and 20+ built-in tools ready to use.',
@@ -57,6 +69,7 @@ const features = [
 
 // Comparison data - AI Agent Platforms
 const comparison = [
+  { feature: 'Multi-model support (GPT, Claude, Gemini, Llama)', secureAgent: true, openclaw: false, autogpt: true, langchain: true },
   { feature: 'Multi-channel (Telegram, Discord, Slack, Teams)', secureAgent: true, openclaw: true, autogpt: false, langchain: false },
   { feature: 'Enterprise security (OWASP, Zero Trust)', secureAgent: true, openclaw: false, autogpt: false, langchain: false },
   { feature: 'Browser automation', secureAgent: true, openclaw: true, autogpt: true, langchain: true },
@@ -65,8 +78,8 @@ const comparison = [
   { feature: 'No-code setup', secureAgent: true, openclaw: true, autogpt: false, langchain: false },
   { feature: 'Multi-agent routing', secureAgent: true, openclaw: false, autogpt: true, langchain: true },
   { feature: 'Built-in billing/subscriptions', secureAgent: true, openclaw: false, autogpt: false, langchain: false },
+  { feature: 'Cost estimation & budgets', secureAgent: true, openclaw: false, autogpt: false, langchain: false },
   { feature: 'Production ready', secureAgent: true, openclaw: true, autogpt: false, langchain: false },
-  { feature: 'Active support & docs', secureAgent: true, openclaw: true, autogpt: true, langchain: true },
 ];
 
 // Pricing data - aligned with dedicated pricing page
@@ -406,7 +419,7 @@ export default function Home() {
             </p>
           </motion.div>
 
-          <div className="grid md:grid-cols-2 gap-6">
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
             {features.map((feature, index) => (
               <motion.div
                 key={feature.title}
