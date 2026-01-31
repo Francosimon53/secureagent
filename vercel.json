@@ -71,6 +71,10 @@
       "dest": "/api/teams.ts"
     },
     {
+      "src": "/api/elevenlabs",
+      "dest": "/api/elevenlabs.ts"
+    },
+    {
       "src": "/api/(.*)",
       "dest": "/api/index.ts"
     },

@@ -60,6 +60,15 @@ interface Message {
   role: 'user' | 'assistant';
   content: string;
   timestamp: Date;
+  audioUrl?: string;
+  audioLoading?: boolean;
+}
+
+interface ElevenLabsVoice {
+  key: string;
+  id: string;
+  name: string;
+  description: string;
 }
 
 type VoiceState = 'off' | 'listening' | 'wake-detected' | 'command' | 'processing';
@@ -92,10 +101,38 @@ export default function ChatPage() {
   const commandTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const voiceStateRef = useRef<VoiceState>('off');
 
+  // ElevenLabs TTS state
+  const [elevenLabsEnabled, setElevenLabsEnabled] = useState(false);
+  const [elevenLabsReady, setElevenLabsReady] = useState(false);
+  const [selectedVoice, setSelectedVoice] = useState('rachel');
+  const [availableVoices, setAvailableVoices] = useState<ElevenLabsVoice[]>([]);
+  const [showVoiceSelector, setShowVoiceSelector] = useState(false);
+  const [autoPlay, setAutoPlay] = useState(true);
+  const currentAudioRef = useRef<HTMLAudioElement | null>(null);
+
   // Keep ref in sync with state
   useEffect(() => {
     voiceStateRef.current = voiceState;
   }, [voiceState]);
+
+  // Fetch ElevenLabs voices on mount
+  useEffect(() => {
+    const fetchVoices = async () => {
+      try {
+        const res = await fetch(`${API_BASE}/api/elevenlabs`);
+        if (res.ok) {
+          const data = await res.json();
+          if (data.status?.ready) {
+            setElevenLabsReady(true);
+            setAvailableVoices(data.featuredVoices || []);
+          }
+        }
+      } catch (error) {
+        console.error('Failed to fetch ElevenLabs voices:', error);
+      }
+    };
+    fetchVoices();
+  }, []);
 
   // Check for voice support
   useEffect(() => {
@@ -112,6 +149,61 @@ export default function ChatPage() {
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
+
+  // Generate speech using ElevenLabs
+  const generateSpeech = useCallback(async (messageId: string, text: string) => {
+    if (!elevenLabsEnabled || !elevenLabsReady) return;
+
+    // Update message to show loading
+    setMessages(prev => prev.map(m =>
+      m.id === messageId ? { ...m, audioLoading: true } : m
+    ));
+
+    try {
+      const res = await fetch(`${API_BASE}/api/elevenlabs`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          text: text.slice(0, 2000), // Limit text length
+          voice: selectedVoice,
+        }),
+      });
+
+      if (!res.ok) {
+        throw new Error('Failed to generate speech');
+      }
+
+      const data = await res.json();
+
+      if (data.audio) {
+        // Convert base64 to blob URL
+        const audioBlob = await fetch(`data:audio/mpeg;base64,${data.audio}`).then(r => r.blob());
+        const audioUrl = URL.createObjectURL(audioBlob);
+
+        // Update message with audio URL
+        setMessages(prev => prev.map(m =>
+          m.id === messageId ? { ...m, audioUrl, audioLoading: false } : m
+        ));
+
+        // Auto-play if enabled
+        if (autoPlay) {
+          // Stop any currently playing audio
+          if (currentAudioRef.current) {
+            currentAudioRef.current.pause();
+          }
+
+          const audio = new Audio(audioUrl);
+          currentAudioRef.current = audio;
+          audio.play().catch(console.error);
+        }
+      }
+    } catch (error) {
+      console.error('ElevenLabs TTS error:', error);
+      setMessages(prev => prev.map(m =>
+        m.id === messageId ? { ...m, audioLoading: false } : m
+      ));
+    }
+  }, [elevenLabsEnabled, elevenLabsReady, selectedVoice, autoPlay]);
 
   const sendMessage = useCallback(async (messageText?: string) => {
     const text = messageText || input;
@@ -158,8 +250,12 @@ export default function ChatPage() {
 
       setMessages(prev => [...prev, assistantMessage]);
 
-      // Speak the response if voice is active
-      if (voiceState !== 'off' && 'speechSynthesis' in window) {
+      // Generate ElevenLabs speech if enabled
+      if (elevenLabsEnabled && elevenLabsReady) {
+        generateSpeech(assistantMessage.id, assistantMessage.content);
+      }
+      // Fall back to browser TTS if voice wake is active
+      else if (voiceState !== 'off' && 'speechSynthesis' in window) {
         const utterance = new SpeechSynthesisUtterance(assistantMessage.content);
         utterance.rate = 1;
         utterance.pitch = 1;
@@ -180,7 +276,7 @@ export default function ChatPage() {
     } finally {
       setIsLoading(false);
     }
-  }, [input, isLoading, conversationId, voiceState]);
+  }, [input, isLoading, conversationId, voiceState, elevenLabsEnabled, elevenLabsReady, generateSpeech]);
 
   // Initialize speech recognition
   const initRecognition = useCallback(() => {
@@ -408,9 +504,23 @@ export default function ChatPage() {
       if (commandTimeoutRef.current) {
         clearTimeout(commandTimeoutRef.current);
       }
+      if (currentAudioRef.current) {
+        currentAudioRef.current.pause();
+      }
       window.speechSynthesis?.cancel();
     };
   }, []);
+
+  // Close voice selector when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (showVoiceSelector && !(e.target as Element).closest('.relative')) {
+        setShowVoiceSelector(false);
+      }
+    };
+    document.addEventListener('click', handleClickOutside);
+    return () => document.removeEventListener('click', handleClickOutside);
+  }, [showVoiceSelector]);
 
   const clearChat = () => {
     setMessages([]);
@@ -465,7 +575,90 @@ export default function ChatPage() {
           </p>
         </div>
         <div className="flex items-center gap-3">
-          {/* Voice Toggle Button */}
+          {/* ElevenLabs Voice Mode */}
+          {elevenLabsReady && (
+            <div className="relative">
+              <button
+                onClick={() => setShowVoiceSelector(!showVoiceSelector)}
+                className={`px-4 py-2 rounded-lg text-white font-medium transition-all flex items-center gap-2 ${
+                  elevenLabsEnabled
+                    ? 'bg-purple-600 hover:bg-purple-500'
+                    : 'bg-gray-700 hover:bg-gray-600'
+                }`}
+                title={elevenLabsEnabled ? 'ElevenLabs Voice On' : 'Enable ElevenLabs Voice'}
+              >
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15.536a5 5 0 001.414 1.414m2.828-9.9a9 9 0 012.828-2.828" />
+                </svg>
+                <span className="hidden sm:inline">
+                  {elevenLabsEnabled ? availableVoices.find(v => v.key === selectedVoice)?.name || 'Voice' : 'TTS'}
+                </span>
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+
+              {/* Voice Selector Dropdown */}
+              {showVoiceSelector && (
+                <div className="absolute right-0 top-full mt-2 w-72 bg-gray-800 border border-gray-700 rounded-xl shadow-xl z-50 overflow-hidden">
+                  <div className="p-3 border-b border-gray-700">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-medium text-white">ElevenLabs Voice</span>
+                      <button
+                        onClick={() => setElevenLabsEnabled(!elevenLabsEnabled)}
+                        className={`relative w-12 h-6 rounded-full transition-colors ${
+                          elevenLabsEnabled ? 'bg-purple-600' : 'bg-gray-600'
+                        }`}
+                      >
+                        <div className={`absolute top-1 w-4 h-4 rounded-full bg-white transition-transform ${
+                          elevenLabsEnabled ? 'left-7' : 'left-1'
+                        }`} />
+                      </button>
+                    </div>
+                    <div className="flex items-center justify-between mt-2">
+                      <span className="text-xs text-gray-400">Auto-play responses</span>
+                      <button
+                        onClick={() => setAutoPlay(!autoPlay)}
+                        className={`relative w-10 h-5 rounded-full transition-colors ${
+                          autoPlay ? 'bg-blue-600' : 'bg-gray-600'
+                        }`}
+                      >
+                        <div className={`absolute top-0.5 w-4 h-4 rounded-full bg-white transition-transform ${
+                          autoPlay ? 'left-5' : 'left-0.5'
+                        }`} />
+                      </button>
+                    </div>
+                  </div>
+                  <div className="max-h-64 overflow-y-auto">
+                    {availableVoices.map((voice) => (
+                      <button
+                        key={voice.key}
+                        onClick={() => {
+                          setSelectedVoice(voice.key);
+                          setShowVoiceSelector(false);
+                        }}
+                        className={`w-full px-4 py-3 text-left hover:bg-gray-700 transition-colors flex items-center justify-between ${
+                          selectedVoice === voice.key ? 'bg-gray-700' : ''
+                        }`}
+                      >
+                        <div>
+                          <p className="text-white font-medium">{voice.name}</p>
+                          <p className="text-xs text-gray-400">{voice.description}</p>
+                        </div>
+                        {selectedVoice === voice.key && (
+                          <svg className="w-5 h-5 text-purple-400" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                          </svg>
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Voice Wake Button */}
           {voiceSupported && (
             <button
               onClick={toggleVoice}
@@ -483,7 +676,7 @@ export default function ChatPage() {
                 </svg>
               )}
               <span className="hidden sm:inline">
-                {voiceState === 'off' ? 'Voice' : getVoiceStateText()}
+                {voiceState === 'off' ? 'Wake' : getVoiceStateText()}
               </span>
             </button>
           )}
@@ -575,7 +768,12 @@ export default function ChatPage() {
               <p className="text-sm mt-2">Ask anything - I can help with questions, fetch data, and more!</p>
               {voiceSupported && (
                 <p className="text-sm mt-4 text-blue-400">
-                  🎤 Or say "Hey SecureAgent" to use voice commands
+                  🎤 Say "Hey SecureAgent" for voice commands
+                </p>
+              )}
+              {elevenLabsReady && (
+                <p className="text-sm mt-2 text-purple-400">
+                  🔊 Enable TTS for natural voice responses
                 </p>
               )}
             </div>
@@ -601,6 +799,56 @@ export default function ChatPage() {
                     </span>
                   </div>
                   <p className="whitespace-pre-wrap">{message.content}</p>
+
+                  {/* Audio Controls for Assistant Messages */}
+                  {message.role === 'assistant' && elevenLabsEnabled && elevenLabsReady && (
+                    <div className="mt-3 pt-3 border-t border-gray-600">
+                      {message.audioLoading ? (
+                        <div className="flex items-center gap-2 text-gray-400 text-sm">
+                          <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                          </svg>
+                          <span>Generating voice...</span>
+                        </div>
+                      ) : message.audioUrl ? (
+                        <div className="flex items-center gap-2">
+                          <audio
+                            src={message.audioUrl}
+                            controls
+                            className="h-8 w-full max-w-xs"
+                            style={{ filter: 'invert(1)' }}
+                          />
+                          <button
+                            onClick={() => {
+                              const audio = new Audio(message.audioUrl);
+                              if (currentAudioRef.current) {
+                                currentAudioRef.current.pause();
+                              }
+                              currentAudioRef.current = audio;
+                              audio.play();
+                            }}
+                            className="p-2 rounded-lg bg-purple-600 hover:bg-purple-500 transition-colors"
+                            title="Play again"
+                          >
+                            <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 24 24">
+                              <path d="M8 5v14l11-7z" />
+                            </svg>
+                          </button>
+                        </div>
+                      ) : (
+                        <button
+                          onClick={() => generateSpeech(message.id, message.content)}
+                          className="flex items-center gap-2 text-purple-400 hover:text-purple-300 text-sm transition-colors"
+                        >
+                          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15.536a5 5 0 001.414 1.414m2.828-9.9a9 9 0 012.828-2.828" />
+                          </svg>
+                          <span>Generate voice</span>
+                        </button>
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
             ))
