@@ -40,6 +40,10 @@
       "dest": "/api/heartbeat.ts"
     },
     {
+      "src": "/api/whatsapp",
+      "dest": "/api/whatsapp.ts"
+    },
+    {
       "src": "/api/(.*)",
       "dest": "/api/index.ts"
     },
