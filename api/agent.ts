@@ -399,17 +399,20 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(200).end();
   }
 
-  // Parse body
-  let body = req.body;
-  if (typeof body === 'string') {
-    try {
-      body = JSON.parse(body);
-    } catch {
-      return res.status(400).json({
-        error: 'Bad Request',
-        message: 'Invalid JSON in request body',
-      });
+  // Parse body - wrap in try-catch for Vercel dev server compatibility
+  let body: Record<string, unknown> = {};
+  try {
+    const rawBody = req.body;
+    if (typeof rawBody === 'string') {
+      body = JSON.parse(rawBody);
+    } else if (rawBody && typeof rawBody === 'object') {
+      body = rawBody;
     }
+  } catch {
+    return res.status(400).json({
+      error: 'Bad Request',
+      message: 'Invalid JSON in request body',
+    });
   }
 
   try {
