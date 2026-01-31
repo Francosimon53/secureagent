@@ -79,6 +79,23 @@ const initialChannels: ChannelConfig[] = [
     ],
     envVars: ['SLACK_BOT_TOKEN', 'SLACK_SIGNING_SECRET'],
   },
+  {
+    name: 'Google Chat',
+    icon: '💬',
+    endpoint: '/api/google-chat',
+    status: 'loading',
+    configured: false,
+    details: {},
+    setupSteps: [
+      'Create project in Google Cloud Console',
+      'Enable Google Chat API',
+      'Configure OAuth consent screen',
+      'Create credentials (Service Account)',
+      'Enable Google Chat App in configuration',
+      'Set HTTP endpoint URL for your bot',
+    ],
+    envVars: ['GOOGLE_CHAT_SERVICE_ACCOUNT', 'GOOGLE_CHAT_PROJECT_ID'],
+  },
 ];
 
 export default function ChannelsPage() {
