@@ -325,34 +325,79 @@ async function executeSkillTool(name: string, args: Record<string, unknown>): Pr
   throw new Error(`Unknown skill tool: ${name}`);
 }
 
+// Browser operation timeout (45 seconds to leave room for response)
+const BROWSER_TIMEOUT_MS = 45000;
+
+async function withTimeout<T>(promise: Promise<T>, timeoutMs: number, operation: string): Promise<T> {
+  let timeoutId: NodeJS.Timeout;
+  const timeoutPromise = new Promise<never>((_, reject) => {
+    timeoutId = setTimeout(() => {
+      reject(new Error(`Browser operation "${operation}" timed out after ${timeoutMs / 1000}s. Complex web automation tasks may exceed serverless limits. Consider using Telegram (@Secure_Agent_bot) or Discord bot for longer tasks.`));
+    }, timeoutMs);
+  });
+
+  try {
+    const result = await Promise.race([promise, timeoutPromise]);
+    clearTimeout(timeoutId!);
+    return result;
+  } catch (error) {
+    clearTimeout(timeoutId!);
+    throw error;
+  }
+}
+
 async function executeBrowserTool(name: string, args: Record<string, unknown>): Promise<unknown> {
   const browser = await getAgentBrowser();
 
   switch (name) {
     case 'browser_navigate':
-      return browser.navigate(
-        args.url as string,
-        (args.waitUntil as 'load' | 'domcontentloaded' | 'networkidle0' | 'networkidle2') || 'load'
+      return withTimeout(
+        browser.navigate(
+          args.url as string,
+          (args.waitUntil as 'load' | 'domcontentloaded' | 'networkidle0' | 'networkidle2') || 'load'
+        ),
+        BROWSER_TIMEOUT_MS,
+        'navigate'
       );
     case 'browser_screenshot':
-      return browser.screenshot({
-        fullPage: args.fullPage as boolean,
-        selector: args.selector as string,
-      });
+      return withTimeout(
+        browser.screenshot({
+          fullPage: args.fullPage as boolean,
+          selector: args.selector as string,
+        }),
+        BROWSER_TIMEOUT_MS,
+        'screenshot'
+      );
     case 'browser_click':
-      return browser.click(args.selector as string);
+      return withTimeout(
+        browser.click(args.selector as string),
+        BROWSER_TIMEOUT_MS,
+        'click'
+      );
     case 'browser_type':
-      return browser.type(
-        args.selector as string,
-        args.text as string,
-        { clear: args.clear as boolean }
+      return withTimeout(
+        browser.type(
+          args.selector as string,
+          args.text as string,
+          { clear: args.clear as boolean }
+        ),
+        BROWSER_TIMEOUT_MS,
+        'type'
       );
     case 'browser_extract':
-      return args.type === 'html'
-        ? browser.extractHtml(args.selector as string)
-        : browser.extractText(args.selector as string);
+      return withTimeout(
+        args.type === 'html'
+          ? browser.extractHtml(args.selector as string)
+          : browser.extractText(args.selector as string),
+        BROWSER_TIMEOUT_MS,
+        'extract'
+      );
     case 'browser_query':
-      return browser.query(args.selector as string, (args.limit as number) || 10);
+      return withTimeout(
+        browser.query(args.selector as string, (args.limit as number) || 10),
+        BROWSER_TIMEOUT_MS,
+        'query'
+      );
     default:
       throw new Error(`Unknown browser tool: ${name}`);
   }
@@ -517,6 +562,15 @@ When using browser tools:
 2. Use browser_query to find elements by CSS selector
 3. Use browser_click and browser_type to interact
 4. Use browser_extract to get page content
+
+IMPORTANT - Browser Limitations:
+- This web interface has a 60-second timeout for serverless functions
+- Complex multi-step browser tasks (like searching flights, booking, or filling long forms) may timeout
+- For simple tasks (navigate to a page, extract text, take screenshot), browser works well
+- For complex automation that requires multiple page loads and interactions, inform the user:
+  "This task involves complex browser automation that may exceed web timeout limits. For reliable execution of long-running tasks, please use our Telegram bot (@Secure_Agent_bot) or Discord bot which run without timeout constraints."
+- Prefer http_request for API calls when possible (faster than browser)
+- Keep browser operations minimal - don't attempt tasks requiring more than 2-3 page navigations
 
 When using tools, explain what you're doing briefly.`,
           messages,

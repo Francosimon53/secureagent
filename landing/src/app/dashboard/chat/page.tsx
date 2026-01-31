@@ -158,6 +158,9 @@ export default function ChatPage() {
                   <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
                   <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
                 </div>
+                <p className="text-xs text-gray-500 mt-2">
+                  Processing... Browser tasks may take up to 60s
+                </p>
               </div>
             </div>
           )}
