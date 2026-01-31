@@ -11,6 +11,7 @@ const navigation = [
   { name: 'Channels', href: '/dashboard/channels', icon: '📡' },
   { name: 'Skills', href: '/dashboard/skills', icon: '⚡' },
   { name: 'Logs', href: '/dashboard/logs', icon: '📋' },
+  { name: 'Admin', href: '/dashboard/admin', icon: '🏢' },
   { name: 'Settings', href: '/dashboard/settings', icon: '⚙️' },
 ];
 
