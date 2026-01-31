@@ -44,6 +44,10 @@
       "dest": "/api/whatsapp.ts"
     },
     {
+      "src": "/api/discord",
+      "dest": "/api/discord.ts"
+    },
+    {
       "src": "/api/(.*)",
       "dest": "/api/index.ts"
     },
