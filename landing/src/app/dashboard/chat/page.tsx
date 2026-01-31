@@ -55,6 +55,22 @@ declare global {
   }
 }
 
+interface AgentInfo {
+  id: string;
+  name: string;
+  emoji: string;
+  description: string;
+  color: string;
+}
+
+interface MessageAgent {
+  id: string;
+  name: string;
+  emoji: string;
+  color: string;
+  wasAutoDetected?: boolean;
+}
+
 interface Message {
   id: string;
   role: 'user' | 'assistant';
@@ -62,6 +78,7 @@ interface Message {
   timestamp: Date;
   audioUrl?: string;
   audioLoading?: boolean;
+  agent?: MessageAgent;
 }
 
 interface ElevenLabsVoice {
@@ -149,6 +166,12 @@ export default function ChatPage() {
   const [selectedCanvasItem, setSelectedCanvasItem] = useState<string | null>(null);
   const canvasRef = useRef<HTMLDivElement>(null);
 
+  // Multi-Agent state
+  const [agents, setAgents] = useState<AgentInfo[]>([]);
+  const [selectedAgent, setSelectedAgent] = useState<string>('auto');
+  const [showAgentSelector, setShowAgentSelector] = useState(false);
+  const [lastAgent, setLastAgent] = useState<MessageAgent | null>(null);
+
   // Keep ref in sync with state
   useEffect(() => {
     voiceStateRef.current = voiceState;
@@ -204,6 +227,31 @@ export default function ChatPage() {
       setShowCanvas(true);
       setSelectedCanvasItem(newItems[0].id);
     }
+  }, []);
+
+  // Fetch available agents on mount
+  useEffect(() => {
+    const fetchAgents = async () => {
+      try {
+        const res = await fetch(`${API_BASE}/api/chat`);
+        if (res.ok) {
+          const data = await res.json();
+          if (data.agents) {
+            setAgents(data.agents);
+          }
+        }
+      } catch (error) {
+        console.error('Failed to fetch agents:', error);
+        // Set default agents as fallback
+        setAgents([
+          { id: 'general', name: 'General Assistant', emoji: '🛡️', description: 'Your helpful all-purpose assistant', color: '#3B82F6' },
+          { id: 'code', name: 'Code Helper', emoji: '💻', description: 'Programming, debugging, and technical help', color: '#10B981' },
+          { id: 'research', name: 'Research Agent', emoji: '🔍', description: 'Web searches, data gathering, and analysis', color: '#8B5CF6' },
+          { id: 'creative', name: 'Creative Writer', emoji: '✨', description: 'Stories, content, and creative writing', color: '#EC4899' },
+        ]);
+      }
+    };
+    fetchAgents();
   }, []);
 
   // Fetch ElevenLabs voices on mount
@@ -312,13 +360,24 @@ export default function ChatPage() {
     setIsLoading(true);
 
     try {
-      const res = await fetch(`${API_BASE}/api/agent`, {
+      // Build request body with agent selection
+      const requestBody: Record<string, unknown> = {
+        message: userMessage.content,
+        conversationId,
+      };
+
+      // If a specific agent is selected (not auto), send it
+      if (selectedAgent !== 'auto') {
+        requestBody.agentId = selectedAgent;
+        requestBody.autoDetect = false;
+      } else {
+        requestBody.autoDetect = true;
+      }
+
+      const res = await fetch(`${API_BASE}/api/chat`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          message: userMessage.content,
-          conversationId,
-        }),
+        body: JSON.stringify(requestBody),
       });
 
       if (!res.ok) {
@@ -332,11 +391,17 @@ export default function ChatPage() {
         setConversationId(data.conversationId);
       }
 
+      // Track which agent responded
+      if (data.agent) {
+        setLastAgent(data.agent);
+      }
+
       const assistantMessage: Message = {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
         content: data.response || data.error || 'No response received',
         timestamp: new Date(),
+        agent: data.agent,
       };
 
       setMessages(prev => [...prev, assistantMessage]);
@@ -370,7 +435,7 @@ export default function ChatPage() {
     } finally {
       setIsLoading(false);
     }
-  }, [input, isLoading, conversationId, voiceState, elevenLabsEnabled, elevenLabsReady, generateSpeech, parseCanvasContent]);
+  }, [input, isLoading, conversationId, voiceState, elevenLabsEnabled, elevenLabsReady, generateSpeech, parseCanvasContent, selectedAgent]);
 
   // Initialize speech recognition
   const initRecognition = useCallback(() => {
@@ -605,22 +670,27 @@ export default function ChatPage() {
     };
   }, []);
 
-  // Close voice selector when clicking outside
+  // Close dropdowns when clicking outside
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
-      if (showVoiceSelector && !(e.target as Element).closest('.relative')) {
+      const target = e.target as Element;
+      if (showVoiceSelector && !target.closest('.voice-selector-container')) {
         setShowVoiceSelector(false);
+      }
+      if (showAgentSelector && !target.closest('.agent-selector-container')) {
+        setShowAgentSelector(false);
       }
     };
     document.addEventListener('click', handleClickOutside);
     return () => document.removeEventListener('click', handleClickOutside);
-  }, [showVoiceSelector]);
+  }, [showVoiceSelector, showAgentSelector]);
 
   const clearChat = () => {
     setMessages([]);
     setConversationId(null);
     setCanvasItems([]);
     setSelectedCanvasItem(null);
+    setLastAgent(null);
   };
 
   const clearCanvas = () => {
@@ -680,12 +750,108 @@ export default function ChatPage() {
           <h1 className="text-2xl font-bold text-white">Chat</h1>
           <p className="text-gray-400 text-sm">
             {conversationId ? `Session: ${conversationId.slice(0, 20)}...` : 'Start a conversation'}
+            {lastAgent && (
+              <span className="ml-2" style={{ color: lastAgent.color }}>
+                • {lastAgent.emoji} {lastAgent.name}
+              </span>
+            )}
           </p>
         </div>
         <div className="flex items-center gap-3">
+          {/* Agent Selector */}
+          <div className="relative agent-selector-container">
+            <button
+              onClick={() => setShowAgentSelector(!showAgentSelector)}
+              className="px-4 py-2 rounded-lg text-white font-medium transition-all flex items-center gap-2 bg-gray-700 hover:bg-gray-600 border border-gray-600"
+              style={{
+                borderColor: selectedAgent !== 'auto'
+                  ? agents.find(a => a.id === selectedAgent)?.color
+                  : undefined,
+              }}
+            >
+              <span>
+                {selectedAgent === 'auto'
+                  ? '🤖'
+                  : agents.find(a => a.id === selectedAgent)?.emoji || '🛡️'}
+              </span>
+              <span className="hidden sm:inline">
+                {selectedAgent === 'auto'
+                  ? 'Auto-Route'
+                  : agents.find(a => a.id === selectedAgent)?.name || 'Agent'}
+              </span>
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+              </svg>
+            </button>
+
+            {/* Agent Selector Dropdown */}
+            {showAgentSelector && (
+              <div className="absolute right-0 top-full mt-2 w-72 bg-gray-800 border border-gray-700 rounded-xl shadow-xl z-50 overflow-hidden">
+                <div className="p-3 border-b border-gray-700">
+                  <span className="text-sm font-medium text-white">Select Agent</span>
+                  <p className="text-xs text-gray-400 mt-1">Choose an agent or let AI decide</p>
+                </div>
+                <div className="max-h-80 overflow-y-auto">
+                  {/* Auto-Route Option */}
+                  <button
+                    onClick={() => {
+                      setSelectedAgent('auto');
+                      setShowAgentSelector(false);
+                    }}
+                    className={`w-full px-4 py-3 text-left hover:bg-gray-700 transition-colors flex items-center justify-between ${
+                      selectedAgent === 'auto' ? 'bg-gray-700' : ''
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <span className="text-xl">🤖</span>
+                      <div>
+                        <p className="text-white font-medium">Auto-Route</p>
+                        <p className="text-xs text-gray-400">AI picks the best agent</p>
+                      </div>
+                    </div>
+                    {selectedAgent === 'auto' && (
+                      <svg className="w-5 h-5 text-blue-400" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                      </svg>
+                    )}
+                  </button>
+
+                  <div className="h-px bg-gray-700 mx-4" />
+
+                  {/* Agent Options */}
+                  {agents.map((agent) => (
+                    <button
+                      key={agent.id}
+                      onClick={() => {
+                        setSelectedAgent(agent.id);
+                        setShowAgentSelector(false);
+                      }}
+                      className={`w-full px-4 py-3 text-left hover:bg-gray-700 transition-colors flex items-center justify-between ${
+                        selectedAgent === agent.id ? 'bg-gray-700' : ''
+                      }`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <span className="text-xl">{agent.emoji}</span>
+                        <div>
+                          <p className="text-white font-medium">{agent.name}</p>
+                          <p className="text-xs text-gray-400">{agent.description}</p>
+                        </div>
+                      </div>
+                      {selectedAgent === agent.id && (
+                        <svg className="w-5 h-5" style={{ color: agent.color }} fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                        </svg>
+                      )}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+
           {/* ElevenLabs Voice Mode */}
           {elevenLabsReady && (
-            <div className="relative">
+            <div className="relative voice-selector-container">
               <button
                 onClick={() => setShowVoiceSelector(!showVoiceSelector)}
                 className={`px-4 py-2 rounded-lg text-white font-medium transition-all flex items-center gap-2 ${
@@ -897,20 +1063,52 @@ export default function ChatPage() {
             <div className="flex flex-col items-center justify-center h-full text-gray-500">
               <span className="text-6xl mb-4">💬</span>
               <p className="text-lg">Start chatting with SecureAgent</p>
-              <p className="text-sm mt-2">Ask anything - I can help with questions, fetch data, and more!</p>
-              {voiceSupported && (
-                <p className="text-sm mt-4 text-blue-400">
-                  🎤 Say "Hey SecureAgent" for voice commands
-                </p>
-              )}
-              {elevenLabsReady && (
-                <p className="text-sm mt-2 text-purple-400">
-                  🔊 Enable TTS for natural voice responses
-                </p>
-              )}
-              <p className="text-sm mt-2 text-cyan-400">
-                📊 Ask for diagrams, code, or tables to see them in Canvas
+              <p className="text-sm mt-2 text-gray-400">
+                Multiple AI agents ready to help with any task
               </p>
+
+              {/* Agent Pills */}
+              <div className="flex flex-wrap justify-center gap-2 mt-4 max-w-md">
+                {agents.map((agent) => (
+                  <button
+                    key={agent.id}
+                    onClick={() => setSelectedAgent(agent.id)}
+                    className={`px-3 py-1.5 rounded-full text-sm transition-all flex items-center gap-1.5 ${
+                      selectedAgent === agent.id
+                        ? 'text-white'
+                        : 'bg-gray-800 text-gray-300 hover:bg-gray-700'
+                    }`}
+                    style={{
+                      backgroundColor: selectedAgent === agent.id ? agent.color : undefined,
+                    }}
+                  >
+                    <span>{agent.emoji}</span>
+                    <span>{agent.name}</span>
+                  </button>
+                ))}
+              </div>
+
+              <p className="text-xs mt-4 text-gray-500">
+                {selectedAgent === 'auto'
+                  ? '🤖 Auto-routing enabled - AI will pick the best agent for each message'
+                  : `Using ${agents.find(a => a.id === selectedAgent)?.emoji} ${agents.find(a => a.id === selectedAgent)?.name}`}
+              </p>
+
+              <div className="mt-6 space-y-2">
+                {voiceSupported && (
+                  <p className="text-sm text-blue-400">
+                    🎤 Say &quot;Hey SecureAgent&quot; for voice commands
+                  </p>
+                )}
+                {elevenLabsReady && (
+                  <p className="text-sm text-purple-400">
+                    🔊 Enable TTS for natural voice responses
+                  </p>
+                )}
+                <p className="text-sm text-cyan-400">
+                  📊 Ask for diagrams, code, or tables to see them in Canvas
+                </p>
+              </div>
             </div>
           ) : (
             messages.map((message) => (
@@ -927,7 +1125,15 @@ export default function ChatPage() {
                 >
                   <div className="flex items-center gap-2 mb-1">
                     <span className="text-sm font-medium">
-                      {message.role === 'user' ? 'You' : '🛡️ SecureAgent'}
+                      {message.role === 'user' ? 'You' : (
+                        <span className="flex items-center gap-1">
+                          <span>{message.agent?.emoji || '🛡️'}</span>
+                          <span style={{ color: message.agent?.color }}>{message.agent?.name || 'SecureAgent'}</span>
+                          {message.agent?.wasAutoDetected && (
+                            <span className="text-xs bg-gray-600 px-1.5 py-0.5 rounded-full text-gray-300">auto</span>
+                          )}
+                        </span>
+                      )}
                     </span>
                     <span className="text-xs opacity-60">
                       {message.timestamp.toLocaleTimeString()}
@@ -992,7 +1198,18 @@ export default function ChatPage() {
             <div className="flex justify-start">
               <div className="bg-gray-800 border border-gray-700 rounded-2xl px-4 py-3">
                 <div className="flex items-center gap-2">
-                  <span className="text-sm font-medium">🛡️ SecureAgent</span>
+                  <span className="text-sm font-medium">
+                    {selectedAgent === 'auto' ? (
+                      '🤖 Routing...'
+                    ) : (
+                      <span className="flex items-center gap-1">
+                        <span>{agents.find(a => a.id === selectedAgent)?.emoji || '🛡️'}</span>
+                        <span style={{ color: agents.find(a => a.id === selectedAgent)?.color }}>
+                          {agents.find(a => a.id === selectedAgent)?.name || 'SecureAgent'}
+                        </span>
+                      </span>
+                    )}
+                  </span>
                 </div>
                 <div className="flex items-center gap-1 mt-2">
                   <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
@@ -1000,7 +1217,7 @@ export default function ChatPage() {
                   <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
                 </div>
                 <p className="text-xs text-gray-500 mt-2">
-                  Processing... Browser tasks may take up to 60s
+                  Processing... May take up to 60s
                 </p>
               </div>
             </div>
