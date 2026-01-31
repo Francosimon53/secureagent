@@ -96,6 +96,23 @@ const initialChannels: ChannelConfig[] = [
     ],
     envVars: ['GOOGLE_CHAT_SERVICE_ACCOUNT', 'GOOGLE_CHAT_PROJECT_ID'],
   },
+  {
+    name: 'Microsoft Teams',
+    icon: '🟣',
+    endpoint: '/api/teams',
+    status: 'loading',
+    configured: false,
+    details: {},
+    setupSteps: [
+      'Go to Azure Portal or Bot Framework',
+      'Create Azure Bot resource',
+      'Get Microsoft App ID and Password',
+      'Configure messaging endpoint URL',
+      'Create Teams app manifest',
+      'Install app in Teams',
+    ],
+    envVars: ['MICROSOFT_APP_ID', 'MICROSOFT_APP_PASSWORD'],
+  },
 ];
 
 export default function ChannelsPage() {

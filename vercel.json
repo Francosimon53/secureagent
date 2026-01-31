@@ -67,6 +67,10 @@
       "dest": "/api/google-chat.ts"
     },
     {
+      "src": "/api/teams",
+      "dest": "/api/teams.ts"
+    },
+    {
       "src": "/api/(.*)",
       "dest": "/api/index.ts"
     },
