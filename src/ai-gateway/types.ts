@@ -18,6 +18,11 @@ export type AIProvider =
   | 'replicate'
   | 'huggingface'
   | 'ollama'
+  | 'groq'
+  | 'deepseek'
+  | 'openrouter'
+  | 'together'
+  | 'fireworks'
   | 'custom';
 
 /** Provider status */

@@ -735,3 +735,28 @@ export {
   type RateLimiterConfig,
   type RateLimitMiddlewareResult,
 } from './rate-limiter.js';
+
+// Providers
+export {
+  BaseAIProvider,
+  OpenAIProvider,
+  AnthropicProvider,
+  GoogleProvider,
+  GroqProvider,
+  DeepSeekProvider,
+  OpenRouterProvider,
+  createProvider,
+  createOpenAIProvider,
+  createAnthropicProvider,
+  createGoogleProvider,
+  createGroqProvider,
+  createDeepSeekProvider,
+  createOpenRouterProvider,
+  PROVIDER_ENV_KEYS,
+  DEFAULT_PROVIDER_MODELS,
+  MODEL_DISPLAY_INFO,
+  type AIProviderOptions,
+  type OpenRouterProviderOptions,
+  type ProviderFactoryConfig,
+  type ModelDisplayInfo,
+} from './providers/index.js';

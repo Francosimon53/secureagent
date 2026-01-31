@@ -64,29 +64,54 @@ export type AIGatewayEventType = typeof AI_GATEWAY_EVENTS[keyof typeof AI_GATEWA
 
 export const MODEL_PRICING: Record<string, { input: number; output: number }> = {
   // OpenAI models
+  'gpt-5': { input: 500, output: 1500 },
   'gpt-4o': { input: 250, output: 1000 },
   'gpt-4o-mini': { input: 15, output: 60 },
   'gpt-4-turbo': { input: 1000, output: 3000 },
   'gpt-4': { input: 3000, output: 6000 },
   'gpt-3.5-turbo': { input: 50, output: 150 },
+  'o1': { input: 1500, output: 6000 },
+  'o1-mini': { input: 300, output: 1200 },
   'text-embedding-3-large': { input: 13, output: 0 },
   'text-embedding-3-small': { input: 2, output: 0 },
 
   // Anthropic models
+  'claude-opus-4-5-20251101': { input: 1500, output: 7500 },
+  'claude-opus-4-20250514': { input: 1500, output: 7500 },
+  'claude-sonnet-4-20250514': { input: 300, output: 1500 },
   'claude-3-5-sonnet-20241022': { input: 300, output: 1500 },
   'claude-3-opus-20240229': { input: 1500, output: 7500 },
   'claude-3-sonnet-20240229': { input: 300, output: 1500 },
   'claude-3-haiku-20240307': { input: 25, output: 125 },
 
   // Google models
+  'gemini-2.5-pro': { input: 125, output: 500 },
+  'gemini-2.5-flash': { input: 7.5, output: 30 },
   'gemini-1.5-pro': { input: 125, output: 500 },
   'gemini-1.5-flash': { input: 7.5, output: 30 },
   'gemini-pro': { input: 50, output: 150 },
+
+  // Meta Llama models (via Groq/Together)
+  'llama-4-maverick-405b': { input: 50, output: 100 },
+  'llama-4-scout-70b': { input: 15, output: 30 },
+  'llama-3.3-70b': { input: 15, output: 30 },
+  'llama-3.1-405b': { input: 50, output: 100 },
+  'llama-3.1-70b': { input: 15, output: 30 },
+  'llama-3.1-8b': { input: 5, output: 10 },
+
+  // DeepSeek models (cost-effective)
+  'deepseek-chat': { input: 14, output: 28 },
+  'deepseek-reasoner': { input: 55, output: 219 },
+  'deepseek-coder': { input: 14, output: 28 },
 
   // Cohere models
   'command-r-plus': { input: 300, output: 1500 },
   'command-r': { input: 50, output: 150 },
   'embed-english-v3.0': { input: 10, output: 0 },
+
+  // Mixtral (via Groq/Together)
+  'mixtral-8x22b': { input: 90, output: 90 },
+  'mixtral-8x7b': { input: 24, output: 24 },
 
   // Default fallback
   'default': { input: 100, output: 300 },
@@ -97,12 +122,26 @@ export const MODEL_PRICING: Record<string, { input: number; output: number }> = 
 // =============================================================================
 
 export const DEFAULT_MODELS: ModelInfo[] = [
-  // OpenAI
+  // ==========================================================================
+  // OpenAI Models
+  // ==========================================================================
+  {
+    id: 'gpt-5',
+    provider: 'openai',
+    name: 'GPT-5',
+    tier: 'flagship',
+    capabilities: ['chat', 'function_calling', 'streaming', 'json_mode', 'image_analysis'],
+    contextWindow: 256000,
+    maxOutputTokens: 32768,
+    costPerInputToken: 0.005,
+    costPerOutputToken: 0.015,
+    enabled: true,
+  },
   {
     id: 'gpt-4o',
     provider: 'openai',
     name: 'GPT-4o',
-    tier: 'flagship',
+    tier: 'premium',
     capabilities: ['chat', 'function_calling', 'streaming', 'json_mode', 'image_analysis'],
     contextWindow: 128000,
     maxOutputTokens: 16384,
@@ -120,6 +159,30 @@ export const DEFAULT_MODELS: ModelInfo[] = [
     maxOutputTokens: 16384,
     costPerInputToken: 0.00015,
     costPerOutputToken: 0.0006,
+    enabled: true,
+  },
+  {
+    id: 'o1',
+    provider: 'openai',
+    name: 'o1 (Reasoning)',
+    tier: 'flagship',
+    capabilities: ['chat', 'streaming'],
+    contextWindow: 200000,
+    maxOutputTokens: 100000,
+    costPerInputToken: 0.015,
+    costPerOutputToken: 0.06,
+    enabled: true,
+  },
+  {
+    id: 'o1-mini',
+    provider: 'openai',
+    name: 'o1-mini',
+    tier: 'premium',
+    capabilities: ['chat', 'streaming'],
+    contextWindow: 128000,
+    maxOutputTokens: 65536,
+    costPerInputToken: 0.003,
+    costPerOutputToken: 0.012,
     enabled: true,
   },
   {
@@ -146,29 +209,43 @@ export const DEFAULT_MODELS: ModelInfo[] = [
     enabled: true,
   },
 
-  // Anthropic
+  // ==========================================================================
+  // Anthropic Models
+  // ==========================================================================
   {
-    id: 'claude-3-5-sonnet-20241022',
+    id: 'claude-opus-4-5-20251101',
     provider: 'anthropic',
-    name: 'Claude 3.5 Sonnet',
+    name: 'Claude Opus 4.5',
     tier: 'flagship',
     capabilities: ['chat', 'function_calling', 'streaming', 'image_analysis'],
     contextWindow: 200000,
-    maxOutputTokens: 8192,
+    maxOutputTokens: 32000,
+    costPerInputToken: 0.015,
+    costPerOutputToken: 0.075,
+    enabled: true,
+  },
+  {
+    id: 'claude-sonnet-4-20250514',
+    provider: 'anthropic',
+    name: 'Claude Sonnet 4',
+    tier: 'premium',
+    capabilities: ['chat', 'function_calling', 'streaming', 'image_analysis'],
+    contextWindow: 200000,
+    maxOutputTokens: 16000,
     costPerInputToken: 0.003,
     costPerOutputToken: 0.015,
     enabled: true,
   },
   {
-    id: 'claude-3-opus-20240229',
+    id: 'claude-3-5-sonnet-20241022',
     provider: 'anthropic',
-    name: 'Claude 3 Opus',
-    tier: 'flagship',
+    name: 'Claude 3.5 Sonnet',
+    tier: 'premium',
     capabilities: ['chat', 'function_calling', 'streaming', 'image_analysis'],
     contextWindow: 200000,
-    maxOutputTokens: 4096,
-    costPerInputToken: 0.015,
-    costPerOutputToken: 0.075,
+    maxOutputTokens: 8192,
+    costPerInputToken: 0.003,
+    costPerOutputToken: 0.015,
     enabled: true,
   },
   {
@@ -184,7 +261,33 @@ export const DEFAULT_MODELS: ModelInfo[] = [
     enabled: true,
   },
 
-  // Google
+  // ==========================================================================
+  // Google Models
+  // ==========================================================================
+  {
+    id: 'gemini-2.5-pro',
+    provider: 'google',
+    name: 'Gemini 2.5 Pro',
+    tier: 'flagship',
+    capabilities: ['chat', 'function_calling', 'streaming', 'image_analysis'],
+    contextWindow: 1000000,
+    maxOutputTokens: 65536,
+    costPerInputToken: 0.00125,
+    costPerOutputToken: 0.005,
+    enabled: true,
+  },
+  {
+    id: 'gemini-2.5-flash',
+    provider: 'google',
+    name: 'Gemini 2.5 Flash',
+    tier: 'standard',
+    capabilities: ['chat', 'function_calling', 'streaming'],
+    contextWindow: 1000000,
+    maxOutputTokens: 65536,
+    costPerInputToken: 0.000075,
+    costPerOutputToken: 0.0003,
+    enabled: true,
+  },
   {
     id: 'gemini-1.5-pro',
     provider: 'google',
@@ -207,6 +310,142 @@ export const DEFAULT_MODELS: ModelInfo[] = [
     maxOutputTokens: 8192,
     costPerInputToken: 0.000075,
     costPerOutputToken: 0.0003,
+    enabled: true,
+  },
+
+  // ==========================================================================
+  // Meta Llama Models (via Groq)
+  // ==========================================================================
+  {
+    id: 'llama-4-maverick-405b',
+    provider: 'groq',
+    name: 'Llama 4 Maverick 405B',
+    tier: 'flagship',
+    capabilities: ['chat', 'function_calling', 'streaming'],
+    contextWindow: 128000,
+    maxOutputTokens: 32768,
+    costPerInputToken: 0.0005,
+    costPerOutputToken: 0.001,
+    enabled: true,
+  },
+  {
+    id: 'llama-4-scout-70b',
+    provider: 'groq',
+    name: 'Llama 4 Scout 70B',
+    tier: 'premium',
+    capabilities: ['chat', 'function_calling', 'streaming'],
+    contextWindow: 128000,
+    maxOutputTokens: 32768,
+    costPerInputToken: 0.00015,
+    costPerOutputToken: 0.0003,
+    enabled: true,
+  },
+  {
+    id: 'llama-3.3-70b',
+    provider: 'groq',
+    name: 'Llama 3.3 70B',
+    tier: 'standard',
+    capabilities: ['chat', 'function_calling', 'streaming'],
+    contextWindow: 128000,
+    maxOutputTokens: 8192,
+    costPerInputToken: 0.00015,
+    costPerOutputToken: 0.0003,
+    enabled: true,
+  },
+  {
+    id: 'llama-3.1-8b',
+    provider: 'groq',
+    name: 'Llama 3.1 8B',
+    tier: 'economy',
+    capabilities: ['chat', 'streaming'],
+    contextWindow: 128000,
+    maxOutputTokens: 8192,
+    costPerInputToken: 0.00005,
+    costPerOutputToken: 0.0001,
+    enabled: true,
+  },
+
+  // ==========================================================================
+  // DeepSeek Models (Cost-Effective)
+  // ==========================================================================
+  {
+    id: 'deepseek-chat',
+    provider: 'deepseek',
+    name: 'DeepSeek V3',
+    tier: 'standard',
+    capabilities: ['chat', 'function_calling', 'streaming', 'json_mode'],
+    contextWindow: 64000,
+    maxOutputTokens: 8192,
+    costPerInputToken: 0.00014,
+    costPerOutputToken: 0.00028,
+    enabled: true,
+  },
+  {
+    id: 'deepseek-reasoner',
+    provider: 'deepseek',
+    name: 'DeepSeek R1',
+    tier: 'premium',
+    capabilities: ['chat', 'streaming'],
+    contextWindow: 64000,
+    maxOutputTokens: 8192,
+    costPerInputToken: 0.00055,
+    costPerOutputToken: 0.00219,
+    enabled: true,
+  },
+  {
+    id: 'deepseek-coder',
+    provider: 'deepseek',
+    name: 'DeepSeek Coder',
+    tier: 'standard',
+    capabilities: ['chat', 'function_calling', 'streaming'],
+    contextWindow: 64000,
+    maxOutputTokens: 8192,
+    costPerInputToken: 0.00014,
+    costPerOutputToken: 0.00028,
+    enabled: true,
+  },
+
+  // ==========================================================================
+  // OpenRouter Models (Access to 100+ models)
+  // ==========================================================================
+  {
+    id: 'openrouter/auto',
+    provider: 'openrouter',
+    name: 'Auto (Best for prompt)',
+    tier: 'standard',
+    capabilities: ['chat', 'function_calling', 'streaming'],
+    contextWindow: 128000,
+    maxOutputTokens: 8192,
+    costPerInputToken: 0.001, // Variable based on selected model
+    costPerOutputToken: 0.003,
+    enabled: true,
+  },
+
+  // ==========================================================================
+  // Mixtral Models (via Groq/Together)
+  // ==========================================================================
+  {
+    id: 'mixtral-8x22b',
+    provider: 'groq',
+    name: 'Mixtral 8x22B',
+    tier: 'premium',
+    capabilities: ['chat', 'function_calling', 'streaming'],
+    contextWindow: 65536,
+    maxOutputTokens: 8192,
+    costPerInputToken: 0.0009,
+    costPerOutputToken: 0.0009,
+    enabled: true,
+  },
+  {
+    id: 'mixtral-8x7b',
+    provider: 'groq',
+    name: 'Mixtral 8x7B',
+    tier: 'standard',
+    capabilities: ['chat', 'function_calling', 'streaming'],
+    contextWindow: 32768,
+    maxOutputTokens: 8192,
+    costPerInputToken: 0.00024,
+    costPerOutputToken: 0.00024,
     enabled: true,
   },
 ];
@@ -319,6 +558,11 @@ export const PROVIDER_CAPABILITIES: Record<AIProvider, ProviderCapability[]> = {
   replicate: ['chat', 'image_generation', 'audio_generation', 'streaming'],
   huggingface: ['chat', 'embedding', 'streaming'],
   ollama: ['chat', 'embedding', 'streaming'],
+  groq: ['chat', 'function_calling', 'streaming'],
+  deepseek: ['chat', 'function_calling', 'streaming', 'json_mode'],
+  openrouter: ['chat', 'function_calling', 'streaming', 'image_analysis'],
+  together: ['chat', 'embedding', 'function_calling', 'streaming'],
+  fireworks: ['chat', 'function_calling', 'streaming'],
   custom: ['chat', 'streaming'],
 };
 
