@@ -1,0 +1,72 @@
+#!/bin/bash
+#
+# SecureAgent CLI
+#
+
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+cd "$SCRIPT_DIR"
+
+# Load environment
+if [ -f .env ]; then
+    export $(grep -v '^#' .env | xargs)
+fi
+
+case "$1" in
+    start)
+        ./start.sh
+        ;;
+    stop)
+        pkill -f "secureagent" || echo "SecureAgent not running"
+        ;;
+    status)
+        if pgrep -f "secureagent" > /dev/null; then
+            echo "SecureAgent is running"
+        else
+            echo "SecureAgent is not running"
+        fi
+        ;;
+    logs)
+        tail -f logs/secureagent.log 2>/dev/null || echo "No logs found"
+        ;;
+    config)
+        ${EDITOR:-nano} .env
+        ;;
+    update)
+        git pull
+        npm install --legacy-peer-deps
+        echo "SecureAgent updated"
+        ;;
+    doctor)
+        echo "Checking SecureAgent installation..."
+        echo ""
+        echo "Node.js: $(node -v 2>/dev/null || echo 'Not found')"
+        echo "npm: $(npm -v 2>/dev/null || echo 'Not found')"
+        echo "Git: $(git --version 2>/dev/null || echo 'Not found')"
+        echo ""
+        if [ -f .env ]; then
+            echo ".env: Found"
+            if grep -q "ANTHROPIC_API_KEY=sk-" .env; then
+                echo "API Key: Configured"
+            else
+                echo "API Key: Not configured"
+            fi
+        else
+            echo ".env: Not found"
+        fi
+        ;;
+    *)
+        echo "SecureAgent CLI"
+        echo ""
+        echo "Usage: secureagent <command>"
+        echo ""
+        echo "Commands:"
+        echo "  start   - Start SecureAgent server"
+        echo "  stop    - Stop SecureAgent server"
+        echo "  status  - Check if SecureAgent is running"
+        echo "  logs    - View logs"
+        echo "  config  - Edit configuration"
+        echo "  update  - Update to latest version"
+        echo "  doctor  - Check installation"
+        echo ""
+        ;;
+esac
