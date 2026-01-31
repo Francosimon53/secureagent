@@ -71,6 +71,39 @@ interface ElevenLabsVoice {
   description: string;
 }
 
+// Canvas content types
+type CanvasItemType = 'diagram' | 'code' | 'table' | 'markdown' | 'image' | 'chart';
+
+interface CanvasItem {
+  id: string;
+  type: CanvasItemType;
+  title?: string;
+  content: string;
+  language?: string;
+  timestamp: Date;
+}
+
+// Mermaid diagram detection patterns
+const MERMAID_PATTERNS = [
+  /```mermaid\n([\s\S]*?)```/g,
+  /graph\s+(TD|TB|BT|RL|LR)/,
+  /flowchart\s+(TD|TB|BT|RL|LR)/,
+  /sequenceDiagram/,
+  /classDiagram/,
+  /stateDiagram/,
+  /erDiagram/,
+  /journey/,
+  /gantt/,
+  /pie/,
+  /mindmap/,
+];
+
+// Code block pattern
+const CODE_BLOCK_PATTERN = /```(\w+)?\n([\s\S]*?)```/g;
+
+// Table pattern (markdown tables)
+const TABLE_PATTERN = /\|[\s\S]*?\|[\s\S]*?\n\|[-:\s|]+\|[\s\S]*?(?=\n\n|\n$|$)/g;
+
 type VoiceState = 'off' | 'listening' | 'wake-detected' | 'command' | 'processing';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'https://secureagent.vercel.app';
@@ -110,10 +143,68 @@ export default function ChatPage() {
   const [autoPlay, setAutoPlay] = useState(true);
   const currentAudioRef = useRef<HTMLAudioElement | null>(null);
 
+  // Canvas state
+  const [canvasItems, setCanvasItems] = useState<CanvasItem[]>([]);
+  const [showCanvas, setShowCanvas] = useState(false);
+  const [selectedCanvasItem, setSelectedCanvasItem] = useState<string | null>(null);
+  const canvasRef = useRef<HTMLDivElement>(null);
+
   // Keep ref in sync with state
   useEffect(() => {
     voiceStateRef.current = voiceState;
   }, [voiceState]);
+
+  // Parse content for canvas items
+  const parseCanvasContent = useCallback((content: string, messageId: string) => {
+    const newItems: CanvasItem[] = [];
+
+    // Check for Mermaid diagrams
+    const mermaidMatch = content.match(/```mermaid\n([\s\S]*?)```/);
+    if (mermaidMatch) {
+      newItems.push({
+        id: `${messageId}-mermaid-${Date.now()}`,
+        type: 'diagram',
+        title: 'Diagram',
+        content: mermaidMatch[1].trim(),
+        timestamp: new Date(),
+      });
+    }
+
+    // Check for code blocks (excluding mermaid)
+    const codeMatches = [...content.matchAll(/```(\w+)?\n([\s\S]*?)```/g)];
+    codeMatches.forEach((match, index) => {
+      const language = match[1] || 'text';
+      if (language !== 'mermaid') {
+        newItems.push({
+          id: `${messageId}-code-${index}-${Date.now()}`,
+          type: 'code',
+          title: `Code (${language})`,
+          content: match[2].trim(),
+          language,
+          timestamp: new Date(),
+        });
+      }
+    });
+
+    // Check for tables
+    const tableMatch = content.match(/\|[\s\S]*?\|[\s\S]*?\n\|[-:\s|]+\|[\s\S]*?(?=\n\n|\n$|$)/);
+    if (tableMatch) {
+      newItems.push({
+        id: `${messageId}-table-${Date.now()}`,
+        type: 'table',
+        title: 'Table',
+        content: tableMatch[0].trim(),
+        timestamp: new Date(),
+      });
+    }
+
+    // If we found canvas items, show the canvas
+    if (newItems.length > 0) {
+      setCanvasItems(prev => [...prev, ...newItems]);
+      setShowCanvas(true);
+      setSelectedCanvasItem(newItems[0].id);
+    }
+  }, []);
 
   // Fetch ElevenLabs voices on mount
   useEffect(() => {
@@ -250,6 +341,9 @@ export default function ChatPage() {
 
       setMessages(prev => [...prev, assistantMessage]);
 
+      // Parse for canvas content (diagrams, code, tables)
+      parseCanvasContent(assistantMessage.content, assistantMessage.id);
+
       // Generate ElevenLabs speech if enabled
       if (elevenLabsEnabled && elevenLabsReady) {
         generateSpeech(assistantMessage.id, assistantMessage.content);
@@ -276,7 +370,7 @@ export default function ChatPage() {
     } finally {
       setIsLoading(false);
     }
-  }, [input, isLoading, conversationId, voiceState, elevenLabsEnabled, elevenLabsReady, generateSpeech]);
+  }, [input, isLoading, conversationId, voiceState, elevenLabsEnabled, elevenLabsReady, generateSpeech, parseCanvasContent]);
 
   // Initialize speech recognition
   const initRecognition = useCallback(() => {
@@ -525,6 +619,20 @@ export default function ChatPage() {
   const clearChat = () => {
     setMessages([]);
     setConversationId(null);
+    setCanvasItems([]);
+    setSelectedCanvasItem(null);
+  };
+
+  const clearCanvas = () => {
+    setCanvasItems([]);
+    setSelectedCanvasItem(null);
+  };
+
+  const removeCanvasItem = (id: string) => {
+    setCanvasItems(prev => prev.filter(item => item.id !== id));
+    if (selectedCanvasItem === id) {
+      setSelectedCanvasItem(canvasItems.length > 1 ? canvasItems[0].id : null);
+    }
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -680,11 +788,31 @@ export default function ChatPage() {
               </span>
             </button>
           )}
+          {/* Canvas Toggle */}
+          <button
+            onClick={() => setShowCanvas(!showCanvas)}
+            className={`px-4 py-2 rounded-lg text-white font-medium transition-all flex items-center gap-2 ${
+              showCanvas
+                ? 'bg-cyan-600 hover:bg-cyan-500'
+                : 'bg-gray-700 hover:bg-gray-600'
+            }`}
+            title={showCanvas ? 'Hide Canvas' : 'Show Canvas'}
+          >
+            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z" />
+            </svg>
+            <span className="hidden sm:inline">Canvas</span>
+            {canvasItems.length > 0 && (
+              <span className="bg-cyan-400 text-cyan-900 text-xs px-1.5 py-0.5 rounded-full font-bold">
+                {canvasItems.length}
+              </span>
+            )}
+          </button>
           <button
             onClick={clearChat}
             className="px-4 py-2 bg-gray-800 hover:bg-gray-700 border border-gray-700 rounded-lg text-gray-300 transition-colors"
           >
-            Clear Chat
+            Clear
           </button>
         </div>
       </div>
@@ -758,8 +886,12 @@ export default function ChatPage() {
         </div>
       )}
 
-      {/* Messages Container */}
-      <div className="flex-1 bg-gray-900/50 border border-gray-800 rounded-xl overflow-hidden flex flex-col">
+      {/* Main Content - Split View */}
+      <div className={`flex-1 flex gap-4 ${showCanvas ? '' : ''}`}>
+        {/* Messages Container */}
+        <div className={`bg-gray-900/50 border border-gray-800 rounded-xl overflow-hidden flex flex-col ${
+          showCanvas ? 'flex-1 min-w-0' : 'w-full'
+        }`}>
         <div className="flex-1 overflow-y-auto p-4 space-y-4">
           {messages.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-full text-gray-500">
@@ -776,6 +908,9 @@ export default function ChatPage() {
                   🔊 Enable TTS for natural voice responses
                 </p>
               )}
+              <p className="text-sm mt-2 text-cyan-400">
+                📊 Ask for diagrams, code, or tables to see them in Canvas
+              </p>
             </div>
           ) : (
             messages.map((message) => (
@@ -901,6 +1036,168 @@ export default function ChatPage() {
             </button>
           </div>
         </div>
+      </div>
+
+        {/* Canvas Panel */}
+        {showCanvas && (
+          <div className="w-1/2 min-w-[400px] max-w-[600px] bg-gray-900/50 border border-gray-800 rounded-xl overflow-hidden flex flex-col" ref={canvasRef}>
+            {/* Canvas Header */}
+            <div className="p-3 border-b border-gray-800 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <svg className="w-5 h-5 text-cyan-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z" />
+                </svg>
+                <span className="font-medium text-white">Canvas</span>
+                <span className="text-xs text-gray-400">({canvasItems.length} items)</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={clearCanvas}
+                  className="text-xs px-2 py-1 text-gray-400 hover:text-white transition-colors"
+                >
+                  Clear All
+                </button>
+                <button
+                  onClick={() => setShowCanvas(false)}
+                  className="p-1 text-gray-400 hover:text-white transition-colors"
+                >
+                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+
+            {/* Canvas Items Tabs */}
+            {canvasItems.length > 0 && (
+              <div className="flex overflow-x-auto border-b border-gray-800 bg-gray-900/50">
+                {canvasItems.map((item) => (
+                  <button
+                    key={item.id}
+                    onClick={() => setSelectedCanvasItem(item.id)}
+                    className={`flex items-center gap-2 px-4 py-2 text-sm whitespace-nowrap border-b-2 transition-colors ${
+                      selectedCanvasItem === item.id
+                        ? 'border-cyan-400 text-white bg-gray-800/50'
+                        : 'border-transparent text-gray-400 hover:text-white'
+                    }`}
+                  >
+                    {item.type === 'diagram' && <span>📊</span>}
+                    {item.type === 'code' && <span>💻</span>}
+                    {item.type === 'table' && <span>📋</span>}
+                    {item.type === 'markdown' && <span>📝</span>}
+                    {item.type === 'image' && <span>🖼️</span>}
+                    <span>{item.title || item.type}</span>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        removeCanvasItem(item.id);
+                      }}
+                      className="ml-1 p-0.5 rounded hover:bg-gray-700 text-gray-500 hover:text-white"
+                    >
+                      <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {/* Canvas Content */}
+            <div className="flex-1 overflow-auto p-4">
+              {canvasItems.length === 0 ? (
+                <div className="flex flex-col items-center justify-center h-full text-gray-500">
+                  <svg className="w-16 h-16 mb-4 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z" />
+                  </svg>
+                  <p className="text-lg font-medium">Visual Workspace</p>
+                  <p className="text-sm mt-2 text-center max-w-xs">
+                    Ask me to create diagrams, show code, or display tables and they&apos;ll appear here.
+                  </p>
+                  <div className="mt-4 space-y-2 text-xs text-gray-400">
+                    <p>Try asking:</p>
+                    <p className="text-cyan-400">&quot;Show me a flowchart of...&quot;</p>
+                    <p className="text-cyan-400">&quot;Create a diagram of...&quot;</p>
+                    <p className="text-cyan-400">&quot;Write code for...&quot;</p>
+                  </div>
+                </div>
+              ) : (
+                <>
+                  {canvasItems.map((item) => (
+                    <div
+                      key={item.id}
+                      className={`${selectedCanvasItem === item.id ? 'block' : 'hidden'}`}
+                    >
+                      {/* Diagram Rendering */}
+                      {item.type === 'diagram' && (
+                        <div className="bg-gray-800 rounded-lg p-4">
+                          <div className="flex items-center justify-between mb-3">
+                            <span className="text-sm text-gray-400">Mermaid Diagram</span>
+                            <button
+                              onClick={() => navigator.clipboard.writeText(item.content)}
+                              className="text-xs px-2 py-1 bg-gray-700 hover:bg-gray-600 rounded text-gray-300"
+                            >
+                              Copy Code
+                            </button>
+                          </div>
+                          <pre className="bg-gray-900 rounded p-3 overflow-x-auto text-sm text-cyan-300 font-mono">
+                            {item.content}
+                          </pre>
+                          <p className="mt-3 text-xs text-gray-500">
+                            Tip: Copy and paste into mermaid.live to render
+                          </p>
+                        </div>
+                      )}
+
+                      {/* Code Rendering */}
+                      {item.type === 'code' && (
+                        <div className="bg-gray-800 rounded-lg overflow-hidden">
+                          <div className="flex items-center justify-between px-4 py-2 bg-gray-700/50 border-b border-gray-700">
+                            <span className="text-sm text-gray-300 font-mono">{item.language}</span>
+                            <button
+                              onClick={() => navigator.clipboard.writeText(item.content)}
+                              className="text-xs px-2 py-1 bg-gray-600 hover:bg-gray-500 rounded text-gray-200"
+                            >
+                              Copy
+                            </button>
+                          </div>
+                          <pre className="p-4 overflow-x-auto text-sm font-mono text-gray-200 leading-relaxed">
+                            <code>{item.content}</code>
+                          </pre>
+                        </div>
+                      )}
+
+                      {/* Table Rendering */}
+                      {item.type === 'table' && (
+                        <div className="bg-gray-800 rounded-lg p-4 overflow-x-auto">
+                          <div className="flex items-center justify-between mb-3">
+                            <span className="text-sm text-gray-400">Table</span>
+                            <button
+                              onClick={() => navigator.clipboard.writeText(item.content)}
+                              className="text-xs px-2 py-1 bg-gray-700 hover:bg-gray-600 rounded text-gray-300"
+                            >
+                              Copy
+                            </button>
+                          </div>
+                          <div className="text-sm font-mono text-gray-200 whitespace-pre">
+                            {item.content}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Markdown Rendering */}
+                      {item.type === 'markdown' && (
+                        <div className="bg-gray-800 rounded-lg p-4 prose prose-invert prose-sm max-w-none">
+                          <pre className="whitespace-pre-wrap text-gray-200">{item.content}</pre>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </>
+              )}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* CSS for sound wave animation */}
