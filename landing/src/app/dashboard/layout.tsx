@@ -7,6 +7,7 @@ import { ReactNode, useState } from 'react';
 const navigation = [
   { name: 'Overview', href: '/dashboard', icon: '📊' },
   { name: 'Chat', href: '/dashboard/chat', icon: '💬' },
+  { name: 'Compare', href: '/dashboard/compare', icon: '⚖️' },
   { name: 'Sessions', href: '/dashboard/sessions', icon: '👥' },
   { name: 'Channels', href: '/dashboard/channels', icon: '📡' },
   { name: 'Skills', href: '/dashboard/skills', icon: '⚡' },
