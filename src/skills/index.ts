@@ -71,6 +71,29 @@ export {
   DELETE_SKILL_TOOL,
 } from './skill-tools.js';
 
+// Built-in Skills
+export {
+  BUILTIN_SKILLS,
+  SKILL_CATEGORIES,
+  getSkillsByCategory,
+  getSkillById,
+  getPremiumSkills,
+  getFreeSkills,
+  webSearchSkill,
+  codeExecutorSkill,
+  fileManagerSkill,
+  calendarSkill,
+  emailSkill,
+  githubSkill,
+  slackToolsSkill,
+  dataAnalysisSkill,
+  httpRequestSkill,
+  jsonProcessorSkill,
+  screenshotSkill,
+  memorySkill,
+  type BuiltinSkillDefinition,
+} from './builtin/index.js';
+
 // =============================================================================
 // Convenience Factory
 // =============================================================================
