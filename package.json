@@ -28,6 +28,7 @@
     "@anthropic-ai/sdk": "^0.72.1",
     "@sparticuz/chromium": "^143.0.4",
     "better-sqlite3": "^12.6.2",
+    "discord.js": "^14.25.1",
     "openai": "^6.17.0",
     "pino": "^9.0.0",
     "playwright-core": "^1.58.1",
