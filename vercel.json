@@ -48,6 +48,10 @@
       "dest": "/api/discord.ts"
     },
     {
+      "src": "/api/slack",
+      "dest": "/api/slack.ts"
+    },
+    {
       "src": "/api/(.*)",
       "dest": "/api/index.ts"
     },
