@@ -457,7 +457,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         });
       }
 
-      const result = await executeTool(name, args || {});
+      const toolArgs = (args || {}) as Record<string, unknown>;
+      const result = await executeTool(name as string, toolArgs);
       return res.status(200).json({
         success: true,
         tool: name,
@@ -467,7 +468,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     // POST /api/agent/chat - Chat with agent
     if (method === 'POST' && (action === 'chat' || !action)) {
-      const { message, conversationId, maxTurns = 5 } = body;
+      const { message, conversationId, maxTurns: maxTurnsRaw = 5 } = body;
+      const maxTurns = typeof maxTurnsRaw === 'number' ? maxTurnsRaw : 5;
 
       if (!message) {
         return res.status(400).json({
@@ -485,11 +487,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       }
 
       const client = new Anthropic({ apiKey });
-      const convId = conversationId || `conv_${Date.now()}_${Math.random().toString(36).substring(7)}`;
+      const convId = (conversationId as string) || `conv_${Date.now()}_${Math.random().toString(36).substring(7)}`;
 
       // Get or create conversation history
-      let messages = conversations.get(convId) || [];
-      messages.push({ role: 'user', content: message });
+      const messages: Anthropic.MessageParam[] = conversations.get(convId) || [];
+      messages.push({ role: 'user', content: message as string });
 
       // Tool use loop
       let response: Anthropic.Message;
