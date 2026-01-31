@@ -1,0 +1,58 @@
+# SecureAgent Sandbox - Node.js Runtime
+# Minimal, secure Node.js 20 environment for sandboxed JavaScript execution
+#
+# Security features:
+# - Alpine base (minimal attack surface)
+# - Non-root user (nobody:nogroup)
+# - Read-only filesystem compatible
+# - No network utilities
+# - Minimal Node.js installation
+
+FROM node:20-alpine AS builder
+
+# Create app directory
+WORKDIR /app
+
+# Install common packages (will be available in sandbox)
+RUN npm init -y && \
+    npm install --omit=dev \
+        lodash@4.17.21 \
+        date-fns@3.3.1 \
+        uuid@9.0.1 \
+        validator@13.11.0 \
+        && \
+    npm cache clean --force
+
+# =============================================================================
+# Production Image
+# =============================================================================
+FROM node:20-alpine
+
+# Security: Remove unnecessary packages
+RUN apk del --no-cache \
+        curl wget busybox-extras \
+        && \
+    rm -rf /var/cache/apk/* /tmp/* /root/.npm
+
+# Copy node_modules
+COPY --from=builder /app/node_modules /sandbox/node_modules
+
+# Create sandbox directory
+RUN mkdir -p /sandbox /tmp/sandbox && \
+    chmod 755 /sandbox && \
+    chmod 1777 /tmp/sandbox
+
+# Set working directory
+WORKDIR /sandbox
+
+# Security: Run as nobody user
+USER 65534:65534
+
+# Environment
+ENV NODE_ENV=production \
+    NODE_OPTIONS="--max-old-space-size=128" \
+    HOME=/tmp/sandbox \
+    NODE_PATH=/sandbox/node_modules
+
+# Default command (will be overridden)
+CMD ["node", "-e", "console.log('Sandbox ready')"]

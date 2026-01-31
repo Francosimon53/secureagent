@@ -1776,6 +1776,55 @@ export {
   AlertEngine as HealthAlertEngine,
 } from './health/aba/index.js';
 
+// Docker Sandbox (Secure Code Execution)
+export {
+  // Types
+  type SupportedLanguage,
+  type ResourceLimits,
+  type NetworkConfig,
+  type SandboxConfig as DockerSandboxConfig,
+  type ExecutionRequest as SandboxExecutionRequest,
+  type ExecutionResult as SandboxExecutionResult,
+  type ContainerState,
+  type ContainerInfo,
+  type SandboxAuditEntry,
+  type SandboxEventType,
+  type SandboxErrorCode,
+  type ContainerManager,
+  type SandboxService,
+  type SandboxAuditLogger,
+  SUPPORTED_LANGUAGES,
+  LANGUAGE_IMAGES,
+  LANGUAGE_COMMANDS,
+  LANGUAGE_FILE_EXTENSIONS,
+  ResourceLimitsSchema,
+  NetworkConfigSchema,
+  SandboxConfigSchema,
+  ExecutionRequestSchema,
+  SANDBOX_EVENTS,
+  SANDBOX_ERROR_CODES,
+  SandboxError as DockerSandboxError,
+  // Container Manager
+  type DockerContainerManagerConfig,
+  DockerContainerManager,
+  createContainerManager,
+  // Sandbox Service
+  type SandboxServiceConfig,
+  DockerSandboxService,
+  createSandboxService,
+  // Audit Logger
+  type AuditLoggerConfig,
+  type DatabaseAdapter as SandboxDatabaseAdapter,
+  type QueryOptions as SandboxQueryOptions,
+  InMemorySandboxAuditLogger,
+  SQLiteAuditAdapter,
+  createAuditLogger,
+  createSQLiteAuditAdapter,
+  // System
+  type SandboxSystemConfig,
+  createSandboxSystem,
+} from './sandbox/index.js';
+
 // Skills (Dynamic Tool Creation)
 export {
   // Types
