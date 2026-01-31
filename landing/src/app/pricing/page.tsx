@@ -2,12 +2,15 @@
 
 import Link from 'next/link';
 import { motion } from 'framer-motion';
-import { useState } from 'react';
+import { useState, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 
 type BillingPeriod = 'monthly' | 'yearly';
+type PlanId = 'free' | 'starter' | 'pro' | 'power' | 'unlimited' | 'team' | 'business' | 'enterprise';
 
 interface PricingTier {
   name: string;
+  planId: PlanId;
   description: string;
   monthlyPrice: number | string;
   yearlyPrice: number | string;
@@ -22,11 +25,13 @@ interface PricingTier {
   href: string;
   highlighted: boolean;
   badge?: string;
+  isPerSeat?: boolean;
 }
 
 const individualPlans: PricingTier[] = [
   {
     name: 'Free',
+    planId: 'free',
     description: 'Try SecureAgent risk-free',
     monthlyPrice: 0,
     yearlyPrice: 0,
@@ -48,6 +53,7 @@ const individualPlans: PricingTier[] = [
   },
   {
     name: 'Starter',
+    planId: 'starter',
     description: 'For casual users',
     monthlyPrice: 19,
     yearlyPrice: 190,
@@ -63,12 +69,13 @@ const individualPlans: PricingTier[] = [
       browser: 'None',
       channels: '2 channels',
     },
-    cta: 'Start Free Trial',
+    cta: 'Subscribe',
     href: '/dashboard/admin',
     highlighted: false,
   },
   {
     name: 'Pro',
+    planId: 'pro',
     description: 'For power users & freelancers',
     monthlyPrice: 49,
     yearlyPrice: 490,
@@ -85,13 +92,14 @@ const individualPlans: PricingTier[] = [
       browser: '25 tasks',
       channels: 'All channels',
     },
-    cta: 'Start Free Trial',
+    cta: 'Subscribe',
     href: '/dashboard/admin',
     highlighted: true,
     badge: 'Most Popular',
   },
   {
     name: 'Power',
+    planId: 'power',
     description: 'For heavy users',
     monthlyPrice: 99,
     yearlyPrice: 990,
@@ -108,12 +116,13 @@ const individualPlans: PricingTier[] = [
       browser: '75 tasks',
       channels: 'All channels',
     },
-    cta: 'Start Free Trial',
+    cta: 'Subscribe',
     href: '/dashboard/admin',
     highlighted: false,
   },
   {
     name: 'Unlimited',
+    planId: 'unlimited',
     description: 'For teams & agencies',
     monthlyPrice: 199,
     yearlyPrice: 1990,
@@ -130,7 +139,7 @@ const individualPlans: PricingTier[] = [
       browser: '150 tasks',
       channels: 'All channels',
     },
-    cta: 'Start Free Trial',
+    cta: 'Subscribe',
     href: '/dashboard/admin',
     highlighted: false,
   },
@@ -139,6 +148,7 @@ const individualPlans: PricingTier[] = [
 const teamPlans: PricingTier[] = [
   {
     name: 'Team',
+    planId: 'team',
     description: 'For small businesses',
     monthlyPrice: 39,
     yearlyPrice: 390,
@@ -155,12 +165,14 @@ const teamPlans: PricingTier[] = [
       browser: '15/user',
       channels: 'All channels',
     },
-    cta: 'Start Team Trial',
+    cta: 'Subscribe',
     href: '/dashboard/admin',
     highlighted: false,
+    isPerSeat: true,
   },
   {
     name: 'Business',
+    planId: 'business',
     description: 'For growing companies',
     monthlyPrice: 79,
     yearlyPrice: 790,
@@ -182,9 +194,11 @@ const teamPlans: PricingTier[] = [
     href: 'mailto:contact@secureagent.dev?subject=Business%20Plan%20Inquiry',
     highlighted: true,
     badge: 'Best Value',
+    isPerSeat: true,
   },
   {
     name: 'Enterprise',
+    planId: 'enterprise',
     description: 'For large organizations',
     monthlyPrice: 'Custom',
     yearlyPrice: 'Custom',
@@ -262,9 +276,17 @@ const comparison = [
   { feature: 'Analytics Dashboard', free: false, starter: false, pro: true, power: true, unlimited: true },
 ];
 
-export default function PricingPage() {
+// Inner component that uses useSearchParams
+function PricingPageContent() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const [billingPeriod, setBillingPeriod] = useState<BillingPeriod>('monthly');
   const [showComparison, setShowComparison] = useState(false);
+  const [loadingPlan, setLoadingPlan] = useState<PlanId | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  // Check for canceled checkout
+  const canceled = searchParams.get('canceled');
 
   const formatPrice = (price: number | string) => {
     if (typeof price === 'string') return price;
@@ -275,6 +297,109 @@ export default function PricingPage() {
   const getPrice = (tier: PricingTier) => {
     const price = billingPeriod === 'monthly' ? tier.monthlyPrice : tier.yearlyPrice;
     return formatPrice(price);
+  };
+
+  const handleCheckout = async (tier: PricingTier, quantity: number = 1) => {
+    // Free plan - just redirect to dashboard
+    if (tier.planId === 'free') {
+      router.push('/dashboard/chat');
+      return;
+    }
+
+    // Enterprise - redirect to contact
+    if (tier.planId === 'enterprise') {
+      window.location.href = tier.href;
+      return;
+    }
+
+    setLoadingPlan(tier.planId);
+    setError(null);
+
+    try {
+      const response = await fetch('/api/stripe/checkout', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          planId: tier.planId,
+          interval: billingPeriod,
+          quantity: quantity,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to create checkout session');
+      }
+
+      // Redirect to Stripe Checkout
+      if (data.url) {
+        window.location.href = data.url;
+      } else {
+        throw new Error('No checkout URL returned');
+      }
+    } catch (err) {
+      console.error('Checkout error:', err);
+      setError(err instanceof Error ? err.message : 'Failed to start checkout');
+      setLoadingPlan(null);
+    }
+  };
+
+  // Render button for a tier
+  const renderButton = (tier: PricingTier, variant: 'individual' | 'team') => {
+    const isLoading = loadingPlan === tier.planId;
+    const isPaid = tier.planId !== 'free' && tier.planId !== 'enterprise';
+    const isMailto = tier.href.startsWith('mailto:');
+
+    const baseClasses = `block w-full py-3 rounded-xl font-semibold text-center transition-all disabled:opacity-50 disabled:cursor-not-allowed`;
+    const highlightedClasses = variant === 'individual'
+      ? 'bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-500 hover:to-cyan-500 text-white'
+      : 'bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white';
+    const normalClasses = 'bg-white/5 hover:bg-white/10 text-white border border-white/10';
+
+    if (isMailto) {
+      return (
+        <a
+          href={tier.href}
+          className={`${baseClasses} ${tier.highlighted ? highlightedClasses : normalClasses}`}
+        >
+          {tier.cta}
+        </a>
+      );
+    }
+
+    if (isPaid) {
+      return (
+        <button
+          onClick={() => handleCheckout(tier, tier.isPerSeat ? (tier.planId === 'team' ? 3 : 5) : 1)}
+          disabled={isLoading}
+          className={`${baseClasses} ${tier.highlighted ? highlightedClasses : normalClasses}`}
+        >
+          {isLoading ? (
+            <span className="inline-flex items-center gap-2">
+              <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+              </svg>
+              Processing...
+            </span>
+          ) : (
+            tier.cta
+          )}
+        </button>
+      );
+    }
+
+    return (
+      <Link
+        href={tier.href}
+        className={`${baseClasses} ${tier.highlighted ? highlightedClasses : normalClasses}`}
+      >
+        {tier.cta}
+      </Link>
+    );
   };
 
   return (
@@ -322,6 +447,18 @@ export default function PricingPage() {
             <p className="text-xl text-gray-400 mb-8">
               Start free, scale as you grow. No hidden fees, cancel anytime.
             </p>
+
+            {/* Error/Status Messages */}
+            {error && (
+              <div className="mb-6 p-4 bg-red-500/10 border border-red-500/20 rounded-xl text-red-400 text-sm">
+                {error}
+              </div>
+            )}
+            {canceled && (
+              <div className="mb-6 p-4 bg-yellow-500/10 border border-yellow-500/20 rounded-xl text-yellow-400 text-sm">
+                Checkout was canceled. Feel free to try again when you&apos;re ready.
+              </div>
+            )}
 
             {/* Billing Toggle */}
             <div className="inline-flex items-center gap-4 p-1 bg-white/5 rounded-xl">
@@ -417,29 +554,7 @@ export default function PricingPage() {
                   ))}
                 </ul>
 
-                {tier.href.startsWith('mailto:') ? (
-                  <a
-                    href={tier.href}
-                    className={`block w-full py-3 rounded-xl font-semibold text-center transition-all ${
-                      tier.highlighted
-                        ? 'bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-500 hover:to-cyan-500 text-white'
-                        : 'bg-white/5 hover:bg-white/10 text-white border border-white/10'
-                    }`}
-                  >
-                    {tier.cta}
-                  </a>
-                ) : (
-                  <Link
-                    href={tier.href}
-                    className={`block w-full py-3 rounded-xl font-semibold text-center transition-all ${
-                      tier.highlighted
-                        ? 'bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-500 hover:to-cyan-500 text-white'
-                        : 'bg-white/5 hover:bg-white/10 text-white border border-white/10'
-                    }`}
-                  >
-                    {tier.cta}
-                  </Link>
-                )}
+                {renderButton(tier, 'individual')}
               </motion.div>
             ))}
           </div>
@@ -493,29 +608,7 @@ export default function PricingPage() {
                   ))}
                 </ul>
 
-                {tier.href.startsWith('mailto:') ? (
-                  <a
-                    href={tier.href}
-                    className={`block w-full py-3 rounded-xl font-semibold text-center transition-all ${
-                      tier.highlighted
-                        ? 'bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white'
-                        : 'bg-white/5 hover:bg-white/10 text-white border border-white/10'
-                    }`}
-                  >
-                    {tier.cta}
-                  </a>
-                ) : (
-                  <Link
-                    href={tier.href}
-                    className={`block w-full py-3 rounded-xl font-semibold text-center transition-all ${
-                      tier.highlighted
-                        ? 'bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white'
-                        : 'bg-white/5 hover:bg-white/10 text-white border border-white/10'
-                    }`}
-                  >
-                    {tier.cta}
-                  </Link>
-                )}
+                {renderButton(tier, 'team')}
               </motion.div>
             ))}
           </div>
@@ -665,5 +758,18 @@ export default function PricingPage() {
         </div>
       </footer>
     </div>
+  );
+}
+
+// Wrap with Suspense for useSearchParams
+export default function PricingPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-[#0a0a0f] text-white flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
+      </div>
+    }>
+      <PricingPageContent />
+    </Suspense>
   );
 }
