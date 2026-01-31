@@ -37,7 +37,7 @@ const individualPlans: PricingTier[] = [
       'Community support',
     ],
     limits: {
-      messages: '50/month',
+      messages: '30/month',
       voice: 'None',
       browser: 'None',
       channels: '1 channel',
@@ -49,8 +49,8 @@ const individualPlans: PricingTier[] = [
   {
     name: 'Starter',
     description: 'For casual users',
-    monthlyPrice: 9,
-    yearlyPrice: 90,
+    monthlyPrice: 19,
+    yearlyPrice: 190,
     features: [
       'Everything in Free',
       'Voice responses (ElevenLabs)',
@@ -58,8 +58,8 @@ const individualPlans: PricingTier[] = [
       'Email support',
     ],
     limits: {
-      messages: '500/month',
-      voice: '50 responses',
+      messages: '300/month',
+      voice: '25 responses',
       browser: 'None',
       channels: '2 channels',
     },
@@ -70,8 +70,8 @@ const individualPlans: PricingTier[] = [
   {
     name: 'Pro',
     description: 'For power users & freelancers',
-    monthlyPrice: 29,
-    yearlyPrice: 290,
+    monthlyPrice: 49,
+    yearlyPrice: 490,
     features: [
       'Everything in Starter',
       'Browser automation',
@@ -80,9 +80,9 @@ const individualPlans: PricingTier[] = [
       'Webhook integrations',
     ],
     limits: {
-      messages: '2,000/month',
-      voice: '200 responses',
-      browser: '50 tasks',
+      messages: '1,000/month',
+      voice: '100 responses',
+      browser: '25 tasks',
       channels: 'All channels',
     },
     cta: 'Start Free Trial',
@@ -91,21 +91,43 @@ const individualPlans: PricingTier[] = [
     badge: 'Most Popular',
   },
   {
-    name: 'Unlimited',
+    name: 'Power',
     description: 'For heavy users',
-    monthlyPrice: 79,
-    yearlyPrice: 790,
+    monthlyPrice: 99,
+    yearlyPrice: 990,
     features: [
       'Everything in Pro',
-      'Unlimited messages*',
+      'Higher limits',
       'Priority processing',
       'Advanced analytics',
+      'Priority support',
+    ],
+    limits: {
+      messages: '3,000/month',
+      voice: '250 responses',
+      browser: '75 tasks',
+      channels: 'All channels',
+    },
+    cta: 'Start Free Trial',
+    href: '/dashboard/admin',
+    highlighted: false,
+  },
+  {
+    name: 'Unlimited',
+    description: 'For teams & agencies',
+    monthlyPrice: 199,
+    yearlyPrice: 1990,
+    features: [
+      'Everything in Power',
+      'Generous limits',
+      'Dedicated support',
+      'Custom integrations',
       'Phone support',
     ],
     limits: {
-      messages: 'Unlimited*',
+      messages: '10,000/month',
       voice: '500 responses',
-      browser: '200 tasks',
+      browser: '150 tasks',
       channels: 'All channels',
     },
     cta: 'Start Free Trial',
@@ -118,8 +140,8 @@ const teamPlans: PricingTier[] = [
   {
     name: 'Team',
     description: 'For small businesses',
-    monthlyPrice: 25,
-    yearlyPrice: 250,
+    monthlyPrice: 39,
+    yearlyPrice: 390,
     features: [
       '3+ users required',
       'Shared channel management',
@@ -128,9 +150,9 @@ const teamPlans: PricingTier[] = [
       'Admin controls',
     ],
     limits: {
-      messages: '1,000/user/month',
-      voice: 'Shared pool',
-      browser: 'Shared pool',
+      messages: '500/user/month',
+      voice: '50/user',
+      browser: '15/user',
       channels: 'All channels',
     },
     cta: 'Start Team Trial',
@@ -140,8 +162,8 @@ const teamPlans: PricingTier[] = [
   {
     name: 'Business',
     description: 'For growing companies',
-    monthlyPrice: 49,
-    yearlyPrice: 490,
+    monthlyPrice: 79,
+    yearlyPrice: 790,
     features: [
       '5+ users required',
       'Everything in Team',
@@ -222,22 +244,22 @@ const faqs = [
 ];
 
 const comparison = [
-  { feature: 'Web Chat', free: true, starter: true, pro: true, unlimited: true },
-  { feature: 'Multi-Agent Routing', free: true, starter: true, pro: true, unlimited: true },
-  { feature: 'Canvas Workspace', free: true, starter: true, pro: true, unlimited: true },
-  { feature: 'Voice Wake ("Hey SecureAgent")', free: true, starter: true, pro: true, unlimited: true },
-  { feature: 'ElevenLabs Voice Responses', free: false, starter: true, pro: true, unlimited: true },
-  { feature: 'Browser Automation', free: false, starter: false, pro: true, unlimited: true },
-  { feature: 'Telegram Bot', free: false, starter: true, pro: true, unlimited: true },
-  { feature: 'Discord Bot', free: false, starter: true, pro: true, unlimited: true },
-  { feature: 'Slack Bot', free: false, starter: false, pro: true, unlimited: true },
-  { feature: 'WhatsApp Bot', free: false, starter: false, pro: true, unlimited: true },
-  { feature: 'Teams Bot', free: false, starter: false, pro: true, unlimited: true },
-  { feature: 'Google Chat Bot', free: false, starter: false, pro: true, unlimited: true },
-  { feature: 'API Access', free: false, starter: false, pro: true, unlimited: true },
-  { feature: 'Webhooks', free: false, starter: false, pro: true, unlimited: true },
-  { feature: 'Priority Processing', free: false, starter: false, pro: false, unlimited: true },
-  { feature: 'Analytics Dashboard', free: false, starter: false, pro: true, unlimited: true },
+  { feature: 'Web Chat', free: true, starter: true, pro: true, power: true, unlimited: true },
+  { feature: 'Multi-Agent Routing', free: true, starter: true, pro: true, power: true, unlimited: true },
+  { feature: 'Canvas Workspace', free: true, starter: true, pro: true, power: true, unlimited: true },
+  { feature: 'Voice Wake ("Hey SecureAgent")', free: true, starter: true, pro: true, power: true, unlimited: true },
+  { feature: 'ElevenLabs Voice Responses', free: false, starter: true, pro: true, power: true, unlimited: true },
+  { feature: 'Browser Automation', free: false, starter: false, pro: true, power: true, unlimited: true },
+  { feature: 'Telegram Bot', free: false, starter: true, pro: true, power: true, unlimited: true },
+  { feature: 'Discord Bot', free: false, starter: true, pro: true, power: true, unlimited: true },
+  { feature: 'Slack Bot', free: false, starter: false, pro: true, power: true, unlimited: true },
+  { feature: 'WhatsApp Bot', free: false, starter: false, pro: true, power: true, unlimited: true },
+  { feature: 'Teams Bot', free: false, starter: false, pro: true, power: true, unlimited: true },
+  { feature: 'Google Chat Bot', free: false, starter: false, pro: true, power: true, unlimited: true },
+  { feature: 'API Access', free: false, starter: false, pro: true, power: true, unlimited: true },
+  { feature: 'Webhooks', free: false, starter: false, pro: true, power: true, unlimited: true },
+  { feature: 'Priority Processing', free: false, starter: false, pro: false, power: true, unlimited: true },
+  { feature: 'Analytics Dashboard', free: false, starter: false, pro: true, power: true, unlimited: true },
 ];
 
 export default function PricingPage() {
@@ -335,7 +357,7 @@ export default function PricingPage() {
       <section className="py-12 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto">
           <h2 className="text-2xl font-bold text-center mb-8">Individual Plans</h2>
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6">
             {individualPlans.map((tier, index) => (
               <motion.div
                 key={tier.name}
@@ -540,22 +562,23 @@ export default function PricingPage() {
               animate={{ opacity: 1, height: 'auto' }}
               className="bg-white/5 border border-white/10 rounded-2xl overflow-hidden"
             >
-              <div className="grid grid-cols-5 gap-4 p-4 bg-white/5 border-b border-white/10 text-sm font-medium">
+              <div className="grid grid-cols-6 gap-4 p-4 bg-white/5 border-b border-white/10 text-sm font-medium">
                 <div className="text-gray-400">Feature</div>
                 <div className="text-center text-gray-400">Free</div>
                 <div className="text-center text-gray-400">Starter</div>
                 <div className="text-center text-white">Pro</div>
+                <div className="text-center text-gray-400">Power</div>
                 <div className="text-center text-gray-400">Unlimited</div>
               </div>
               {comparison.map((row, index) => (
                 <div
                   key={row.feature}
-                  className={`grid grid-cols-5 gap-4 p-4 text-sm ${
+                  className={`grid grid-cols-6 gap-4 p-4 text-sm ${
                     index !== comparison.length - 1 ? 'border-b border-white/5' : ''
                   }`}
                 >
                   <div className="text-gray-300">{row.feature}</div>
-                  {[row.free, row.starter, row.pro, row.unlimited].map((value, i) => (
+                  {[row.free, row.starter, row.pro, row.power, row.unlimited].map((value, i) => (
                     <div key={i} className="text-center">
                       {value ? (
                         <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-green-500/20 text-green-400">
