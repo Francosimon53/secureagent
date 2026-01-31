@@ -50,6 +50,11 @@ export default function ChatPage() {
         }),
       });
 
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        throw new Error(errorData.message || errorData.error || `HTTP ${res.status}: ${res.statusText}`);
+      }
+
       const data = await res.json();
 
       if (data.conversationId) {
@@ -68,7 +73,7 @@ export default function ChatPage() {
       const errorMessage: Message = {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
-        content: 'Failed to connect to the server. Please check your connection.',
+        content: `Error: ${error instanceof Error ? error.message : 'Failed to connect to the server. Please check your connection.'}`,
         timestamp: new Date(),
       };
       setMessages(prev => [...prev, errorMessage]);
