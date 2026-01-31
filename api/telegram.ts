@@ -332,17 +332,20 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     try {
-      // Parse body if it's a string
+      // Parse body - wrap in try-catch for Vercel dev server compatibility
       let update: TelegramUpdate;
-      if (typeof req.body === 'string') {
-        try {
-          update = JSON.parse(req.body);
-        } catch {
-          console.error('Failed to parse request body');
+      try {
+        const rawBody = req.body;
+        if (typeof rawBody === 'string') {
+          update = JSON.parse(rawBody);
+        } else if (rawBody && typeof rawBody === 'object') {
+          update = rawBody as TelegramUpdate;
+        } else {
           return res.status(200).json({ ok: true });
         }
-      } else {
-        update = req.body as TelegramUpdate;
+      } catch {
+        console.error('Failed to parse request body');
+        return res.status(200).json({ ok: true });
       }
 
       // Process message
