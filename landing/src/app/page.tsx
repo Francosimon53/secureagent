@@ -171,7 +171,7 @@ export default function Home() {
             <div className="hidden md:flex items-center gap-8">
               <a href="#features" className="text-gray-400 hover:text-white transition-colors text-sm">Features</a>
               <a href="#channels" className="text-gray-400 hover:text-white transition-colors text-sm">Channels</a>
-              <a href="#pricing" className="text-gray-400 hover:text-white transition-colors text-sm">Pricing</a>
+              <Link href="/pricing" className="text-gray-400 hover:text-white transition-colors text-sm">Pricing</Link>
               <a
                 href="https://github.com/Francosimon53/secureagent"
                 target="_blank"
@@ -214,7 +214,7 @@ export default function Home() {
               <div className="flex flex-col gap-4">
                 <a href="#features" className="text-gray-400 hover:text-white transition-colors">Features</a>
                 <a href="#channels" className="text-gray-400 hover:text-white transition-colors">Channels</a>
-                <a href="#pricing" className="text-gray-400 hover:text-white transition-colors">Pricing</a>
+                <Link href="/pricing" className="text-gray-400 hover:text-white transition-colors">Pricing</Link>
                 <a href="https://github.com/Francosimon53/secureagent" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-white transition-colors">GitHub</a>
               </div>
             </div>
@@ -631,7 +631,7 @@ export default function Home() {
               <ul className="space-y-2 text-gray-400 text-sm">
                 <li><a href="#features" className="hover:text-white transition-colors">Features</a></li>
                 <li><a href="#channels" className="hover:text-white transition-colors">Channels</a></li>
-                <li><a href="#pricing" className="hover:text-white transition-colors">Pricing</a></li>
+                <li><Link href="/pricing" className="hover:text-white transition-colors">Pricing</Link></li>
                 <li><Link href="/dashboard" className="hover:text-white transition-colors">Dashboard</Link></li>
               </ul>
             </div>
