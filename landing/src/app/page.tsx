@@ -1,211 +1,528 @@
-import Link from "next/link";
+'use client';
 
-// Feature data
+import Link from 'next/link';
+import { motion } from 'framer-motion';
+import { useState } from 'react';
+
+// Animation variants
+const fadeInUp = {
+  initial: { opacity: 0, y: 20 },
+  animate: { opacity: 1, y: 0 },
+  transition: { duration: 0.5 }
+};
+
+const stagger = {
+  animate: {
+    transition: {
+      staggerChildren: 0.1
+    }
+  }
+};
+
+// Channel data
+const channels = [
+  { name: 'Telegram', icon: '✈️', status: 'active', users: '2.1K', color: 'from-blue-400 to-blue-600' },
+  { name: 'Discord', icon: '🎮', status: 'active', users: '1.8K', color: 'from-indigo-400 to-indigo-600' },
+  { name: 'Slack', icon: '💼', status: 'active', users: '956', color: 'from-green-400 to-green-600' },
+  { name: 'Web Chat', icon: '💬', status: 'active', users: '3.2K', color: 'from-cyan-400 to-cyan-600' },
+];
+
+// Features data
 const features = [
   {
-    icon: "🔐",
-    title: "Security First",
-    description: "OWASP Top 10 compliance, Zero Trust architecture, and sandboxed execution with gVisor support.",
+    icon: '🌐',
+    title: 'Browser Automation',
+    description: 'Navigate websites, fill forms, extract data, and take screenshots. Your AI can browse the web just like you do.',
+    gradient: 'from-purple-500 to-pink-500',
   },
   {
-    icon: "🤖",
-    title: "Multi-Channel",
-    description: "Connect via Discord, Slack, WhatsApp, Telegram, and custom REST APIs - all from one codebase.",
+    icon: '🔐',
+    title: 'Enterprise Security',
+    description: 'OWASP Top 10 compliance, Zero Trust architecture, input sanitization, and sandboxed execution.',
+    gradient: 'from-green-500 to-emerald-500',
   },
   {
-    icon: "💰",
-    title: "Cost Control",
-    description: "Built-in AI budget limits, smart routing between models, and real-time usage analytics.",
+    icon: '🧠',
+    title: 'Memory & Context',
+    description: 'Persistent conversations across sessions. Your AI remembers context and learns from interactions.',
+    gradient: 'from-blue-500 to-cyan-500',
   },
   {
-    icon: "🏥",
-    title: "Industry Verticals",
-    description: "Pre-built modules for Healthcare/ABA, Legal, Finance, and more with compliance baked in.",
+    icon: '⚡',
+    title: 'Real-time Tools',
+    description: 'HTTP requests, JSON processing, data transformation, and 20+ built-in tools ready to use.',
+    gradient: 'from-orange-500 to-red-500',
   },
 ];
 
-// Pricing tiers
+// Comparison data
+const comparison = [
+  { feature: 'Multi-channel support', secureAgent: true, chatgpt: false, claude: false },
+  { feature: 'Browser automation', secureAgent: true, chatgpt: false, claude: false },
+  { feature: 'Self-hosted option', secureAgent: true, chatgpt: false, claude: false },
+  { feature: 'Enterprise security', secureAgent: true, chatgpt: true, claude: true },
+  { feature: 'Custom tools/skills', secureAgent: true, chatgpt: true, claude: true },
+  { feature: 'API access', secureAgent: true, chatgpt: true, claude: true },
+  { feature: 'Conversation memory', secureAgent: true, chatgpt: true, claude: true },
+  { feature: 'White-label option', secureAgent: true, chatgpt: false, claude: false },
+];
+
+// Pricing data
 const pricing = [
   {
-    name: "Free",
-    price: "$0",
-    period: "/mo",
-    description: "For personal projects",
-    features: ["1 channel", "100 messages/day", "Community support", "Basic analytics"],
-    cta: "Get Started",
+    name: 'Free',
+    price: '$0',
+    period: '/month',
+    description: 'Perfect for trying out SecureAgent',
+    features: [
+      '3 users',
+      '1 bot',
+      '1,000 API calls/day',
+      'Web chat access',
+      'Community support',
+    ],
+    cta: 'Get Started',
     highlighted: false,
   },
   {
-    name: "Pro",
-    price: "$29",
-    period: "/mo",
-    description: "For growing teams",
-    features: ["All channels", "Unlimited messages", "Priority support", "Advanced analytics", "API access"],
-    cta: "Start Free Trial",
+    name: 'Pro',
+    price: '$49',
+    period: '/month',
+    description: 'For growing teams and startups',
+    features: [
+      '10 users',
+      '5 bots',
+      '50,000 API calls/day',
+      'All channels',
+      'Browser automation',
+      'Audit logs',
+      'API keys',
+      'Priority support',
+    ],
+    cta: 'Start Free Trial',
     highlighted: true,
   },
   {
-    name: "Business",
-    price: "$99",
-    period: "/mo",
-    description: "For scaling businesses",
-    features: ["Everything in Pro", "$50 AI credits included", "Custom integrations", "Team management", "99.9% SLA"],
-    cta: "Start Free Trial",
+    name: 'Business',
+    price: '$199',
+    period: '/month',
+    description: 'For scaling organizations',
+    features: [
+      '50 users',
+      '20 bots',
+      '500,000 API calls/day',
+      'Everything in Pro',
+      'SSO integration',
+      'Advanced analytics',
+      'Custom integrations',
+      '99.9% SLA',
+    ],
+    cta: 'Start Free Trial',
     highlighted: false,
   },
   {
-    name: "Enterprise",
-    price: "$299",
-    period: "/mo",
-    description: "For large organizations",
-    features: ["Everything in Business", "SSO/SAML", "Dedicated support", "Custom SLA", "White-label option", "On-premise available"],
-    cta: "Contact Sales",
+    name: 'Enterprise',
+    price: 'Custom',
+    period: '',
+    description: 'For large organizations',
+    features: [
+      'Unlimited users',
+      'Unlimited bots',
+      'Unlimited API calls',
+      'Everything in Business',
+      'White-label option',
+      'Custom domain',
+      'Dedicated support',
+      'On-premise available',
+    ],
+    cta: 'Contact Sales',
     highlighted: false,
   },
 ];
 
-// Tech stats
-const techStats = [
-  { value: "1,078", label: "Tests Passing" },
-  { value: "150+", label: "Modules" },
-  { value: "100%", label: "TypeScript" },
-  { value: "40+", label: "Enterprise Features" },
-];
-
 export default function Home() {
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-950 via-gray-900 to-gray-950">
+    <div className="min-h-screen bg-[#0a0a0f] text-white overflow-x-hidden">
+      {/* Gradient background effects */}
+      <div className="fixed inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute -top-40 -right-40 w-80 h-80 bg-blue-500/20 rounded-full blur-[120px]" />
+        <div className="absolute top-1/2 -left-40 w-80 h-80 bg-purple-500/20 rounded-full blur-[120px]" />
+        <div className="absolute bottom-0 right-1/4 w-80 h-80 bg-cyan-500/10 rounded-full blur-[120px]" />
+      </div>
+
       {/* Navigation */}
-      <nav className="fixed top-0 left-0 right-0 z-50 bg-gray-950/80 backdrop-blur-lg border-b border-gray-800">
+      <nav className="fixed top-0 left-0 right-0 z-50 bg-[#0a0a0f]/80 backdrop-blur-xl border-b border-white/5">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
-            <div className="flex items-center gap-2">
-              <span className="text-2xl">🛡️</span>
-              <span className="text-xl font-bold text-white">SecureAgent</span>
-            </div>
+            <Link href="/" className="flex items-center gap-2 group">
+              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center text-lg font-bold">
+                S
+              </div>
+              <span className="text-xl font-bold">SecureAgent</span>
+            </Link>
+
+            {/* Desktop Navigation */}
             <div className="hidden md:flex items-center gap-8">
-              <a href="#features" className="text-gray-400 hover:text-white transition-colors">Features</a>
-              <a href="#pricing" className="text-gray-400 hover:text-white transition-colors">Pricing</a>
-              <a href="#tech" className="text-gray-400 hover:text-white transition-colors">Tech Stack</a>
+              <a href="#features" className="text-gray-400 hover:text-white transition-colors text-sm">Features</a>
+              <a href="#channels" className="text-gray-400 hover:text-white transition-colors text-sm">Channels</a>
+              <a href="#pricing" className="text-gray-400 hover:text-white transition-colors text-sm">Pricing</a>
               <a
                 href="https://github.com/Francosimon53/secureagent"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-gray-400 hover:text-white transition-colors"
+                className="text-gray-400 hover:text-white transition-colors text-sm"
               >
                 GitHub
               </a>
             </div>
-            <a
-              href="https://github.com/Francosimon53/secureagent"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="px-4 py-2 bg-blue-600 hover:bg-blue-500 rounded-lg font-medium transition-colors"
-            >
-              Get Started
-            </a>
+
+            <div className="flex items-center gap-3">
+              <Link
+                href="/dashboard"
+                className="hidden sm:inline-flex px-4 py-2 text-sm text-gray-300 hover:text-white transition-colors"
+              >
+                Dashboard
+              </Link>
+              <Link
+                href="/dashboard/chat"
+                className="px-4 py-2 bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-500 hover:to-cyan-500 rounded-lg font-medium text-sm transition-all hover:shadow-lg hover:shadow-blue-500/25"
+              >
+                Try Now
+              </Link>
+
+              {/* Mobile menu button */}
+              <button
+                className="md:hidden p-2 text-gray-400 hover:text-white"
+                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={mobileMenuOpen ? "M6 18L18 6M6 6l12 12" : "M4 6h16M4 12h16M4 18h16"} />
+                </svg>
+              </button>
+            </div>
           </div>
+
+          {/* Mobile menu */}
+          {mobileMenuOpen && (
+            <div className="md:hidden py-4 border-t border-white/5">
+              <div className="flex flex-col gap-4">
+                <a href="#features" className="text-gray-400 hover:text-white transition-colors">Features</a>
+                <a href="#channels" className="text-gray-400 hover:text-white transition-colors">Channels</a>
+                <a href="#pricing" className="text-gray-400 hover:text-white transition-colors">Pricing</a>
+                <a href="https://github.com/Francosimon53/secureagent" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-white transition-colors">GitHub</a>
+              </div>
+            </div>
+          )}
         </div>
       </nav>
 
       {/* Hero Section */}
-      <section className="pt-32 pb-20 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-7xl mx-auto text-center">
-          <div className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600/10 border border-blue-500/20 rounded-full text-blue-400 text-sm mb-8">
-            <span className="relative flex h-2 w-2">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-blue-500"></span>
-            </span>
-            Now with Claude & OpenAI Integration
-          </div>
-
-          <h1 className="text-5xl sm:text-6xl lg:text-7xl font-bold tracking-tight mb-6">
-            <span className="text-white">Secure</span>
-            <span className="bg-gradient-to-r from-blue-500 to-cyan-400 bg-clip-text text-transparent">Agent</span>
-          </h1>
-
-          <p className="text-xl sm:text-2xl text-gray-400 max-w-3xl mx-auto mb-8">
-            Enterprise-Grade AI Assistant with{" "}
-            <span className="text-white font-semibold">OWASP Top 10 Compliance</span>
-          </p>
-
-          <p className="text-lg text-gray-500 max-w-2xl mx-auto mb-12">
-            Build secure, multi-channel AI assistants with built-in cost control,
-            compliance features, and support for Discord, Slack, WhatsApp, and more.
-          </p>
-
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <a
-              href="https://github.com/Francosimon53/secureagent"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="px-8 py-4 bg-blue-600 hover:bg-blue-500 rounded-xl font-semibold text-lg transition-all hover:scale-105 hover:shadow-lg hover:shadow-blue-500/25"
+      <section className="relative pt-32 pb-20 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto">
+          <motion.div
+            className="text-center"
+            initial="initial"
+            animate="animate"
+            variants={stagger}
+          >
+            {/* Badge */}
+            <motion.div
+              variants={fadeInUp}
+              className="inline-flex items-center gap-2 px-4 py-2 bg-white/5 border border-white/10 rounded-full text-sm mb-8"
             >
-              Get Started
-            </a>
-            <a
-              href="https://secureagent.vercel.app/api/health"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="px-8 py-4 bg-gray-800 hover:bg-gray-700 border border-gray-700 rounded-xl font-semibold text-lg transition-all hover:scale-105"
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+              </span>
+              <span className="text-gray-300">4 Channels Active</span>
+              <span className="text-gray-500">•</span>
+              <span className="text-gray-400">8K+ messages today</span>
+            </motion.div>
+
+            {/* Headline */}
+            <motion.h1
+              variants={fadeInUp}
+              className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold tracking-tight mb-6"
             >
-              View Demo
-            </a>
-          </div>
+              <span className="text-white">Your AI Assistant That</span>
+              <br />
+              <span className="bg-gradient-to-r from-blue-400 via-cyan-400 to-emerald-400 bg-clip-text text-transparent">
+                Actually Does Things
+              </span>
+            </motion.h1>
+
+            {/* Subheadline */}
+            <motion.p
+              variants={fadeInUp}
+              className="text-lg sm:text-xl text-gray-400 max-w-2xl mx-auto mb-10"
+            >
+              Enterprise-grade security. Multi-channel support. Browser automation.
+              <br className="hidden sm:block" />
+              <span className="text-gray-300">One AI that works everywhere you do.</span>
+            </motion.p>
+
+            {/* CTA Buttons */}
+            <motion.div
+              variants={fadeInUp}
+              className="flex flex-col sm:flex-row gap-4 justify-center"
+            >
+              <Link
+                href="/dashboard/chat"
+                className="group px-8 py-4 bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-500 hover:to-cyan-500 rounded-xl font-semibold text-lg transition-all hover:shadow-xl hover:shadow-blue-500/25 hover:scale-105 flex items-center justify-center gap-2"
+              >
+                Try Web Chat
+                <svg className="w-5 h-5 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                </svg>
+              </Link>
+              <a
+                href="https://github.com/Francosimon53/secureagent"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="px-8 py-4 bg-white/5 hover:bg-white/10 border border-white/10 hover:border-white/20 rounded-xl font-semibold text-lg transition-all hover:scale-105 flex items-center justify-center gap-2"
+              >
+                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                  <path fillRule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z" clipRule="evenodd" />
+                </svg>
+                View Documentation
+              </a>
+            </motion.div>
+          </motion.div>
+
+          {/* Demo Preview */}
+          <motion.div
+            initial={{ opacity: 0, y: 40 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.3 }}
+            className="mt-20 relative"
+          >
+            <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0f] via-transparent to-transparent z-10 pointer-events-none" />
+            <div className="relative rounded-2xl border border-white/10 bg-white/5 backdrop-blur-sm overflow-hidden shadow-2xl">
+              {/* Browser chrome */}
+              <div className="flex items-center gap-2 px-4 py-3 bg-white/5 border-b border-white/10">
+                <div className="flex gap-2">
+                  <div className="w-3 h-3 rounded-full bg-red-500/80" />
+                  <div className="w-3 h-3 rounded-full bg-yellow-500/80" />
+                  <div className="w-3 h-3 rounded-full bg-green-500/80" />
+                </div>
+                <div className="flex-1 flex justify-center">
+                  <div className="px-4 py-1 bg-white/5 rounded-lg text-sm text-gray-400">
+                    secureagent.vercel.app/dashboard/chat
+                  </div>
+                </div>
+              </div>
+
+              {/* Chat preview */}
+              <div className="p-6 space-y-4 min-h-[300px]">
+                <div className="flex gap-3">
+                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center text-sm font-bold">U</div>
+                  <div className="flex-1 bg-white/5 rounded-2xl rounded-tl-none px-4 py-3 max-w-md">
+                    <p className="text-gray-300">Go to Hacker News and tell me the top 3 stories</p>
+                  </div>
+                </div>
+
+                <div className="flex gap-3 justify-end">
+                  <div className="flex-1 bg-gradient-to-r from-blue-600/20 to-cyan-600/20 border border-blue-500/20 rounded-2xl rounded-tr-none px-4 py-3 max-w-lg">
+                    <p className="text-gray-200 text-sm mb-2">Here are the top 3 stories on Hacker News:</p>
+                    <ol className="text-gray-300 text-sm space-y-1 list-decimal list-inside">
+                      <li>Antirender: remove glossy shine on architectural renderings</li>
+                      <li>How to geolocate IPs in your CLI using latency</li>
+                      <li>NASA&apos;s WB-57 crash lands at Houston</li>
+                    </ol>
+                  </div>
+                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-emerald-500 to-cyan-500 flex items-center justify-center text-sm">🤖</div>
+                </div>
+
+                <div className="flex items-center gap-2 text-xs text-gray-500">
+                  <span className="px-2 py-1 bg-green-500/10 text-green-400 rounded">browser_navigate</span>
+                  <span className="px-2 py-1 bg-blue-500/10 text-blue-400 rounded">browser_query</span>
+                  <span>executed in 2.3s</span>
+                </div>
+              </div>
+            </div>
+          </motion.div>
         </div>
       </section>
 
-      {/* Features Section */}
-      <section id="features" className="py-20 px-4 sm:px-6 lg:px-8">
+      {/* Active Channels Section */}
+      <section id="channels" className="py-20 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-16">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="text-center mb-16"
+          >
             <h2 className="text-3xl sm:text-4xl font-bold text-white mb-4">
-              Built for Enterprise Security
+              One AI, Every Channel
             </h2>
             <p className="text-lg text-gray-400 max-w-2xl mx-auto">
-              Every feature designed with security, compliance, and scalability in mind.
+              Deploy once, connect everywhere. Your AI assistant works across all major platforms.
             </p>
-          </div>
+          </motion.div>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
-            {features.map((feature, index) => (
-              <div
-                key={index}
-                className="p-6 bg-gray-900/50 border border-gray-800 rounded-2xl hover:border-gray-700 transition-all hover:-translate-y-1"
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {channels.map((channel, index) => (
+              <motion.div
+                key={channel.name}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: index * 0.1 }}
+                className="group relative p-6 bg-white/5 border border-white/10 rounded-2xl hover:border-white/20 transition-all hover:-translate-y-1"
               >
-                <div className="text-4xl mb-4">{feature.icon}</div>
-                <h3 className="text-xl font-semibold text-white mb-2">{feature.title}</h3>
-                <p className="text-gray-400">{feature.description}</p>
-              </div>
+                <div className={`absolute inset-0 bg-gradient-to-br ${channel.color} opacity-0 group-hover:opacity-5 rounded-2xl transition-opacity`} />
+                <div className="relative">
+                  <div className="flex items-center justify-between mb-4">
+                    <span className="text-3xl">{channel.icon}</span>
+                    <span className="flex items-center gap-1 text-xs text-green-400">
+                      <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
+                      {channel.status}
+                    </span>
+                  </div>
+                  <h3 className="text-xl font-semibold text-white mb-1">{channel.name}</h3>
+                  <p className="text-gray-400 text-sm">{channel.users} active users</p>
+                </div>
+              </motion.div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* Pricing Section */}
-      <section id="pricing" className="py-20 px-4 sm:px-6 lg:px-8 bg-gray-900/30">
+      {/* Features Section */}
+      <section id="features" className="py-20 px-4 sm:px-6 lg:px-8 bg-white/[0.02]">
         <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-16">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="text-center mb-16"
+          >
+            <h2 className="text-3xl sm:text-4xl font-bold text-white mb-4">
+              Powerful Features, Built-in
+            </h2>
+            <p className="text-lg text-gray-400 max-w-2xl mx-auto">
+              Everything you need to build secure, capable AI assistants.
+            </p>
+          </motion.div>
+
+          <div className="grid md:grid-cols-2 gap-6">
+            {features.map((feature, index) => (
+              <motion.div
+                key={feature.title}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: index * 0.1 }}
+                className="group p-8 bg-white/5 border border-white/10 rounded-2xl hover:border-white/20 transition-all"
+              >
+                <div className={`inline-flex items-center justify-center w-12 h-12 rounded-xl bg-gradient-to-br ${feature.gradient} mb-6`}>
+                  <span className="text-2xl">{feature.icon}</span>
+                </div>
+                <h3 className="text-xl font-semibold text-white mb-3">{feature.title}</h3>
+                <p className="text-gray-400 leading-relaxed">{feature.description}</p>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Comparison Section */}
+      <section className="py-20 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-4xl mx-auto">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="text-center mb-16"
+          >
+            <h2 className="text-3xl sm:text-4xl font-bold text-white mb-4">
+              Why SecureAgent?
+            </h2>
+            <p className="text-lg text-gray-400 max-w-2xl mx-auto">
+              See how we compare to other AI assistants.
+            </p>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="bg-white/5 border border-white/10 rounded-2xl overflow-hidden"
+          >
+            <div className="grid grid-cols-4 gap-4 p-4 bg-white/5 border-b border-white/10 text-sm font-medium">
+              <div className="text-gray-400">Feature</div>
+              <div className="text-center text-white">SecureAgent</div>
+              <div className="text-center text-gray-400">ChatGPT</div>
+              <div className="text-center text-gray-400">Claude</div>
+            </div>
+            {comparison.map((row, index) => (
+              <div key={row.feature} className={`grid grid-cols-4 gap-4 p-4 text-sm ${index !== comparison.length - 1 ? 'border-b border-white/5' : ''}`}>
+                <div className="text-gray-300">{row.feature}</div>
+                <div className="text-center">
+                  {row.secureAgent ? (
+                    <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-green-500/20 text-green-400">✓</span>
+                  ) : (
+                    <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-red-500/20 text-red-400">✗</span>
+                  )}
+                </div>
+                <div className="text-center">
+                  {row.chatgpt ? (
+                    <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-green-500/20 text-green-400">✓</span>
+                  ) : (
+                    <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-red-500/20 text-red-400">✗</span>
+                  )}
+                </div>
+                <div className="text-center">
+                  {row.claude ? (
+                    <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-green-500/20 text-green-400">✓</span>
+                  ) : (
+                    <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-red-500/20 text-red-400">✗</span>
+                  )}
+                </div>
+              </div>
+            ))}
+          </motion.div>
+        </div>
+      </section>
+
+      {/* Pricing Section */}
+      <section id="pricing" className="py-20 px-4 sm:px-6 lg:px-8 bg-white/[0.02]">
+        <div className="max-w-7xl mx-auto">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="text-center mb-16"
+          >
             <h2 className="text-3xl sm:text-4xl font-bold text-white mb-4">
               Simple, Transparent Pricing
             </h2>
             <p className="text-lg text-gray-400 max-w-2xl mx-auto">
               Start free, scale as you grow. No hidden fees.
             </p>
-          </div>
+          </motion.div>
 
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
             {pricing.map((tier, index) => (
-              <div
-                key={index}
-                className={`p-6 rounded-2xl transition-all ${
+              <motion.div
+                key={tier.name}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: index * 0.1 }}
+                className={`relative p-6 rounded-2xl transition-all ${
                   tier.highlighted
-                    ? "bg-gradient-to-b from-blue-600/20 to-blue-600/5 border-2 border-blue-500 scale-105"
-                    : "bg-gray-900/50 border border-gray-800 hover:border-gray-700"
+                    ? 'bg-gradient-to-b from-blue-600/20 to-transparent border-2 border-blue-500 scale-105'
+                    : 'bg-white/5 border border-white/10 hover:border-white/20'
                 }`}
               >
                 {tier.highlighted && (
-                  <div className="text-blue-400 text-sm font-semibold mb-2">Most Popular</div>
+                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 bg-gradient-to-r from-blue-600 to-cyan-600 rounded-full text-xs font-semibold">
+                    Most Popular
+                  </div>
                 )}
                 <h3 className="text-xl font-semibold text-white">{tier.name}</h3>
                 <div className="mt-4 mb-2">
@@ -223,108 +540,82 @@ export default function Home() {
                     </li>
                   ))}
                 </ul>
-                <button
-                  className={`w-full py-3 rounded-lg font-semibold transition-all ${
+                <Link
+                  href={tier.name === 'Enterprise' ? '#' : '/dashboard/admin'}
+                  className={`block w-full py-3 rounded-xl font-semibold text-center transition-all ${
                     tier.highlighted
-                      ? "bg-blue-600 hover:bg-blue-500 text-white"
-                      : "bg-gray-800 hover:bg-gray-700 text-white border border-gray-700"
+                      ? 'bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-500 hover:to-cyan-500 text-white'
+                      : 'bg-white/5 hover:bg-white/10 text-white border border-white/10'
                   }`}
                 >
                   {tier.cta}
-                </button>
-              </div>
+                </Link>
+              </motion.div>
             ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Tech Stack Section */}
-      <section id="tech" className="py-20 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl sm:text-4xl font-bold text-white mb-4">
-              Battle-Tested Technology
-            </h2>
-            <p className="text-lg text-gray-400 max-w-2xl mx-auto">
-              Built with modern tools and rigorous testing standards.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-8">
-            {techStats.map((stat, index) => (
-              <div key={index} className="text-center p-6 bg-gray-900/30 rounded-2xl border border-gray-800">
-                <div className="text-4xl sm:text-5xl font-bold bg-gradient-to-r from-blue-500 to-cyan-400 bg-clip-text text-transparent mb-2">
-                  {stat.value}
-                </div>
-                <div className="text-gray-400">{stat.label}</div>
-              </div>
-            ))}
-          </div>
-
-          <div className="mt-12 p-8 bg-gray-900/30 rounded-2xl border border-gray-800">
-            <div className="flex flex-wrap justify-center gap-4">
-              {["TypeScript", "Node.js 20+", "Vitest", "Zod", "Pino", "SQLite", "Claude API", "OpenAI API"].map((tech, index) => (
-                <span
-                  key={index}
-                  className="px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-gray-300 text-sm"
-                >
-                  {tech}
-                </span>
-              ))}
-            </div>
           </div>
         </div>
       </section>
 
       {/* CTA Section */}
       <section className="py-20 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-4xl mx-auto text-center">
-          <h2 className="text-3xl sm:text-4xl font-bold text-white mb-6">
-            Ready to Build Secure AI Assistants?
-          </h2>
-          <p className="text-lg text-gray-400 mb-8">
-            Get started in minutes with our comprehensive documentation and examples.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <a
-              href="https://github.com/Francosimon53/secureagent"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="px-8 py-4 bg-blue-600 hover:bg-blue-500 rounded-xl font-semibold text-lg transition-all hover:scale-105"
-            >
-              View on GitHub
-            </a>
-            <a
-              href="https://secureagent.vercel.app/api"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="px-8 py-4 bg-gray-800 hover:bg-gray-700 border border-gray-700 rounded-xl font-semibold text-lg transition-all hover:scale-105"
-            >
-              API Documentation
-            </a>
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          className="max-w-4xl mx-auto text-center"
+        >
+          <div className="relative p-12 rounded-3xl bg-gradient-to-br from-blue-600/20 via-cyan-600/10 to-transparent border border-white/10 overflow-hidden">
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(59,130,246,0.1),transparent_50%)]" />
+            <div className="relative">
+              <h2 className="text-3xl sm:text-4xl font-bold text-white mb-4">
+                Ready to Get Started?
+              </h2>
+              <p className="text-lg text-gray-400 mb-8 max-w-xl mx-auto">
+                Deploy your own AI assistant in minutes. No credit card required for the free tier.
+              </p>
+              <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                <Link
+                  href="/dashboard/chat"
+                  className="px-8 py-4 bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-500 hover:to-cyan-500 rounded-xl font-semibold text-lg transition-all hover:shadow-xl hover:shadow-blue-500/25 hover:scale-105"
+                >
+                  Try Web Chat Free
+                </Link>
+                <a
+                  href="https://t.me/Secure_Agent_bot"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="px-8 py-4 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl font-semibold text-lg transition-all hover:scale-105"
+                >
+                  Try on Telegram
+                </a>
+              </div>
+            </div>
           </div>
-        </div>
+        </motion.div>
       </section>
 
       {/* Footer */}
-      <footer className="py-12 px-4 sm:px-6 lg:px-8 border-t border-gray-800">
+      <footer className="py-12 px-4 sm:px-6 lg:px-8 border-t border-white/5">
         <div className="max-w-7xl mx-auto">
-          <div className="grid md:grid-cols-4 gap-8 mb-8">
+          <div className="grid md:grid-cols-4 gap-8 mb-12">
             <div>
-              <div className="flex items-center gap-2 mb-4">
-                <span className="text-2xl">🛡️</span>
-                <span className="text-xl font-bold text-white">SecureAgent</span>
-              </div>
+              <Link href="/" className="flex items-center gap-2 mb-4">
+                <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center text-lg font-bold">
+                  S
+                </div>
+                <span className="text-xl font-bold">SecureAgent</span>
+              </Link>
               <p className="text-gray-500 text-sm">
-                Enterprise-grade AI assistant framework with security at its core.
+                Enterprise-grade AI assistant with security at its core.
               </p>
             </div>
             <div>
               <h4 className="font-semibold text-white mb-4">Product</h4>
               <ul className="space-y-2 text-gray-400 text-sm">
                 <li><a href="#features" className="hover:text-white transition-colors">Features</a></li>
+                <li><a href="#channels" className="hover:text-white transition-colors">Channels</a></li>
                 <li><a href="#pricing" className="hover:text-white transition-colors">Pricing</a></li>
-                <li><a href="#tech" className="hover:text-white transition-colors">Tech Stack</a></li>
+                <li><Link href="/dashboard" className="hover:text-white transition-colors">Dashboard</Link></li>
               </ul>
             </div>
             <div>
@@ -336,14 +627,14 @@ export default function Home() {
               </ul>
             </div>
             <div>
-              <h4 className="font-semibold text-white mb-4">Contact</h4>
+              <h4 className="font-semibold text-white mb-4">Connect</h4>
               <ul className="space-y-2 text-gray-400 text-sm">
-                <li><a href="https://github.com/Francosimon53/secureagent/issues" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">Report Issue</a></li>
-                <li><a href="https://github.com/Francosimon53/secureagent/discussions" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">Discussions</a></li>
+                <li><a href="https://t.me/Secure_Agent_bot" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">Telegram Bot</a></li>
+                <li><a href="https://github.com/Francosimon53/secureagent/discussions" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">Community</a></li>
               </ul>
             </div>
           </div>
-          <div className="pt-8 border-t border-gray-800 flex flex-col sm:flex-row justify-between items-center gap-4">
+          <div className="pt-8 border-t border-white/5 flex flex-col sm:flex-row justify-between items-center gap-4">
             <p className="text-gray-500 text-sm">
               &copy; {new Date().getFullYear()} SecureAgent. MIT License.
             </p>
@@ -356,6 +647,16 @@ export default function Home() {
               >
                 <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
                   <path fillRule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z" clipRule="evenodd" />
+                </svg>
+              </a>
+              <a
+                href="https://t.me/Secure_Agent_bot"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-gray-400 hover:text-white transition-colors"
+              >
+                <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.38-.94-2.23-1.5-.99-.65-.35-1.01.22-1.59.15-.15 2.71-2.48 2.76-2.69a.2.2 0 00-.05-.18c-.06-.05-.14-.03-.21-.02-.09.02-1.49.95-4.22 2.79-.4.27-.76.41-1.08.4-.36-.01-1.04-.2-1.55-.37-.63-.2-1.12-.31-1.08-.66.02-.18.27-.36.74-.55 2.92-1.27 4.86-2.11 5.83-2.51 2.78-1.16 3.35-1.36 3.73-1.36.08 0 .27.02.39.12.1.08.13.19.14.27-.01.06.01.24 0 .38z"/>
                 </svg>
               </a>
             </div>
