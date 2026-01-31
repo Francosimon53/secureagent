@@ -82,6 +82,7 @@ const pricing = [
       'Community support',
     ],
     cta: 'Get Started',
+    href: '/dashboard/chat',
     highlighted: false,
   },
   {
@@ -100,6 +101,7 @@ const pricing = [
       'Priority support',
     ],
     cta: 'Start Free Trial',
+    href: '/dashboard/admin',
     highlighted: true,
   },
   {
@@ -118,6 +120,7 @@ const pricing = [
       '99.9% SLA',
     ],
     cta: 'Start Free Trial',
+    href: '/dashboard/admin',
     highlighted: false,
   },
   {
@@ -136,6 +139,7 @@ const pricing = [
       'On-premise available',
     ],
     cta: 'Contact Sales',
+    href: 'mailto:contact@secureagent.dev?subject=Enterprise%20Inquiry',
     highlighted: false,
   },
 ];
@@ -540,16 +544,29 @@ export default function Home() {
                     </li>
                   ))}
                 </ul>
-                <Link
-                  href={tier.name === 'Enterprise' ? '#' : '/dashboard/admin'}
-                  className={`block w-full py-3 rounded-xl font-semibold text-center transition-all ${
-                    tier.highlighted
-                      ? 'bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-500 hover:to-cyan-500 text-white'
-                      : 'bg-white/5 hover:bg-white/10 text-white border border-white/10'
-                  }`}
-                >
-                  {tier.cta}
-                </Link>
+                {tier.href.startsWith('mailto:') ? (
+                  <a
+                    href={tier.href}
+                    className={`block w-full py-3 rounded-xl font-semibold text-center transition-all ${
+                      tier.highlighted
+                        ? 'bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-500 hover:to-cyan-500 text-white'
+                        : 'bg-white/5 hover:bg-white/10 text-white border border-white/10'
+                    }`}
+                  >
+                    {tier.cta}
+                  </a>
+                ) : (
+                  <Link
+                    href={tier.href}
+                    className={`block w-full py-3 rounded-xl font-semibold text-center transition-all ${
+                      tier.highlighted
+                        ? 'bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-500 hover:to-cyan-500 text-white'
+                        : 'bg-white/5 hover:bg-white/10 text-white border border-white/10'
+                    }`}
+                  >
+                    {tier.cta}
+                  </Link>
+                )}
               </motion.div>
             ))}
           </div>
@@ -630,7 +647,7 @@ export default function Home() {
               <h4 className="font-semibold text-white mb-4">Connect</h4>
               <ul className="space-y-2 text-gray-400 text-sm">
                 <li><a href="https://t.me/Secure_Agent_bot" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">Telegram Bot</a></li>
-                <li><a href="https://github.com/Francosimon53/secureagent/discussions" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">Community</a></li>
+                <li><a href="https://github.com/Francosimon53/secureagent/issues" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">Community</a></li>
               </ul>
             </div>
           </div>
