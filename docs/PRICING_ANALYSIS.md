@@ -183,36 +183,45 @@ Total per session: ~$0.135
 |---|---|
 | **Price** | $0/month |
 | **Target** | Trial users, hobbyists |
-| **Limits** | 50 messages/month, 1 channel, no voice |
-| **Cost to Serve** | ~$0.70/user |
+| **Limits** | 30 messages/month, 1 channel, no voice |
+| **Cost to Serve** | ~$0.40/user |
 | **Purpose** | Acquisition funnel |
 
 #### Starter Plan
 | | |
 |---|---|
-| **Price** | $9/month |
+| **Price** | $19/month |
 | **Target** | Casual users |
-| **Limits** | 500 messages/month, 2 channels, 50 voice responses |
-| **Cost to Serve** | ~$3.50/user |
-| **Margin** | ~61% |
+| **Limits** | 300 messages/month, 2 channels, 25 voice responses |
+| **Cost to Serve** | ~$6.30/user |
+| **Margin** | ~67% |
 
 #### Pro Plan
 | | |
 |---|---|
-| **Price** | $29/month |
+| **Price** | $49/month |
 | **Target** | Power users, freelancers |
-| **Limits** | 2,000 messages/month, all channels, 200 voice responses, 50 browser tasks |
-| **Cost to Serve** | ~$15/user |
-| **Margin** | ~48% |
+| **Limits** | 1,000 messages/month, all channels, 100 voice responses, 25 browser tasks |
+| **Cost to Serve** | ~$22.75/user |
+| **Margin** | ~54% |
+
+#### Power Plan
+| | |
+|---|---|
+| **Price** | $99/month |
+| **Target** | Heavy users |
+| **Limits** | 3,000 messages/month, all channels, 250 voice responses, 75 browser tasks |
+| **Cost to Serve** | ~$47.00/user |
+| **Margin** | ~53% |
 
 #### Unlimited Plan
 | | |
 |---|---|
-| **Price** | $79/month |
-| **Target** | Heavy users, small teams |
-| **Limits** | Unlimited messages*, all features, 500 voice, 200 browser |
-| **Cost to Serve** | ~$40/user (avg) |
-| **Margin** | ~49% |
+| **Price** | $199/month |
+| **Target** | Teams & agencies |
+| **Limits** | 10,000 messages/month*, all features, 500 voice, 150 browser |
+| **Cost to Serve** | ~$95/user (avg) |
+| **Margin** | ~52% |
 | *Fair use policy applies |
 
 ### 4.2 Business/Team Plans
@@ -220,20 +229,20 @@ Total per session: ~$0.135
 #### Team Plan
 | | |
 |---|---|
-| **Price** | $25/user/month (min 3 users) |
+| **Price** | $39/user/month (min 3 users) |
 | **Target** | Small businesses |
-| **Limits** | 1,000 messages/user, shared channels, team analytics |
-| **Cost to Serve** | ~$12/user |
-| **Margin** | ~52% |
+| **Limits** | 500 messages/user, 50 voice/user, 15 browser/user, shared channels, team analytics |
+| **Cost to Serve** | ~$18/user |
+| **Margin** | ~54% |
 
 #### Business Plan
 | | |
 |---|---|
-| **Price** | $49/user/month (min 5 users) |
+| **Price** | $79/user/month (min 5 users) |
 | **Target** | Growing companies |
-| **Limits** | 3,000 messages/user, SSO, priority support, API access |
-| **Cost to Serve** | ~$25/user |
-| **Margin** | ~49% |
+| **Limits** | 3,000 messages/user, shared voice/browser pools, SSO, priority support, API access |
+| **Cost to Serve** | ~$38/user |
+| **Margin** | ~52% |
 
 ### 4.3 Enterprise Plans
 
@@ -322,12 +331,11 @@ For users who exceed plan limits:
 
 | Plan | SecureAgent | ChatGPT | Claude | Gemini |
 |------|-------------|---------|--------|--------|
-| Free | 50 msg | Limited | None | Limited |
-| ~$10 | Starter | - | - | - |
-| ~$20 | - | Plus | Pro | Advanced |
-| ~$30 | Pro | - | - | - |
-| ~$80 | Unlimited | - | - | - |
-| ~$200 | - | Pro | - | - |
+| Free | 30 msg | Limited | None | Limited |
+| ~$20 | Starter ($19) | Plus | Pro | Advanced |
+| ~$50 | Pro ($49) | - | - | - |
+| ~$100 | Power ($99) | - | - | - |
+| ~$200 | Unlimited ($199) | Pro | - | - |
 
 **SecureAgent Value Proposition:**
 - More features at every price point
@@ -335,6 +343,7 @@ For users who exceed plan limits:
 - Browser automation included
 - Voice features included
 - Enterprise features built-in
+- ~50% margins at full usage ensure sustainable business
 
 ---
 
