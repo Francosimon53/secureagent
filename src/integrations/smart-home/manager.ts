@@ -19,13 +19,13 @@ import type {
   DeviceEvent,
   DiscoveredDevice,
   DeviceType,
-} from './types';
-import type { SmartHomeConfig } from './config';
-import { PhilipsHueIntegration } from './hue';
-import { HomeAssistantIntegration } from './home-assistant';
-import { KasaIntegration, TapoIntegration } from './smart-plugs';
-import { NestIntegration, EcobeeIntegration } from './thermostat';
-import { RingIntegration } from './security';
+} from './types.js';
+import type { SmartHomeConfig } from './config.js';
+import { PhilipsHueIntegration } from './hue.js';
+import { HomeAssistantIntegration } from './home-assistant.js';
+import { KasaIntegration, TapoIntegration } from './smart-plugs.js';
+import { NestIntegration, EcobeeIntegration } from './thermostat.js';
+import { RingIntegration } from './security.js';
 
 type EventCallback = (event: DeviceEvent) => void;
 

@@ -7,8 +7,8 @@
 import type {
   ThermostatDevice,
   CommandResult,
-} from './types';
-import type { NestConfig, EcobeeConfig } from './config';
+} from './types.js';
+import type { NestConfig, EcobeeConfig } from './config.js';
 
 // Nest API types
 interface NestDevice {
@@ -125,7 +125,14 @@ export class NestIntegration {
       }),
     });
 
-    const tokens = await response.json();
+    interface TokenResponse {
+      access_token: string;
+      refresh_token: string;
+      expires_in: number;
+      error?: string;
+      error_description?: string;
+    }
+    const tokens = (await response.json()) as TokenResponse;
     if (tokens.error) {
       throw new Error(`Token exchange failed: ${tokens.error_description}`);
     }
@@ -155,7 +162,13 @@ export class NestIntegration {
       }),
     });
 
-    const tokens = await response.json();
+    interface TokenResponse {
+      access_token: string;
+      expires_in: number;
+      error?: string;
+      error_description?: string;
+    }
+    const tokens = (await response.json()) as TokenResponse;
     if (tokens.error) {
       throw new Error(`Token refresh failed: ${tokens.error_description}`);
     }
@@ -194,7 +207,7 @@ export class NestIntegration {
       throw new Error(`Nest API error: ${response.status}`);
     }
 
-    return response.json();
+    return (await response.json()) as T;
   }
 
   /**
@@ -387,7 +400,7 @@ export class EcobeeIntegration {
     const response = await fetch(
       `https://api.ecobee.com/authorize?response_type=ecobeePin&client_id=${this.config.apiKey}&scope=smartWrite`
     );
-    const result = await response.json();
+    const result = (await response.json()) as { ecobeePin: string; code: string };
     return { pin: result.ecobeePin, code: result.code };
   }
 
@@ -405,7 +418,14 @@ export class EcobeeIntegration {
       }),
     });
 
-    const tokens = await response.json();
+    interface TokenResponse {
+      access_token: string;
+      refresh_token: string;
+      expires_in: number;
+      error?: string;
+      error_description?: string;
+    }
+    const tokens = (await response.json()) as TokenResponse;
     if (tokens.error) {
       throw new Error(`Token exchange failed: ${tokens.error_description}`);
     }
@@ -433,7 +453,14 @@ export class EcobeeIntegration {
       }),
     });
 
-    const tokens = await response.json();
+    interface TokenResponse {
+      access_token: string;
+      refresh_token: string;
+      expires_in: number;
+      error?: string;
+      error_description?: string;
+    }
+    const tokens = (await response.json()) as TokenResponse;
     if (tokens.error) {
       throw new Error(`Token refresh failed: ${tokens.error_description}`);
     }
@@ -473,7 +500,7 @@ export class EcobeeIntegration {
       throw new Error(`Ecobee API error: ${response.status}`);
     }
 
-    return response.json();
+    return (await response.json()) as T;
   }
 
   /**

@@ -9,8 +9,8 @@ import type {
   AlarmDevice,
   CommandResult,
   DeviceEvent,
-} from './types';
-import type { RingConfig } from './config';
+} from './types.js';
+import type { RingConfig } from './config.js';
 
 // Ring API types
 interface RingDevice {
@@ -120,7 +120,7 @@ export class RingIntegration {
       throw new Error('Ring authentication failed');
     }
 
-    const tokens = await response.json();
+    const tokens = (await response.json()) as { access_token: string; refresh_token: string };
     this.accessToken = tokens.access_token;
     this.refreshToken = tokens.refresh_token;
   }
@@ -162,7 +162,7 @@ export class RingIntegration {
       throw new Error(`Ring API error: ${response.status}`);
     }
 
-    return response.json();
+    return (await response.json()) as T;
   }
 
   /**

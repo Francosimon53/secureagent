@@ -34,7 +34,7 @@ export type {
   CommandResult,
   DeviceEvent,
   DiscoveredDevice,
-} from './types';
+} from './types.js';
 
 // Configuration
 export {
@@ -47,7 +47,7 @@ export {
   RingConfigSchema,
   SmartHomeConfigSchema,
   defaultSmartHomeConfig,
-} from './config';
+} from './config.js';
 
 export type {
   HueConfig,
@@ -58,25 +58,25 @@ export type {
   EcobeeConfig,
   RingConfig,
   SmartHomeConfig,
-} from './config';
+} from './config.js';
 
 // Integrations
-export { PhilipsHueIntegration } from './hue';
-export { HomeAssistantIntegration } from './home-assistant';
-export { KasaIntegration, TapoIntegration } from './smart-plugs';
-export { NestIntegration, EcobeeIntegration } from './thermostat';
-export { RingIntegration, IPCameraIntegration } from './security';
+export { PhilipsHueIntegration } from './hue.js';
+export { HomeAssistantIntegration } from './home-assistant.js';
+export { KasaIntegration, TapoIntegration } from './smart-plugs.js';
+export { NestIntegration, EcobeeIntegration } from './thermostat.js';
+export { RingIntegration, IPCameraIntegration } from './security.js';
 
 // Manager
-export { SmartHomeManager } from './manager';
+export { SmartHomeManager } from './manager.js';
 
 // Tools
 export {
   createSmartHomeTools,
   executeSmartHomeTool,
-} from './tools';
+} from './tools.js';
 
 export type {
   ToolDefinition,
   ToolResult,
-} from './tools';
+} from './tools.js';

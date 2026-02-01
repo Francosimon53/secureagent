@@ -14,8 +14,8 @@ import type {
   PlugDevice,
   CommandResult,
   DeviceType,
-} from './types';
-import type { HomeAssistantConfig } from './config';
+} from './types.js';
+import type { HomeAssistantConfig } from './config.js';
 
 // Home Assistant API types
 interface HAState {
@@ -91,7 +91,7 @@ export class HomeAssistantIntegration {
     body?: unknown
   ): Promise<T> {
     const url = `${this.config.url}${endpoint}`;
-    const headers: HeadersInit = {
+    const headers: Record<string, string> = {
       'Authorization': `Bearer ${this.config.accessToken}`,
       'Content-Type': 'application/json',
     };
@@ -106,7 +106,7 @@ export class HomeAssistantIntegration {
       throw new Error(`Home Assistant API error: ${response.status} ${response.statusText}`);
     }
 
-    return response.json();
+    return (await response.json()) as T;
   }
 
   /**

@@ -10,8 +10,8 @@ import type {
   Scene,
   CommandResult,
   DiscoveredDevice,
-} from './types';
-import type { HueConfig } from './config';
+} from './types.js';
+import type { HueConfig } from './config.js';
 
 // Hue API types
 interface HueBridge {
@@ -105,7 +105,7 @@ export class PhilipsHueIntegration {
     try {
       const response = await fetch('https://discovery.meethue.com/');
       if (!response.ok) throw new Error('Discovery failed');
-      return await response.json();
+      return (await response.json()) as HueBridge[];
     } catch (error) {
       console.error('Bridge discovery failed:', error);
       return [];
@@ -129,7 +129,10 @@ export class PhilipsHueIntegration {
         }),
       });
 
-      const result = await response.json();
+      const result = (await response.json()) as Array<{
+        error?: { type: number; description: string };
+        success?: { username: string; clientkey?: string };
+      }>;
 
       if (result[0]?.error) {
         if (result[0].error.type === 101) {
@@ -176,11 +179,11 @@ export class PhilipsHueIntegration {
     const result = await response.json();
 
     // Check for errors in response
-    if (Array.isArray(result) && result[0]?.error) {
-      throw new Error(result[0].error.description);
+    if (Array.isArray(result) && (result as Array<{ error?: { description: string } }>)[0]?.error) {
+      throw new Error((result as Array<{ error: { description: string } }>)[0].error.description);
     }
 
-    return result;
+    return result as T;
   }
 
   /**

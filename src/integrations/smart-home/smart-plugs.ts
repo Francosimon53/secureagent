@@ -8,8 +8,8 @@ import type {
   PlugDevice,
   CommandResult,
   DiscoveredDevice,
-} from './types';
-import type { KasaConfig, TapoConfig } from './config';
+} from './types.js';
+import type { KasaConfig, TapoConfig } from './config.js';
 
 // Kasa device info structure
 interface KasaDeviceInfo {
@@ -158,7 +158,7 @@ export class KasaIntegration {
       // For browser/Node.js compatibility, we'd use a backend proxy
       fetch(`http://${ip}:9999/kasa`, {
         method: 'POST',
-        body: encrypted.buffer as BodyInit,
+        body: encrypted.buffer.slice(encrypted.byteOffset, encrypted.byteOffset + encrypted.byteLength) as ArrayBuffer,
         signal: AbortSignal.timeout(timeout),
       })
         .then((res) => res.arrayBuffer())
@@ -430,7 +430,12 @@ export class TapoIntegration {
       }),
     });
 
-    const result = await response.json();
+    interface AuthResponse {
+      error_code: number;
+      msg?: string;
+      result: { token: string };
+    }
+    const result = (await response.json()) as AuthResponse;
     if (result.error_code !== 0) {
       throw new Error(`Tapo auth failed: ${result.msg}`);
     }
@@ -455,7 +460,18 @@ export class TapoIntegration {
       }),
     });
 
-    const result = await response.json();
+    interface DeviceListResponse {
+      result?: {
+        deviceList: Array<{
+          deviceId: string;
+          alias: string;
+          deviceMac: string;
+          deviceModel: string;
+          status: number;
+        }>;
+      };
+    }
+    const result = (await response.json()) as DeviceListResponse;
     const discovered: DiscoveredDevice[] = [];
 
     if (result.result?.deviceList) {
@@ -517,12 +533,17 @@ export class TapoIntegration {
       }),
     });
 
-    const result = await response.json();
+    interface CommandResponse {
+      error_code: number;
+      msg?: string;
+      result: { responseData: string };
+    }
+    const result = (await response.json()) as CommandResponse;
     if (result.error_code !== 0) {
       throw new Error(`Tapo command failed: ${result.msg}`);
     }
 
-    return JSON.parse(result.result.responseData);
+    return JSON.parse(result.result.responseData) as Record<string, unknown>;
   }
 
   /**

@@ -4,7 +4,7 @@
  * AI agent tools for controlling smart home devices.
  */
 
-import type { SmartHomeManager } from './manager';
+import type { SmartHomeManager } from './manager.js';
 import type {
   SmartDevice,
   LightDevice,
@@ -12,7 +12,7 @@ import type {
   CameraDevice,
   AlarmDevice,
   DeviceType,
-} from './types';
+} from './types.js';
 
 export interface ToolDefinition {
   name: string;
