@@ -11,6 +11,7 @@ const navigation = [
   { name: 'Sessions', href: '/dashboard/sessions', icon: '👥' },
   { name: 'Channels', href: '/dashboard/channels', icon: '📡' },
   { name: 'Integrations', href: '/dashboard/integrations', icon: '🔗' },
+  { name: 'Smart Home', href: '/dashboard/smart-home', icon: '🏠' },
   { name: 'Social Media', href: '/dashboard/social', icon: '📱' },
   { name: 'Skills', href: '/dashboard/skills', icon: '⚡' },
   { name: 'Marketplace', href: '/dashboard/marketplace', icon: '🏪' },
