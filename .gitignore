@@ -9,3 +9,6 @@ coverage/
 .turbo/
 .vercel
 .env*.local
+
+# Build artifacts
+*.zip
