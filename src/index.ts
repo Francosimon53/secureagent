@@ -2058,3 +2058,45 @@ export {
   type CreateReminderInput,
   type UpdateReminderInput,
 } from './integrations/index.js';
+
+// =============================================================================
+// SKILL MARKETPLACE
+// =============================================================================
+
+export {
+  // Types
+  SKILL_CATEGORIES,
+  type SkillCategory,
+  type SkillStatus,
+  type SkillParameter as MarketplaceSkillParameter,
+  type SkillConfig,
+  type SkillPermission,
+  type MarketplaceSkill,
+  type SkillVersion,
+  type InstalledSkill,
+  type SkillRating,
+  type SkillSubmission,
+  type MarketplaceSearchOptions,
+  type PaginatedResponse,
+  type SkillCard,
+  type TrendingMetrics,
+  type ValidationResult as MarketplaceValidationResult,
+  type ValidationError as MarketplaceValidationError,
+  type ValidationWarning,
+  type MarketplaceStats,
+  // Store
+  type MarketplaceStore,
+  InMemoryMarketplaceStore,
+  createMarketplaceStore,
+  getMarketplaceStore,
+  // Validation
+  validateSkillSubmission,
+  validateVersionBump,
+  sanitizeSkillForDisplay,
+  // Service
+  MarketplaceService,
+  MarketplaceError,
+  type MarketplaceServiceConfig,
+  getMarketplaceService,
+  createMarketplaceService,
+} from './skills/marketplace/index.js';

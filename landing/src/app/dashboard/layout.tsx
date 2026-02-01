@@ -12,6 +12,7 @@ const navigation = [
   { name: 'Channels', href: '/dashboard/channels', icon: '📡' },
   { name: 'Integrations', href: '/dashboard/integrations', icon: '🔗' },
   { name: 'Skills', href: '/dashboard/skills', icon: '⚡' },
+  { name: 'Marketplace', href: '/dashboard/marketplace', icon: '🏪' },
   { name: 'Extension', href: '/dashboard/extension', icon: '🧩' },
   { name: 'Logs', href: '/dashboard/logs', icon: '📋' },
   { name: 'Admin', href: '/dashboard/admin', icon: '🏢' },
