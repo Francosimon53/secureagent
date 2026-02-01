@@ -994,6 +994,73 @@ const DevToolsConfigSchema = z.object({
   }).optional(),
 });
 
+// Autonomy configuration
+const AutonomyConfigSchema = z.object({
+  enabled: z.boolean().default(true),
+
+  execution: z.object({
+    maxIterations: z.number().min(1).max(1000).default(50),
+    maxStepsPerPlan: z.number().min(1).max(100).default(20),
+    stepTimeout: z.number().min(1000).max(3600000).default(60000),
+    executionTimeout: z.number().min(60000).max(86400000).default(3600000),
+    enableParallelSteps: z.boolean().default(false),
+  }).default({}),
+
+  correction: z.object({
+    maxRetriesPerStep: z.number().min(0).max(10).default(3),
+    enableSessionLearning: z.boolean().default(true),
+    learningDecayMs: z.number().min(0).default(3600000),
+    maxLearnedPatterns: z.number().min(0).max(1000).default(100),
+    retryBackoffMs: z.number().min(100).max(60000).default(1000),
+    backoffMultiplier: z.number().min(1).max(5).default(2),
+  }).default({}),
+
+  approval: z.object({
+    defaultPermissionLevel: z.enum(['always_ask', 'sensitive_only', 'never_ask']).default('sensitive_only'),
+    sensitiveCategories: z.array(z.enum([
+      'data_modification',
+      'external_communication',
+      'financial',
+      'credential_access',
+      'irreversible_action',
+      'system_change',
+      'data_export',
+    ])).default(['data_modification', 'financial', 'credential_access', 'irreversible_action']),
+    approvalTimeout: z.number().min(10000).max(3600000).default(300000),
+    suggestAlternatives: z.boolean().default(true),
+    maxAlternatives: z.number().min(0).max(10).default(3),
+    alwaysRequireApprovalPatterns: z.array(z.string()).default([]),
+    neverRequireApprovalPatterns: z.array(z.string()).default([]),
+  }).default({}),
+
+  planning: z.object({
+    maxPlanComplexity: z.number().min(1).max(50).default(20),
+    enableDynamicReplanning: z.boolean().default(true),
+    planCacheTimeout: z.number().min(0).max(86400000).default(3600000),
+    maxSubgoals: z.number().min(1).max(20).default(10),
+  }).default({}),
+
+  chaining: z.object({
+    maxChainLength: z.number().min(1).max(100).default(50),
+    variableExpirationMs: z.number().min(0).default(3600000),
+    enableConditionalBranching: z.boolean().default(true),
+    maxParallelBranches: z.number().min(1).max(10).default(5),
+  }).default({}),
+
+  longRunning: z.object({
+    checkpointInterval: z.number().min(10000).max(3600000).default(300000),
+    enableWebhooks: z.boolean().default(true),
+    maxConcurrentExecutions: z.number().min(1).max(100).default(10),
+    staleExecutionTimeout: z.number().min(60000).max(86400000).default(3600000),
+  }).default({}),
+
+  store: z.object({
+    type: z.enum(['memory', 'database']).default('memory'),
+    executionRetentionMs: z.number().min(0).default(604800000),
+    planRetentionMs: z.number().min(0).default(604800000),
+  }).default({}),
+});
+
 // Enterprise configuration
 const EnterpriseConfigSchema = z.object({
   enabled: z.boolean().default(true),
@@ -1098,6 +1165,7 @@ const BaseConfigSchema = z.object({
   finance: FinanceConfigSchema.optional(),
   healthABA: HealthABAConfigSchema.optional(),
   enterprise: EnterpriseConfigSchema.optional(),
+  autonomy: AutonomyConfigSchema.optional(),
 });
 
 // Test-compatible ConfigSchema with static validate method
@@ -1154,6 +1222,7 @@ export type ContentCreatorConfig = z.infer<typeof ContentCreatorConfigSchema>;
 export type FinanceConfig = z.infer<typeof FinanceConfigSchema>;
 export type HealthABAConfig = z.infer<typeof HealthABAConfigSchema>;
 export type EnterpriseConfig = z.infer<typeof EnterpriseConfigSchema>;
+export type AutonomyConfig = z.infer<typeof AutonomyConfigSchema>;
 
 // Configuration loader with validation (supports both static and instance usage)
 export class ConfigLoader {

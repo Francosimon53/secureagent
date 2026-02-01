@@ -23,6 +23,7 @@ export {
   type ContentCreatorConfig,
   type FinanceConfig,
   type HealthABAConfig,
+  type AutonomyConfig,
 } from './config/index.js';
 
 // Security - Types
@@ -1876,3 +1877,75 @@ export {
   type SkillSystemConfig,
   createSkillSystem,
 } from './skills/index.js';
+
+// Autonomy (Agentic Capabilities)
+export {
+  // Manager
+  AutonomyManager,
+  createAutonomyManager,
+  createAutonomyModule,
+  // Events & Constants
+  AUTONOMY_EVENTS,
+  AUTONOMY_ERROR_CODES,
+  AUTONOMY_DEFAULTS,
+  CORRECTION_STRATEGIES,
+  SENSITIVITY_KEYWORDS,
+  AutonomyError,
+  // Configuration
+  AutonomyConfigSchema,
+  type AutonomyConfig as AutonomyModuleConfig,
+  // Core Types
+  type Goal as AutonomyGoal,
+  type GoalInput as AutonomyGoalInput,
+  type Plan as AutonomyPlan,
+  type PlanStep as AutonomyPlanStep,
+  type ToolChain as AutonomyToolChain,
+  type ChainStep as AutonomyChainStep,
+  type ExecutionSession as AutonomyExecutionSession,
+  type ExecutionResult as AutonomyExecutionResult,
+  type TrackedFailure as AutonomyTrackedFailure,
+  type LearnedPattern as AutonomyLearnedPattern,
+  type ActionClassification as AutonomyActionClassification,
+  type ApprovalDecision as AutonomyApprovalDecision,
+  // Planning
+  GoalPlanner,
+  createGoalPlanner,
+  PlanValidator,
+  createPlanValidator,
+  // Execution
+  AgenticLoop,
+  createAgenticLoop,
+  StepExecutor as AutonomyStepExecutor,
+  createStepExecutor as createAutonomyStepExecutor,
+  Evaluator as AutonomyEvaluator,
+  createEvaluator as createAutonomyEvaluator,
+  // Chaining
+  ToolChainOrchestrator,
+  createToolChainOrchestrator,
+  ChainBuilder,
+  VariableRegistry,
+  createVariableRegistry,
+  // Correction
+  CorrectionEngine,
+  createCorrectionEngine,
+  FailureTracker,
+  createFailureTracker,
+  StrategySelector,
+  createStrategySelector,
+  SessionLearner,
+  createSessionLearner,
+  // Approval
+  PermissionManager as AutonomyPermissionManager,
+  createPermissionManager as createAutonomyPermissionManager,
+  SensitivityClassifier,
+  createSensitivityClassifier,
+  ConfirmationBuilder,
+  createConfirmationBuilder,
+  // Stores
+  InMemoryExecutionStore,
+  DatabaseExecutionStore,
+  createExecutionStore,
+  InMemoryPlanStore,
+  DatabasePlanStore,
+  createPlanStore,
+} from './autonomy/index.js';

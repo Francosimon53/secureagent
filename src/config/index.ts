@@ -23,4 +23,5 @@ export {
   type FinanceConfig,
   type HealthABAConfig,
   type EnterpriseConfig,
+  type AutonomyConfig,
 } from './schema.js';
