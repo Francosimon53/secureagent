@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "SecureAgent AI Assistant",
-  "version": "1.0.0",
-  "description": "Your autonomous AI assistant. Chat, summarize pages, translate, and more - powered by 25+ AI models including local Ollama support for complete privacy.",
+  "version": "1.0.1",
+  "description": "AI assistant for any page. Chat, summarize, translate, explain - 25+ models with local privacy option.",
   "permissions": [
     "activeTab",
     "contextMenus",
