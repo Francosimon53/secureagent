@@ -41,6 +41,7 @@
     "@types/node": "^22.0.0",
     "@vercel/node": "^5.5.28",
     "@vitest/coverage-v8": "^2.1.9",
+    "canvas": "^3.2.1",
     "eslint": "^9.39.2",
     "pino-pretty": "^11.0.0",
     "prettier": "^3.8.1",

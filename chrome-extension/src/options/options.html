@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SecureAgent Settings</title>
+  <link rel="stylesheet" href="options.css">
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div class="logo">
+        <img src="../../icons/icon48.png" alt="SecureAgent" width="40" height="40">
+        <div>
+          <h1>SecureAgent AI</h1>
+          <p class="version">Chrome Extension Settings</p>
+        </div>
+      </div>
+    </header>
+
+    <main>
+      <!-- API Configuration -->
+      <section class="card">
+        <h2>API Configuration</h2>
+        <div class="form-group">
+          <label for="apiKey">API Key</label>
+          <div class="input-group">
+            <input type="password" id="apiKey" placeholder="Enter your API key">
+            <button type="button" id="toggleApiKey" class="btn-icon" title="Show/Hide">
+              <svg id="eyeIcon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                <circle cx="12" cy="12" r="3"></circle>
+              </svg>
+            </button>
+          </div>
+          <p class="hint">Get your API key from the SecureAgent dashboard</p>
+        </div>
+
+        <div class="form-group">
+          <label for="apiUrl">API URL (Optional)</label>
+          <input type="url" id="apiUrl" placeholder="http://localhost:3000/api">
+          <p class="hint">Leave empty to use default. Change for custom deployments.</p>
+        </div>
+      </section>
+
+      <!-- Preferences -->
+      <section class="card">
+        <h2>Preferences</h2>
+        <div class="form-group">
+          <label class="checkbox-label">
+            <input type="checkbox" id="showTooltip" checked>
+            <span>Show tooltip on text selection</span>
+          </label>
+          <p class="hint">Display quick action buttons when selecting text</p>
+        </div>
+
+        <div class="form-group">
+          <label for="defaultLanguage">Translate to</label>
+          <select id="defaultLanguage">
+            <option value="en">English</option>
+            <option value="es">Spanish</option>
+            <option value="fr">French</option>
+            <option value="de">German</option>
+            <option value="it">Italian</option>
+            <option value="pt">Portuguese</option>
+            <option value="zh">Chinese</option>
+            <option value="ja">Japanese</option>
+            <option value="ko">Korean</option>
+            <option value="ar">Arabic</option>
+          </select>
+        </div>
+      </section>
+
+      <!-- Keyboard Shortcuts -->
+      <section class="card">
+        <h2>Keyboard Shortcuts</h2>
+        <p class="hint">Configure in Chrome's extension shortcuts settings</p>
+        <a href="chrome://extensions/shortcuts" class="link" id="shortcutsLink">Open Extension Shortcuts</a>
+
+        <div class="shortcuts-info">
+          <div class="shortcut">
+            <span class="key">Ctrl+Shift+S</span>
+            <span>Summarize current page</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- About -->
+      <section class="card">
+        <h2>About</h2>
+        <div class="about-info">
+          <p><strong>Version:</strong> 1.0.0</p>
+          <p><strong>Support:</strong> <a href="https://secureagent.ai/support" target="_blank">secureagent.ai/support</a></p>
+        </div>
+      </section>
+
+      <!-- Actions -->
+      <div class="actions">
+        <button id="saveBtn" class="btn btn-primary">Save Settings</button>
+        <button id="clearDataBtn" class="btn btn-secondary">Clear All Data</button>
+      </div>
+
+      <div id="statusMessage" class="status-message"></div>
+    </main>
+  </div>
+
+  <script src="options.js"></script>
+</body>
+</html>

@@ -1,0 +1,259 @@
+/* SecureAgent Chrome Extension - Content Script Styles */
+
+/* Floating UI */
+#secureagent-floating-ui {
+  position: fixed;
+  z-index: 2147483647;
+  width: 360px;
+  max-height: 400px;
+  background: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-size: 14px;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(10px) scale(0.95);
+  transition: all 0.2s ease;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+#secureagent-floating-ui.visible {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0) scale(1);
+}
+
+/* Header */
+#secureagent-floating-ui .sa-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+  color: white;
+  cursor: grab;
+}
+
+#secureagent-floating-ui .sa-header:active {
+  cursor: grabbing;
+}
+
+#secureagent-floating-ui .sa-logo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+}
+
+#secureagent-floating-ui .sa-icon {
+  width: 24px;
+  height: 24px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: 700;
+}
+
+#secureagent-floating-ui .sa-close {
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.1);
+  border: none;
+  border-radius: 6px;
+  color: white;
+  font-size: 20px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+#secureagent-floating-ui .sa-close:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+/* Content */
+#secureagent-floating-ui .sa-content {
+  flex: 1;
+  padding: 16px;
+  overflow-y: auto;
+  max-height: 280px;
+}
+
+/* Loading */
+#secureagent-floating-ui .sa-loading {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: #64748b;
+  padding: 20px 0;
+}
+
+#secureagent-floating-ui .sa-spinner {
+  width: 20px;
+  height: 20px;
+  border: 2px solid #e2e8f0;
+  border-top-color: #6366f1;
+  border-radius: 50%;
+  animation: sa-spin 0.8s linear infinite;
+}
+
+@keyframes sa-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Result */
+#secureagent-floating-ui .sa-result {
+  line-height: 1.6;
+  color: #1e293b;
+}
+
+#secureagent-floating-ui .sa-action-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: #6366f1;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 8px;
+}
+
+#secureagent-floating-ui .sa-result-text {
+  color: #334155;
+}
+
+#secureagent-floating-ui .sa-result-text pre {
+  background: #1e293b;
+  color: #e2e8f0;
+  padding: 12px;
+  border-radius: 8px;
+  overflow-x: auto;
+  margin: 8px 0;
+  font-size: 12px;
+}
+
+#secureagent-floating-ui .sa-result-text code {
+  font-family: 'SF Mono', Monaco, Consolas, monospace;
+  background: #f1f5f9;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 12px;
+}
+
+#secureagent-floating-ui .sa-result-text pre code {
+  background: transparent;
+  padding: 0;
+}
+
+/* Error */
+#secureagent-floating-ui .sa-error {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  color: #dc2626;
+  background: #fef2f2;
+  padding: 12px;
+  border-radius: 8px;
+  border: 1px solid #fecaca;
+}
+
+#secureagent-floating-ui .sa-error svg {
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+/* Footer */
+#secureagent-floating-ui .sa-footer {
+  display: flex;
+  justify-content: flex-end;
+  padding: 12px 16px;
+  border-top: 1px solid #e2e8f0;
+  background: #f8fafc;
+}
+
+#secureagent-floating-ui .sa-copy {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background: transparent;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  color: #64748b;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+#secureagent-floating-ui .sa-copy:hover {
+  background: white;
+  border-color: #6366f1;
+  color: #6366f1;
+}
+
+/* Selection Tooltip */
+#secureagent-tooltip {
+  position: fixed;
+  z-index: 2147483647;
+  display: flex;
+  gap: 4px;
+  padding: 6px;
+  background: #1e293b;
+  border-radius: 8px;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.2);
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(5px);
+  transition: all 0.15s ease;
+}
+
+#secureagent-tooltip.visible {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+}
+
+#secureagent-tooltip .sa-tooltip-btn {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  color: #94a3b8;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+#secureagent-tooltip .sa-tooltip-btn:hover {
+  background: #334155;
+  color: white;
+}
+
+/* Scrollbar */
+#secureagent-floating-ui .sa-content::-webkit-scrollbar {
+  width: 6px;
+}
+
+#secureagent-floating-ui .sa-content::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+#secureagent-floating-ui .sa-content::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 3px;
+}
+
+#secureagent-floating-ui .sa-content::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
