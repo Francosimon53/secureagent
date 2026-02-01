@@ -14,6 +14,15 @@ export { GoogleProvider, createGoogleProvider } from './google.js';
 export { GroqProvider, createGroqProvider } from './groq.js';
 export { DeepSeekProvider, createDeepSeekProvider } from './deepseek.js';
 export { OpenRouterProvider, createOpenRouterProvider, type OpenRouterProviderOptions } from './openrouter.js';
+export {
+  OllamaProvider,
+  createOllamaProvider,
+  isOllamaAvailable,
+  getOllamaModelInfo,
+  OLLAMA_MODELS,
+  type OllamaProviderOptions,
+  type OllamaModelId,
+} from './ollama.js';
 
 import type { AIProvider } from '../types.js';
 import type { AIProviderOptions } from './base.js';
@@ -23,6 +32,7 @@ import { GoogleProvider } from './google.js';
 import { GroqProvider } from './groq.js';
 import { DeepSeekProvider } from './deepseek.js';
 import { OpenRouterProvider, type OpenRouterProviderOptions } from './openrouter.js';
+import { OllamaProvider, type OllamaProviderOptions } from './ollama.js';
 
 /**
  * Provider factory configuration
@@ -34,6 +44,7 @@ export interface ProviderFactoryConfig {
   groq?: AIProviderOptions;
   deepseek?: AIProviderOptions;
   openrouter?: OpenRouterProviderOptions;
+  ollama?: OllamaProviderOptions;
 }
 
 /**
@@ -41,21 +52,23 @@ export interface ProviderFactoryConfig {
  */
 export function createProvider(
   provider: AIProvider,
-  options: AIProviderOptions | OpenRouterProviderOptions
-): OpenAIProvider | AnthropicProvider | GoogleProvider | GroqProvider | DeepSeekProvider | OpenRouterProvider {
+  options: AIProviderOptions | OpenRouterProviderOptions | OllamaProviderOptions
+): OpenAIProvider | AnthropicProvider | GoogleProvider | GroqProvider | DeepSeekProvider | OpenRouterProvider | OllamaProvider {
   switch (provider) {
     case 'openai':
-      return new OpenAIProvider(options);
+      return new OpenAIProvider(options as AIProviderOptions);
     case 'anthropic':
-      return new AnthropicProvider(options);
+      return new AnthropicProvider(options as AIProviderOptions);
     case 'google':
-      return new GoogleProvider(options);
+      return new GoogleProvider(options as AIProviderOptions);
     case 'groq':
-      return new GroqProvider(options);
+      return new GroqProvider(options as AIProviderOptions);
     case 'deepseek':
-      return new DeepSeekProvider(options);
+      return new DeepSeekProvider(options as AIProviderOptions);
     case 'openrouter':
       return new OpenRouterProvider(options as OpenRouterProviderOptions);
+    case 'ollama':
+      return new OllamaProvider(options as OllamaProviderOptions);
     default:
       throw new Error(`Unsupported provider: ${provider}`);
   }
@@ -75,6 +88,7 @@ export const PROVIDER_ENV_KEYS: Record<string, string> = {
   cohere: 'COHERE_API_KEY',
   together: 'TOGETHER_API_KEY',
   fireworks: 'FIREWORKS_API_KEY',
+  ollama: 'OLLAMA_HOST', // Optional: override default localhost:11434
 };
 
 /**
@@ -87,6 +101,7 @@ export const DEFAULT_PROVIDER_MODELS: Record<string, string> = {
   groq: 'llama-3.3-70b',
   deepseek: 'deepseek-chat',
   openrouter: 'openrouter/auto',
+  ollama: 'llama3.2',
 };
 
 /**
@@ -98,13 +113,17 @@ export interface ModelDisplayInfo {
   provider: string;
   providerName: string;
   description: string;
-  tier: 'economy' | 'standard' | 'premium' | 'flagship';
+  tier: 'economy' | 'standard' | 'premium' | 'flagship' | 'local';
   costPer1MInput: number;
   costPer1MOutput: number;
   contextWindow: number;
   maxOutput: number;
   capabilities: string[];
   recommended?: boolean;
+  /** True if this is a local model (Ollama) - no data leaves the machine */
+  isLocal?: boolean;
+  /** Parameter size for local models */
+  parameterSize?: string;
 }
 
 export const MODEL_DISPLAY_INFO: ModelDisplayInfo[] = [
@@ -286,5 +305,145 @@ export const MODEL_DISPLAY_INFO: ModelDisplayInfo[] = [
     contextWindow: 128000,
     maxOutput: 8192,
     capabilities: ['chat', 'streaming'],
+  },
+
+  // ==========================================================================
+  // Local Models (Ollama) - Complete Privacy, No Data Leaves Your Machine
+  // ==========================================================================
+  {
+    id: 'ollama/llama3.2',
+    name: 'Llama 3.2 3B',
+    provider: 'ollama',
+    providerName: 'Local (Ollama)',
+    description: 'Fast and efficient for everyday tasks - runs locally',
+    tier: 'local',
+    costPer1MInput: 0,
+    costPer1MOutput: 0,
+    contextWindow: 128000,
+    maxOutput: 4096,
+    capabilities: ['chat', 'streaming'],
+    isLocal: true,
+    parameterSize: '3B',
+    recommended: true,
+  },
+  {
+    id: 'ollama/llama3.1',
+    name: 'Llama 3.1 8B',
+    provider: 'ollama',
+    providerName: 'Local (Ollama)',
+    description: 'Great balance of speed and quality - runs locally',
+    tier: 'local',
+    costPer1MInput: 0,
+    costPer1MOutput: 0,
+    contextWindow: 128000,
+    maxOutput: 4096,
+    capabilities: ['chat', 'streaming', 'function_calling'],
+    isLocal: true,
+    parameterSize: '8B',
+  },
+  {
+    id: 'ollama/llama3.1:70b',
+    name: 'Llama 3.1 70B',
+    provider: 'ollama',
+    providerName: 'Local (Ollama)',
+    description: 'High-quality responses, requires 48GB+ RAM',
+    tier: 'local',
+    costPer1MInput: 0,
+    costPer1MOutput: 0,
+    contextWindow: 128000,
+    maxOutput: 4096,
+    capabilities: ['chat', 'streaming', 'function_calling'],
+    isLocal: true,
+    parameterSize: '70B',
+  },
+  {
+    id: 'ollama/mistral',
+    name: 'Mistral 7B',
+    provider: 'ollama',
+    providerName: 'Local (Ollama)',
+    description: 'Fast European open-source model - runs locally',
+    tier: 'local',
+    costPer1MInput: 0,
+    costPer1MOutput: 0,
+    contextWindow: 32000,
+    maxOutput: 4096,
+    capabilities: ['chat', 'streaming'],
+    isLocal: true,
+    parameterSize: '7B',
+  },
+  {
+    id: 'ollama/codellama',
+    name: 'Code Llama 7B',
+    provider: 'ollama',
+    providerName: 'Local (Ollama)',
+    description: 'Optimized for code generation - runs locally',
+    tier: 'local',
+    costPer1MInput: 0,
+    costPer1MOutput: 0,
+    contextWindow: 16000,
+    maxOutput: 4096,
+    capabilities: ['chat', 'streaming', 'completion'],
+    isLocal: true,
+    parameterSize: '7B',
+  },
+  {
+    id: 'ollama/phi3',
+    name: 'Phi-3 Mini 3.8B',
+    provider: 'ollama',
+    providerName: 'Local (Ollama)',
+    description: 'Microsoft compact model - runs locally',
+    tier: 'local',
+    costPer1MInput: 0,
+    costPer1MOutput: 0,
+    contextWindow: 128000,
+    maxOutput: 4096,
+    capabilities: ['chat', 'streaming'],
+    isLocal: true,
+    parameterSize: '3.8B',
+  },
+  {
+    id: 'ollama/gemma2',
+    name: 'Gemma 2 9B',
+    provider: 'ollama',
+    providerName: 'Local (Ollama)',
+    description: 'Google open-source model - runs locally',
+    tier: 'local',
+    costPer1MInput: 0,
+    costPer1MOutput: 0,
+    contextWindow: 8192,
+    maxOutput: 4096,
+    capabilities: ['chat', 'streaming'],
+    isLocal: true,
+    parameterSize: '9B',
+  },
+  {
+    id: 'ollama/qwen2.5',
+    name: 'Qwen 2.5 7B',
+    provider: 'ollama',
+    providerName: 'Local (Ollama)',
+    description: 'Strong multilingual support - runs locally',
+    tier: 'local',
+    costPer1MInput: 0,
+    costPer1MOutput: 0,
+    contextWindow: 128000,
+    maxOutput: 4096,
+    capabilities: ['chat', 'streaming', 'function_calling'],
+    isLocal: true,
+    parameterSize: '7B',
+  },
+  {
+    id: 'ollama/deepseek-coder-v2',
+    name: 'DeepSeek Coder V2',
+    provider: 'ollama',
+    providerName: 'Local (Ollama)',
+    description: 'Excellent for code tasks - runs locally',
+    tier: 'local',
+    costPer1MInput: 0,
+    costPer1MOutput: 0,
+    contextWindow: 128000,
+    maxOutput: 4096,
+    capabilities: ['chat', 'streaming', 'completion'],
+    isLocal: true,
+    parameterSize: '16B',
   },
 ];

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 
 interface AgentConfig {
   id: string;
@@ -314,6 +315,36 @@ export default function SettingsPage() {
             {renderSecretInput('OpenAI API Key', 'openai', settings.api.openaiApiKey, (v) =>
               setSettings(prev => ({ ...prev, api: { ...prev.api, openaiApiKey: v } }))
             )}
+
+            {/* Ollama / Local LLMs */}
+            <div className="mt-8 pt-6 border-t border-gray-800">
+              <Link
+                href="/dashboard/settings/ollama"
+                className="block p-4 bg-gradient-to-r from-green-500/10 to-emerald-500/10 border border-green-500/30 rounded-xl hover:border-green-500/50 transition-colors"
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 bg-green-500/20 rounded-xl flex items-center justify-center">
+                      <span className="text-2xl">🔒</span>
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <h3 className="font-semibold text-white">Local LLMs (Ollama)</h3>
+                        <span className="px-2 py-0.5 bg-green-500/20 text-green-400 text-xs rounded-full">
+                          Private
+                        </span>
+                      </div>
+                      <p className="text-sm text-gray-400">
+                        Run AI models locally - no data leaves your machine
+                      </p>
+                    </div>
+                  </div>
+                  <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  </svg>
+                </div>
+              </Link>
+            </div>
           </div>
         )}
 
