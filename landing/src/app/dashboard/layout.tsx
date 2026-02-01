@@ -10,6 +10,7 @@ const navigation = [
   { name: 'Compare', href: '/dashboard/compare', icon: '⚖️' },
   { name: 'Sessions', href: '/dashboard/sessions', icon: '👥' },
   { name: 'Channels', href: '/dashboard/channels', icon: '📡' },
+  { name: 'Integrations', href: '/dashboard/integrations', icon: '🔗' },
   { name: 'Skills', href: '/dashboard/skills', icon: '⚡' },
   { name: 'Extension', href: '/dashboard/extension', icon: '🧩' },
   { name: 'Logs', href: '/dashboard/logs', icon: '📋' },
