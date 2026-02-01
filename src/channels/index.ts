@@ -65,3 +65,42 @@ export {
   type IMessageAttachment,
   type ParsedMessage as IMessageParsedMessage,
 } from './imessage/index.js';
+
+// Matrix (Decentralized Chat)
+export {
+  MatrixChannel,
+  type MatrixConfig,
+  type MatrixRoom,
+  type MatrixUser,
+  type MatrixEvent,
+  type MatrixMessageContent,
+} from './matrix/index.js';
+
+// Google Chat
+export {
+  GoogleChatChannel,
+  type GoogleChatConfig,
+  type GoogleChatSpace,
+  type GoogleChatUser,
+  type GoogleChatMessage,
+  type GoogleChatCard,
+  type GoogleChatCardV2,
+  type GoogleChatWidget,
+  type GoogleChatEvent,
+  type GoogleChatAttachment,
+} from './googlechat/index.js';
+
+// Microsoft Teams
+export {
+  TeamsChannel,
+  type TeamsConfig,
+  type TeamsTeam,
+  type TeamsChannel as TeamsChannelInfo,
+  type TeamsUser,
+  type TeamsMessage,
+  type TeamsChat,
+  type TeamsChatMember,
+  type TeamsAdaptiveCard,
+  type TeamsActivity,
+  type TeamsAttachment,
+} from './teams/index.js';
