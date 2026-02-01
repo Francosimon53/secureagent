@@ -1,0 +1,25 @@
+{
+  "name": "@secureagent/ios",
+  "version": "1.0.0",
+  "private": true,
+  "description": "SecureAgent iOS App",
+  "scripts": {
+    "start": "react-native start",
+    "ios": "react-native run-ios",
+    "ios:device": "react-native run-ios --device",
+    "pod-install": "cd ios && pod install",
+    "clean": "cd ios && xcodebuild clean && rm -rf build",
+    "build:release": "cd ios && xcodebuild -workspace SecureAgent.xcworkspace -scheme SecureAgent -configuration Release -archivePath build/SecureAgent.xcarchive archive",
+    "lint": "eslint . --ext .js,.jsx,.ts,.tsx",
+    "test": "jest"
+  },
+  "dependencies": {
+    "@secureagent/mobile": "file:../mobile"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.23.7",
+    "@react-native/babel-preset": "^0.73.18",
+    "@types/react": "^18.2.47",
+    "typescript": "^5.3.3"
+  }
+}

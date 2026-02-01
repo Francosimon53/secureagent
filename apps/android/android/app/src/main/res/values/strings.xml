@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">SecureAgent</string>
+    <string name="widget_name">SecureAgent</string>
+    <string name="widget_description">Quick access to SecureAgent AI assistant</string>
+</resources>

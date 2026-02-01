@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'">
+  <title>SecureAgent</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="app">
+    <!-- Header -->
+    <header class="header">
+      <div class="header-title">
+        <span class="logo">🛡️</span>
+        <span>SecureAgent</span>
+      </div>
+      <button class="close-btn" onclick="window.secureAgent.hideWindow()">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+          <path d="M1 1L13 13M1 13L13 1" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+      </button>
+    </header>
+
+    <!-- Quick Actions -->
+    <div class="quick-actions">
+      <button class="action-btn" onclick="runQuickAction('summarize')">
+        <span class="action-icon">📝</span>
+        <span>Summarize</span>
+      </button>
+      <button class="action-btn" onclick="runQuickAction('translate')">
+        <span class="action-icon">🌐</span>
+        <span>Translate</span>
+      </button>
+      <button class="action-btn" onclick="runQuickAction('explain')">
+        <span class="action-icon">💡</span>
+        <span>Explain</span>
+      </button>
+      <button class="action-btn" onclick="runQuickAction('grammar')">
+        <span class="action-icon">✏️</span>
+        <span>Fix Grammar</span>
+      </button>
+    </div>
+
+    <!-- Chat Messages -->
+    <div class="messages" id="messages">
+      <div class="welcome-message">
+        <p>Hi! I'm your SecureAgent assistant.</p>
+        <p class="hint">Ask me anything or use the quick actions above.</p>
+      </div>
+    </div>
+
+    <!-- Input Area -->
+    <div class="input-area">
+      <textarea
+        id="input"
+        placeholder="Ask SecureAgent..."
+        rows="1"
+        autofocus
+      ></textarea>
+      <button class="send-btn" id="sendBtn" onclick="sendMessage()">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+          <path d="M22 2L11 13M22 2L15 22L11 13M22 2L2 9L11 13" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

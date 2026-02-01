@@ -1,0 +1,24 @@
+{
+  "name": "@secureagent/android",
+  "version": "1.0.0",
+  "private": true,
+  "description": "SecureAgent Android App",
+  "scripts": {
+    "start": "react-native start",
+    "android": "react-native run-android",
+    "android:release": "cd android && ./gradlew assembleRelease",
+    "android:bundle": "cd android && ./gradlew bundleRelease",
+    "clean": "cd android && ./gradlew clean",
+    "lint": "eslint . --ext .js,.jsx,.ts,.tsx",
+    "test": "jest"
+  },
+  "dependencies": {
+    "@secureagent/mobile": "file:../mobile"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.23.7",
+    "@react-native/babel-preset": "^0.73.18",
+    "@types/react": "^18.2.47",
+    "typescript": "^5.3.3"
+  }
+}
