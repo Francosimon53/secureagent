@@ -4,7 +4,7 @@
  */
 
 // API Configuration
-const API_BASE_URL = 'http://localhost:3000/api';
+const API_BASE_URL = 'https://landing-xi-pied.vercel.app/api';
 
 // Context menu IDs
 const MENU_IDS = {
