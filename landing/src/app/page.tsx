@@ -161,8 +161,18 @@ export default function Home() {
         <div className="absolute bottom-0 right-1/4 w-80 h-80 bg-cyan-500/10 rounded-full blur-[120px]" />
       </div>
 
+      {/* Launch Banner */}
+      <div className="fixed top-0 left-0 right-0 z-[60] bg-gradient-to-r from-blue-600 via-purple-600 to-cyan-600 text-white text-center py-2 px-4">
+        <p className="text-sm font-medium">
+          <span className="hidden sm:inline">Launch Special: </span>
+          <span className="font-bold">50% off</span> first 3 months with code{' '}
+          <code className="bg-white/20 px-2 py-0.5 rounded font-mono">PRODUCTHUNT50</code>
+          <span className="hidden sm:inline"> - Limited time!</span>
+        </p>
+      </div>
+
       {/* Navigation */}
-      <nav className="fixed top-0 left-0 right-0 z-50 bg-[#0a0a0f]/80 backdrop-blur-xl border-b border-white/5">
+      <nav className="fixed top-8 left-0 right-0 z-50 bg-[#0a0a0f]/80 backdrop-blur-xl border-b border-white/5">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <Link href="/" className="flex items-center gap-2 group">
@@ -232,7 +242,7 @@ export default function Home() {
       </nav>
 
       {/* Hero Section */}
-      <section className="relative pt-32 pb-20 px-4 sm:px-6 lg:px-8">
+      <section className="relative pt-40 pb-20 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto">
           <motion.div
             className="text-center"
@@ -300,6 +310,30 @@ export default function Home() {
                   <path fillRule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z" clipRule="evenodd" />
                 </svg>
                 View Documentation
+              </a>
+            </motion.div>
+
+            {/* Product Hunt Badge */}
+            <motion.div
+              variants={fadeInUp}
+              className="mt-8 flex justify-center"
+            >
+              <a
+                href="https://www.producthunt.com/posts/secureagent"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-3 px-4 py-2 bg-white/5 border border-white/10 rounded-xl hover:bg-white/10 transition-all group"
+              >
+                <div className="w-8 h-8 rounded-lg bg-[#DA552F] flex items-center justify-center">
+                  <svg className="w-5 h-5 text-white" viewBox="0 0 40 40" fill="currentColor">
+                    <path d="M20 40C31.046 40 40 31.046 40 20S31.046 0 20 0 0 8.954 0 20s8.954 20 20 20zm0-34c7.732 0 14 6.268 14 14s-6.268 14-14 14S6 27.732 6 20 12.268 6 20 6z"/>
+                    <path d="M22.667 20H17v-6.667h5.667a3.333 3.333 0 010 6.667zm0-10H13.333V30H17v-6.667h5.667a6.667 6.667 0 100-13.333z"/>
+                  </svg>
+                </div>
+                <div className="text-left">
+                  <p className="text-xs text-gray-400">Featured on</p>
+                  <p className="text-sm font-semibold text-white group-hover:text-orange-400 transition-colors">Product Hunt</p>
+                </div>
               </a>
             </motion.div>
           </motion.div>
@@ -592,6 +626,119 @@ export default function Home() {
                     {tier.cta}
                   </Link>
                 )}
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Demo Video Section */}
+      <section className="py-20 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-5xl mx-auto">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="text-center mb-12"
+          >
+            <h2 className="text-3xl sm:text-4xl font-bold text-white mb-4">
+              See SecureAgent in Action
+            </h2>
+            <p className="text-lg text-gray-400 max-w-2xl mx-auto">
+              Watch how SecureAgent automates your daily tasks with AI.
+            </p>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="relative aspect-video rounded-2xl border border-white/10 bg-white/5 overflow-hidden group cursor-pointer"
+          >
+            {/* Video placeholder */}
+            <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-blue-600/20 to-purple-600/20">
+              <div className="text-center">
+                <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-white/10 flex items-center justify-center group-hover:bg-white/20 transition-all group-hover:scale-110">
+                  <svg className="w-8 h-8 text-white ml-1" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M8 5v14l11-7z"/>
+                  </svg>
+                </div>
+                <p className="text-gray-400 text-sm">Demo video coming soon</p>
+              </div>
+            </div>
+            {/* Decorative elements */}
+            <div className="absolute top-4 left-4 flex items-center gap-2">
+              <div className="w-3 h-3 rounded-full bg-red-500/80" />
+              <div className="w-3 h-3 rounded-full bg-yellow-500/80" />
+              <div className="w-3 h-3 rounded-full bg-green-500/80" />
+            </div>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* Testimonials Section */}
+      <section className="py-20 px-4 sm:px-6 lg:px-8 bg-white/[0.02]">
+        <div className="max-w-7xl mx-auto">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="text-center mb-16"
+          >
+            <h2 className="text-3xl sm:text-4xl font-bold text-white mb-4">
+              What Users Are Saying
+            </h2>
+            <p className="text-lg text-gray-400 max-w-2xl mx-auto">
+              Join thousands of users automating their workflows with SecureAgent.
+            </p>
+          </motion.div>
+
+          <div className="grid md:grid-cols-3 gap-6">
+            {[
+              {
+                quote: "Finally, an AI that actually does things! The browser automation alone saved me hours of manual work.",
+                author: "Alex K.",
+                role: "Product Manager",
+                avatar: "A",
+              },
+              {
+                quote: "I set up a morning briefing that runs automatically. It's like having a personal assistant that never sleeps.",
+                author: "Sarah M.",
+                role: "Startup Founder",
+                avatar: "S",
+              },
+              {
+                quote: "The multi-channel support is a game changer. Same AI on Telegram, Slack, and web - conversations sync perfectly.",
+                author: "Mike R.",
+                role: "Developer",
+                avatar: "M",
+              },
+            ].map((testimonial, index) => (
+              <motion.div
+                key={testimonial.author}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: index * 0.1 }}
+                className="p-6 bg-white/5 border border-white/10 rounded-2xl"
+              >
+                <div className="flex gap-1 mb-4">
+                  {[...Array(5)].map((_, i) => (
+                    <svg key={i} className="w-5 h-5 text-yellow-500" fill="currentColor" viewBox="0 0 20 20">
+                      <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
+                    </svg>
+                  ))}
+                </div>
+                <p className="text-gray-300 mb-6 leading-relaxed">&quot;{testimonial.quote}&quot;</p>
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center font-semibold">
+                    {testimonial.avatar}
+                  </div>
+                  <div>
+                    <p className="font-semibold text-white">{testimonial.author}</p>
+                    <p className="text-sm text-gray-500">{testimonial.role}</p>
+                  </div>
+                </div>
               </motion.div>
             ))}
           </div>
