@@ -15,22 +15,37 @@ export const authOptions: NextAuthOptions = {
       },
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) {
-          throw new Error('Please enter your email and password');
+          return null;
         }
 
-        // Use shared user store to verify credentials
-        const user = await verifyCredentials(credentials.email, credentials.password);
+        const email = credentials.email.toLowerCase().trim();
+        const password = credentials.password;
 
-        if (!user) {
-          throw new Error('Invalid email or password');
+        // Demo account - hardcoded for reliability
+        if (email === 'demo@secureagent.ai' && password === 'demo123') {
+          return {
+            id: '1',
+            email: 'demo@secureagent.ai',
+            name: 'Demo User',
+          };
         }
 
-        return {
-          id: user.id,
-          name: user.name,
-          email: user.email,
-          image: user.image,
-        };
+        // Check registered users from shared store
+        try {
+          const user = await verifyCredentials(email, password);
+          if (user) {
+            return {
+              id: user.id,
+              name: user.name,
+              email: user.email,
+              image: user.image,
+            };
+          }
+        } catch (error) {
+          console.error('[Auth] Error verifying credentials:', error);
+        }
+
+        return null;
       },
     }),
     // Google Provider (requires GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET)
