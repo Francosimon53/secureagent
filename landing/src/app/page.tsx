@@ -177,6 +177,7 @@ export default function Home() {
               <a href="#features" className="text-gray-400 hover:text-white transition-colors text-sm">Features</a>
               <a href="#channels" className="text-gray-400 hover:text-white transition-colors text-sm">Channels</a>
               <Link href="/pricing" className="text-gray-400 hover:text-white transition-colors text-sm">Pricing</Link>
+              <Link href="/blog" className="text-gray-400 hover:text-white transition-colors text-sm">Blog</Link>
               <Link href="/docs" className="text-gray-400 hover:text-white transition-colors text-sm">API Docs</Link>
               <a
                 href="https://github.com/Francosimon53/secureagent"
@@ -221,6 +222,7 @@ export default function Home() {
                 <a href="#features" className="text-gray-400 hover:text-white transition-colors">Features</a>
                 <a href="#channels" className="text-gray-400 hover:text-white transition-colors">Channels</a>
                 <Link href="/pricing" className="text-gray-400 hover:text-white transition-colors">Pricing</Link>
+                <Link href="/blog" className="text-gray-400 hover:text-white transition-colors">Blog</Link>
                 <Link href="/docs" className="text-gray-400 hover:text-white transition-colors">API Docs</Link>
                 <a href="https://github.com/Francosimon53/secureagent" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-white transition-colors">GitHub</a>
               </div>
@@ -661,6 +663,7 @@ export default function Home() {
             <div>
               <h4 className="font-semibold text-white mb-4">Resources</h4>
               <ul className="space-y-2 text-gray-400 text-sm">
+                <li><Link href="/blog" className="hover:text-white transition-colors">Blog</Link></li>
                 <li><a href="https://github.com/Francosimon53/secureagent" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">GitHub</a></li>
                 <li><Link href="/docs" className="hover:text-white transition-colors">API Docs</Link></li>
                 <li><a href="https://github.com/Francosimon53/secureagent/issues" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">Support</a></li>

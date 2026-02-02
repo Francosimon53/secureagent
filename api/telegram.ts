@@ -502,6 +502,112 @@ To schedule a task:
 }
 
 /**
+ * Handle /blog command - Generate a blog post
+ * Format: /blog generate "Topic"
+ */
+async function handleBlogCommand(
+  chatId: string,
+  args: string,
+  botToken: string
+): Promise<void> {
+  const trimmedArgs = args.trim();
+
+  if (!trimmedArgs || !trimmedArgs.toLowerCase().startsWith('generate')) {
+    await telegramRequest(botToken, 'sendMessage', {
+      chat_id: chatId,
+      text: `📝 <b>Blog Commands</b>
+
+<b>Generate a new blog post:</b>
+<code>/blog generate "Your topic here"</code>
+
+<b>Examples:</b>
+• <code>/blog generate "Getting started with task automation"</code>
+• <code>/blog generate "Top 5 productivity tips with AI"</code>
+• <code>/blog generate "How to use voice commands"</code>
+
+The generated post will be published to the SecureAgent blog.`,
+      parse_mode: 'HTML',
+    });
+    return;
+  }
+
+  // Extract topic from "generate <topic>" or "generate "<topic>""
+  const topicMatch = trimmedArgs.match(/generate\s+["']?(.+?)["']?$/i);
+  if (!topicMatch || !topicMatch[1]) {
+    await telegramRequest(botToken, 'sendMessage', {
+      chat_id: chatId,
+      text: `❌ Please provide a topic.\n\nUsage: <code>/blog generate "Your topic here"</code>`,
+      parse_mode: 'HTML',
+    });
+    return;
+  }
+
+  const topic = topicMatch[1].trim().replace(/["']$/, '');
+
+  // Send typing indicator
+  await telegramRequest(botToken, 'sendChatAction', {
+    chat_id: chatId,
+    action: 'typing',
+  });
+
+  await telegramRequest(botToken, 'sendMessage', {
+    chat_id: chatId,
+    text: `✍️ Generating blog post about: "${topic}"\n\nThis may take a moment...`,
+    parse_mode: 'HTML',
+  });
+
+  try {
+    // Call the blog generation API
+    const baseUrl = process.env.VERCEL_URL
+      ? `https://${process.env.VERCEL_URL}`
+      : 'http://localhost:3000';
+
+    const response = await fetch(`${baseUrl}/api/blog/generate`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        topic,
+        secret: process.env.CRON_SECRET,
+      }),
+    });
+
+    const data = await response.json() as {
+      success?: boolean;
+      post?: { title: string; slug: string; excerpt: string };
+      error?: string;
+    };
+
+    if (data.success && data.post) {
+      await telegramRequest(botToken, 'sendMessage', {
+        chat_id: chatId,
+        text: `✅ <b>Blog Post Generated!</b>
+
+📰 <b>${data.post.title}</b>
+
+${data.post.excerpt}
+
+🔗 <a href="https://secureagent.vercel.app/blog/${data.post.slug}">Read the full post</a>`,
+        parse_mode: 'HTML',
+        disable_web_page_preview: false,
+      });
+    } else {
+      await telegramRequest(botToken, 'sendMessage', {
+        chat_id: chatId,
+        text: `❌ Failed to generate blog post: ${data.error || 'Unknown error'}`,
+        parse_mode: 'HTML',
+      });
+    }
+  } catch (error) {
+    console.error('Blog generation error:', error);
+    await telegramRequest(botToken, 'sendMessage', {
+      chat_id: chatId,
+      text: `❌ Error generating blog post. Please try again later.`,
+      parse_mode: 'HTML',
+    });
+  }
+}
+
+/**
  * Handle /cancel command - Cancel a scheduled task
  */
 async function handleCancelCommand(
@@ -585,6 +691,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         { command: 'schedule', description: 'Schedule a task (e.g., /schedule 9am Check news)' },
         { command: 'tasks', description: 'List your scheduled tasks' },
         { command: 'cancel', description: 'Cancel a scheduled task' },
+        { command: 'blog', description: 'Generate a blog post (e.g., /blog generate "AI tips")' },
         { command: 'clear', description: 'Clear conversation history' },
       ],
     });
@@ -656,6 +763,7 @@ I can help you with:
 /schedule - Schedule a task
 /tasks - View your scheduled tasks
 /cancel - Cancel a scheduled task
+/blog - Generate a blog post
 /help - Show help
 /clear - Clear conversation
 
@@ -675,6 +783,7 @@ Just send me a message to get started!`,
 /schedule - Schedule a task
 /tasks - View your scheduled tasks
 /cancel - Cancel a scheduled task
+/blog - Generate a blog post
 /clear - Clear conversation history
 
 <b>Scheduling Tasks:</b>
@@ -695,6 +804,10 @@ Just type your message and I'll respond!`,
 
           case '/schedule':
             await handleScheduleCommand(chatId, args, botToken);
+            return res.status(200).json({ ok: true });
+
+          case '/blog':
+            await handleBlogCommand(chatId, args, botToken);
             return res.status(200).json({ ok: true });
 
           case '/tasks':
