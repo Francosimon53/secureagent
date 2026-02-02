@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, Suspense } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { signIn } from 'next-auth/react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -8,8 +8,18 @@ import { useRouter, useSearchParams } from 'next/navigation';
 function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const callbackUrl = searchParams.get('callbackUrl') || '/dashboard';
   const error = searchParams.get('error');
+
+  // Check if user has completed onboarding
+  const [hasCompletedOnboarding, setHasCompletedOnboarding] = useState(false);
+
+  useEffect(() => {
+    const onboardingCookie = document.cookie.includes('onboarding_completed=true');
+    setHasCompletedOnboarding(onboardingCookie);
+  }, []);
+
+  // Redirect to onboarding for new users, dashboard for returning users
+  const callbackUrl = searchParams.get('callbackUrl') || (hasCompletedOnboarding ? '/dashboard' : '/onboarding');
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');

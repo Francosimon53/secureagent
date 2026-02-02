@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { useSession } from 'next-auth/react';
 
 interface ChannelStatus {
   name: string;
@@ -21,6 +22,20 @@ interface SystemStats {
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'https://secureagent.vercel.app';
 
 export default function DashboardPage() {
+  const { data: session } = useSession();
+  const [showOnboardingBanner, setShowOnboardingBanner] = useState(false);
+
+  useEffect(() => {
+    // Check if user has completed onboarding
+    const hasCompletedOnboarding = document.cookie.includes('onboarding_completed=true');
+    setShowOnboardingBanner(!hasCompletedOnboarding);
+  }, []);
+
+  const dismissOnboarding = () => {
+    document.cookie = 'onboarding_completed=true; path=/; max-age=31536000';
+    setShowOnboardingBanner(false);
+  };
+
   const [channels, setChannels] = useState<ChannelStatus[]>([
     { name: 'Telegram', status: 'offline', icon: '📱', endpoint: '/api/telegram', configured: false },
     { name: 'Discord', status: 'offline', icon: '🎮', endpoint: '/api/discord', configured: false },
@@ -100,6 +115,37 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-6">
+      {/* Getting Started Banner */}
+      {showOnboardingBanner && (
+        <div className="relative bg-gradient-to-r from-blue-600/20 to-cyan-600/20 border border-blue-500/30 rounded-xl p-6">
+          <button
+            onClick={dismissOnboarding}
+            className="absolute top-4 right-4 text-gray-400 hover:text-white"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+          <div className="flex items-center gap-4">
+            <div className="text-4xl">🚀</div>
+            <div className="flex-1">
+              <h3 className="text-lg font-semibold text-white">
+                Welcome{session?.user?.name ? `, ${session.user.name.split(' ')[0]}` : ''}! Get started with SecureAgent
+              </h3>
+              <p className="text-gray-400 mt-1">
+                Complete your setup to unlock all features, including Telegram integration.
+              </p>
+            </div>
+            <Link
+              href="/onboarding"
+              className="px-6 py-2 bg-blue-600 hover:bg-blue-500 text-white font-medium rounded-lg transition-colors whitespace-nowrap"
+            >
+              Getting Started →
+            </Link>
+          </div>
+        </div>
+      )}
+
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
