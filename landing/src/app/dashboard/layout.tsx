@@ -12,6 +12,7 @@ const navigation = [
   { name: 'Channels', href: '/dashboard/channels', icon: '📡' },
   { name: 'Integrations', href: '/dashboard/integrations', icon: '🔗' },
   { name: 'Smart Home', href: '/dashboard/smart-home', icon: '🏠' },
+  { name: 'Music', href: '/dashboard/music', icon: '🎵' },
   { name: 'Voice Calls', href: '/dashboard/voice-calls', icon: '📞' },
   { name: 'Social Media', href: '/dashboard/social', icon: '📱' },
   { name: 'Skills', href: '/dashboard/skills', icon: '⚡' },
