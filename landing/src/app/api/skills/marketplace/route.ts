@@ -1,380 +1,382 @@
 /**
- * Skill Marketplace API Routes
- *
- * GET /api/skills/marketplace - List/search marketplace skills
- * POST /api/skills/marketplace - Submit new skill
+ * Marketplace Skills API
+ * GET /api/skills/marketplace - List and search skills
  */
 
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 
-// In-memory store for demo (replace with actual database)
-interface SkillCard {
-  id: string;
-  name: string;
-  displayName: string;
-  description: string;
-  icon?: string;
-  category: string;
-  authorName: string;
-  authorAvatar?: string;
-  downloads: number;
-  rating: number;
-  ratingCount: number;
-  featured: boolean;
-  version: string;
-  tags?: string[];
-}
-
-interface MarketplaceSkill extends SkillCard {
-  code: string;
-  authorId: string;
-  status: string;
-  createdAt: number;
-  updatedAt: number;
-  publishedAt?: number;
-}
-
-// Demo skills data
-const demoSkills: MarketplaceSkill[] = [
+// Built-in skill data (mirrors the structure from src/skills/marketplace/built-in)
+const builtInSkills = [
+  // Productivity
   {
-    id: 'skill_1',
-    name: 'smart-summarizer',
-    displayName: 'Smart Summarizer',
-    description: 'Automatically summarize long documents, articles, and web pages into concise key points.',
-    icon: '📝',
+    id: 'pomodoro-timer',
+    name: 'pomodoro-timer',
+    displayName: 'Pomodoro Timer',
+    description: 'Boost your productivity with 25-minute focused work sessions followed by short breaks. Track your pomodoros and maintain your flow.',
+    icon: '🍅',
     category: 'productivity',
-    authorId: 'user_demo',
-    authorName: 'SecureAgent Team',
-    downloads: 1250,
+    authorName: 'SecureAgent',
+    downloads: 4521,
     rating: 4.8,
-    ratingCount: 89,
+    ratingCount: 342,
     featured: true,
-    version: '1.2.0',
-    tags: ['ai', 'summarization', 'documents'],
-    code: 'export async function execute(params) { return { success: true }; }',
-    status: 'published',
-    createdAt: Date.now() - 30 * 24 * 60 * 60 * 1000,
-    updatedAt: Date.now() - 5 * 24 * 60 * 60 * 1000,
-    publishedAt: Date.now() - 30 * 24 * 60 * 60 * 1000,
+    version: '1.0.0',
+    tags: ['timer', 'focus', 'productivity', 'work'],
   },
   {
-    id: 'skill_2',
-    name: 'code-reviewer',
-    displayName: 'Code Reviewer',
-    description: 'AI-powered code review that checks for bugs, security issues, and suggests improvements.',
-    icon: '🔍',
-    category: 'developer',
-    authorId: 'user_demo',
-    authorName: 'DevTools Inc',
-    downloads: 890,
-    rating: 4.6,
-    ratingCount: 56,
-    featured: true,
-    version: '2.0.1',
-    tags: ['code', 'review', 'security', 'ai'],
-    code: 'export async function execute(params) { return { success: true }; }',
-    status: 'published',
-    createdAt: Date.now() - 45 * 24 * 60 * 60 * 1000,
-    updatedAt: Date.now() - 2 * 24 * 60 * 60 * 1000,
-    publishedAt: Date.now() - 45 * 24 * 60 * 60 * 1000,
-  },
-  {
-    id: 'skill_3',
-    name: 'email-composer',
-    displayName: 'Email Composer',
-    description: 'Generate professional emails with customizable tone and style for any occasion.',
-    icon: '✉️',
-    category: 'communication',
-    authorId: 'user_demo2',
-    authorName: 'WriteWell',
-    downloads: 2100,
-    rating: 4.9,
-    ratingCount: 142,
-    featured: true,
-    version: '1.5.0',
-    tags: ['email', 'writing', 'professional'],
-    code: 'export async function execute(params) { return { success: true }; }',
-    status: 'published',
-    createdAt: Date.now() - 60 * 24 * 60 * 60 * 1000,
-    updatedAt: Date.now() - 1 * 24 * 60 * 60 * 1000,
-    publishedAt: Date.now() - 60 * 24 * 60 * 60 * 1000,
-  },
-  {
-    id: 'skill_4',
-    name: 'data-visualizer',
-    displayName: 'Data Visualizer',
-    description: 'Transform CSV and JSON data into beautiful charts and visualizations.',
-    icon: '📊',
-    category: 'data',
-    authorId: 'user_demo3',
-    authorName: 'DataViz Pro',
-    downloads: 567,
-    rating: 4.3,
-    ratingCount: 34,
-    featured: false,
-    version: '1.0.2',
-    tags: ['data', 'charts', 'visualization'],
-    code: 'export async function execute(params) { return { success: true }; }',
-    status: 'published',
-    createdAt: Date.now() - 20 * 24 * 60 * 60 * 1000,
-    updatedAt: Date.now() - 10 * 24 * 60 * 60 * 1000,
-    publishedAt: Date.now() - 20 * 24 * 60 * 60 * 1000,
-  },
-  {
-    id: 'skill_5',
-    name: 'task-automator',
-    displayName: 'Task Automator',
-    description: 'Create automated workflows that trigger based on conditions and schedules.',
-    icon: '⚡',
-    category: 'automation',
-    authorId: 'user_demo',
-    authorName: 'AutoFlow',
-    downloads: 1800,
-    rating: 4.7,
-    ratingCount: 98,
-    featured: true,
-    version: '3.1.0',
-    tags: ['automation', 'workflow', 'scheduling'],
-    code: 'export async function execute(params) { return { success: true }; }',
-    status: 'published',
-    createdAt: Date.now() - 90 * 24 * 60 * 60 * 1000,
-    updatedAt: Date.now() - 3 * 24 * 60 * 60 * 1000,
-    publishedAt: Date.now() - 90 * 24 * 60 * 60 * 1000,
-  },
-  {
-    id: 'skill_6',
-    name: 'meeting-notes',
-    displayName: 'Meeting Notes AI',
-    description: 'Automatically transcribe and summarize meeting recordings with action items.',
-    icon: '🎙️',
+    id: 'daily-standup',
+    name: 'daily-standup',
+    displayName: 'Daily Standup',
+    description: 'Streamline your daily standups with the classic three-question format. Track progress and identify blockers.',
+    icon: '📋',
     category: 'productivity',
-    authorId: 'user_demo4',
-    authorName: 'MeetingMind',
-    downloads: 734,
-    rating: 4.5,
-    ratingCount: 45,
-    featured: false,
-    version: '1.3.0',
-    tags: ['meetings', 'transcription', 'notes'],
-    code: 'export async function execute(params) { return { success: true }; }',
-    status: 'published',
-    createdAt: Date.now() - 15 * 24 * 60 * 60 * 1000,
-    updatedAt: Date.now() - 7 * 24 * 60 * 60 * 1000,
-    publishedAt: Date.now() - 15 * 24 * 60 * 60 * 1000,
-  },
-  {
-    id: 'skill_7',
-    name: 'git-assistant',
-    displayName: 'Git Assistant',
-    description: 'Smart git commands with auto-generated commit messages and PR descriptions.',
-    icon: '🔀',
-    category: 'developer',
-    authorId: 'user_demo5',
-    authorName: 'GitGenius',
-    downloads: 445,
-    rating: 4.4,
-    ratingCount: 28,
-    featured: false,
-    version: '1.1.0',
-    tags: ['git', 'commits', 'developer'],
-    code: 'export async function execute(params) { return { success: true }; }',
-    status: 'published',
-    createdAt: Date.now() - 10 * 24 * 60 * 60 * 1000,
-    updatedAt: Date.now() - 4 * 24 * 60 * 60 * 1000,
-    publishedAt: Date.now() - 10 * 24 * 60 * 60 * 1000,
-  },
-  {
-    id: 'skill_8',
-    name: 'slack-bot',
-    displayName: 'Slack Bot Builder',
-    description: 'Create custom Slack bots and integrations without writing code.',
-    icon: '💬',
-    category: 'communication',
-    authorId: 'user_demo6',
-    authorName: 'SlackMaster',
-    downloads: 321,
-    rating: 4.2,
-    ratingCount: 19,
+    authorName: 'SecureAgent',
+    downloads: 3892,
+    rating: 4.7,
+    ratingCount: 287,
     featured: false,
     version: '1.0.0',
-    tags: ['slack', 'bots', 'integration'],
-    code: 'export async function execute(params) { return { success: true }; }',
-    status: 'published',
-    createdAt: Date.now() - 5 * 24 * 60 * 60 * 1000,
-    updatedAt: Date.now() - 2 * 24 * 60 * 60 * 1000,
-    publishedAt: Date.now() - 5 * 24 * 60 * 60 * 1000,
+    tags: ['standup', 'agile', 'team', 'daily', 'scrum'],
+  },
+  {
+    id: 'meeting-scheduler',
+    name: 'meeting-scheduler',
+    displayName: 'Meeting Scheduler',
+    description: 'Schedule meetings, find available times, and manage your calendar efficiently.',
+    icon: '📅',
+    category: 'productivity',
+    authorName: 'SecureAgent',
+    downloads: 2987,
+    rating: 4.5,
+    ratingCount: 198,
+    featured: false,
+    version: '1.0.0',
+    tags: ['meetings', 'calendar', 'scheduling', 'time'],
+  },
+  {
+    id: 'expense-tracker',
+    name: 'expense-tracker',
+    displayName: 'Expense Tracker',
+    description: 'Track your daily expenses, categorize spending, and get monthly reports to manage your finances.',
+    icon: '💰',
+    category: 'productivity',
+    authorName: 'SecureAgent',
+    downloads: 3456,
+    rating: 4.6,
+    ratingCount: 256,
+    featured: true,
+    version: '1.0.0',
+    tags: ['expenses', 'finance', 'budget', 'money', 'tracking'],
+  },
+  {
+    id: 'habit-tracker',
+    name: 'habit-tracker',
+    displayName: 'Habit Tracker',
+    description: 'Build positive habits with streak tracking. Monitor your progress and stay motivated.',
+    icon: '✅',
+    category: 'productivity',
+    authorName: 'SecureAgent',
+    downloads: 4123,
+    rating: 4.7,
+    ratingCount: 312,
+    featured: true,
+    version: '1.0.0',
+    tags: ['habits', 'streaks', 'goals', 'daily', 'routine'],
+  },
+  
+  // Communication
+  {
+    id: 'email-summarizer',
+    name: 'email-summarizer',
+    displayName: 'Email Summarizer',
+    description: 'Quickly summarize long email threads into key points. Extract action items and important dates.',
+    icon: '📧',
+    category: 'communication',
+    authorName: 'SecureAgent',
+    downloads: 3789,
+    rating: 4.6,
+    ratingCount: 278,
+    featured: true,
+    version: '1.0.0',
+    tags: ['email', 'summary', 'productivity', 'communication'],
+  },
+  {
+    id: 'translation-helper',
+    name: 'translation-helper',
+    displayName: 'Translation Helper',
+    description: 'Translate text between 20+ languages with pronunciation guides and context explanations.',
+    icon: '🌐',
+    category: 'communication',
+    authorName: 'SecureAgent',
+    downloads: 2654,
+    rating: 4.5,
+    ratingCount: 187,
+    featured: false,
+    version: '1.0.0',
+    tags: ['translation', 'languages', 'international', 'communication'],
+  },
+  {
+    id: 'tone-adjuster',
+    name: 'tone-adjuster',
+    displayName: 'Tone Adjuster',
+    description: 'Rewrite your text to match different tones - formal, casual, friendly, professional, or persuasive.',
+    icon: '🎭',
+    category: 'communication',
+    authorName: 'SecureAgent',
+    downloads: 2341,
+    rating: 4.4,
+    ratingCount: 156,
+    featured: false,
+    version: '1.0.0',
+    tags: ['writing', 'tone', 'professional', 'casual', 'communication'],
+  },
+  {
+    id: 'response-generator',
+    name: 'response-generator',
+    displayName: 'Response Generator',
+    description: 'Generate professional responses for common scenarios - acceptances, declines, follow-ups, and more.',
+    icon: '💬',
+    category: 'communication',
+    authorName: 'SecureAgent',
+    downloads: 2876,
+    rating: 4.5,
+    ratingCount: 203,
+    featured: false,
+    version: '1.0.0',
+    tags: ['responses', 'templates', 'professional', 'email'],
+  },
+  
+  // Research
+  {
+    id: 'web-researcher',
+    name: 'web-researcher',
+    displayName: 'Web Researcher',
+    description: 'Deep research assistant that finds, summarizes, and cites sources on any topic.',
+    icon: '🔍',
+    category: 'research',
+    authorName: 'SecureAgent',
+    downloads: 4234,
+    rating: 4.8,
+    ratingCount: 367,
+    featured: true,
+    version: '1.0.0',
+    tags: ['research', 'web', 'sources', 'summary', 'citations'],
+  },
+  {
+    id: 'competitor-monitor',
+    name: 'competitor-monitor',
+    displayName: 'Competitor Monitor',
+    description: 'Track competitor news, product updates, and market movements. Stay ahead of the competition.',
+    icon: '📊',
+    category: 'research',
+    authorName: 'SecureAgent',
+    downloads: 1987,
+    rating: 4.4,
+    ratingCount: 134,
+    featured: false,
+    version: '1.0.0',
+    tags: ['competitors', 'market', 'business', 'tracking', 'analysis'],
+  },
+  {
+    id: 'news-digest',
+    name: 'news-digest',
+    displayName: 'News Digest',
+    description: 'Get personalized daily news summaries on topics you care about. Stay informed effortlessly.',
+    icon: '📰',
+    category: 'research',
+    authorName: 'SecureAgent',
+    downloads: 3123,
+    rating: 4.6,
+    ratingCount: 245,
+    featured: false,
+    version: '1.0.0',
+    tags: ['news', 'digest', 'daily', 'summary', 'updates'],
+  },
+  {
+    id: 'fact-checker',
+    name: 'fact-checker',
+    displayName: 'Fact Checker',
+    description: 'Verify claims and statements with cited sources. Get confidence ratings and explanations.',
+    icon: '✓',
+    category: 'research',
+    authorName: 'SecureAgent',
+    downloads: 2456,
+    rating: 4.5,
+    ratingCount: 178,
+    featured: false,
+    version: '1.0.0',
+    tags: ['facts', 'verification', 'truth', 'sources', 'accuracy'],
+  },
+  
+  // Data & Analysis
+  {
+    id: 'csv-analyzer',
+    name: 'csv-analyzer',
+    displayName: 'CSV Analyzer',
+    description: 'Analyze CSV data with automatic statistics, insights, and data quality checks.',
+    icon: '📊',
+    category: 'data',
+    authorName: 'SecureAgent',
+    downloads: 2789,
+    rating: 4.6,
+    ratingCount: 198,
+    featured: false,
+    version: '1.0.0',
+    tags: ['csv', 'data', 'analysis', 'statistics', 'insights'],
+  },
+  {
+    id: 'chart-generator',
+    name: 'chart-generator',
+    displayName: 'Chart Generator',
+    description: 'Create beautiful ASCII charts - bar charts, line graphs, pie charts, and tables.',
+    icon: '📈',
+    category: 'data',
+    authorName: 'SecureAgent',
+    downloads: 2345,
+    rating: 4.4,
+    ratingCount: 167,
+    featured: false,
+    version: '1.0.0',
+    tags: ['charts', 'visualization', 'graphs', 'data', 'ascii'],
+  },
+  {
+    id: 'report-builder',
+    name: 'report-builder',
+    displayName: 'Report Builder',
+    description: 'Generate professional reports - executive summaries, technical reports, and custom formats.',
+    icon: '📝',
+    category: 'data',
+    authorName: 'SecureAgent',
+    downloads: 1876,
+    rating: 4.5,
+    ratingCount: 143,
+    featured: false,
+    version: '1.0.0',
+    tags: ['reports', 'documents', 'professional', 'summary', 'business'],
+  },
+  
+  // Personal
+  {
+    id: 'birthday-reminder',
+    name: 'birthday-reminder',
+    displayName: 'Birthday Reminder',
+    description: 'Never forget a birthday again. Track important dates, get reminders, and gift suggestions.',
+    icon: '🎂',
+    category: 'personal',
+    authorName: 'SecureAgent',
+    downloads: 3214,
+    rating: 4.8,
+    ratingCount: 256,
+    featured: false,
+    version: '1.0.0',
+    tags: ['birthday', 'reminder', 'calendar', 'gifts', 'celebrations'],
+  },
+  {
+    id: 'recipe-finder',
+    name: 'recipe-finder',
+    displayName: 'Recipe Finder',
+    description: 'Find delicious recipes based on ingredients you have. Includes cooking times and dietary filters.',
+    icon: '🍳',
+    category: 'personal',
+    authorName: 'SecureAgent',
+    downloads: 4123,
+    rating: 4.7,
+    ratingCount: 312,
+    featured: true,
+    version: '1.0.0',
+    tags: ['recipes', 'cooking', 'food', 'meals', 'ingredients'],
+  },
+  {
+    id: 'workout-planner',
+    name: 'workout-planner',
+    displayName: 'Workout Planner',
+    description: 'Generate personalized workout routines. Strength, cardio, HIIT, yoga based on your fitness level.',
+    icon: '💪',
+    category: 'personal',
+    authorName: 'SecureAgent',
+    downloads: 2987,
+    rating: 4.6,
+    ratingCount: 223,
+    featured: false,
+    version: '1.0.0',
+    tags: ['fitness', 'workout', 'exercise', 'health', 'gym'],
+  },
+  {
+    id: 'travel-planner',
+    name: 'travel-planner',
+    displayName: 'Travel Planner',
+    description: 'Plan your perfect trip. Research destinations, get travel tips, and create detailed itineraries.',
+    icon: '✈️',
+    category: 'personal',
+    authorName: 'SecureAgent',
+    downloads: 3567,
+    rating: 4.7,
+    ratingCount: 278,
+    featured: false,
+    version: '1.0.0',
+    tags: ['travel', 'vacation', 'trips', 'itinerary', 'destinations'],
   },
 ];
 
-// Store for user-submitted skills
-const userSkills: MarketplaceSkill[] = [];
+export async function GET(request: Request) {
+  const { searchParams } = new URL(request.url);
+  
+  const query = searchParams.get('query')?.toLowerCase() || '';
+  const category = searchParams.get('category') || '';
+  const sortBy = searchParams.get('sortBy') || 'downloads';
+  const featured = searchParams.get('featured') === 'true';
+  const page = parseInt(searchParams.get('page') || '1');
+  const pageSize = parseInt(searchParams.get('pageSize') || '12');
 
-/**
- * GET /api/skills/marketplace
- * List and search marketplace skills
- */
-export async function GET(request: NextRequest) {
-  try {
-    const { searchParams } = new URL(request.url);
-    const query = searchParams.get('query') || '';
-    const category = searchParams.get('category') || '';
-    const sortBy = searchParams.get('sortBy') || 'downloads';
-    const sortOrder = searchParams.get('sortOrder') || 'desc';
-    const featured = searchParams.get('featured');
-    const page = parseInt(searchParams.get('page') || '1', 10);
-    const pageSize = parseInt(searchParams.get('pageSize') || '20', 10);
+  let filtered = [...builtInSkills];
 
-    // Combine demo and user skills
-    let allSkills = [...demoSkills, ...userSkills].filter(
-      (skill) => skill.status === 'published',
-    );
+  // Filter by featured
+  if (featured) {
+    filtered = filtered.filter(s => s.featured);
+  }
 
-    // Filter by query
-    if (query) {
-      const q = query.toLowerCase();
-      allSkills = allSkills.filter(
-        (skill) =>
-          skill.name.toLowerCase().includes(q) ||
-          skill.displayName.toLowerCase().includes(q) ||
-          skill.description.toLowerCase().includes(q) ||
-          skill.tags?.some((tag) => tag.toLowerCase().includes(q)),
-      );
-    }
-
-    // Filter by category
-    if (category) {
-      allSkills = allSkills.filter((skill) => skill.category === category);
-    }
-
-    // Filter by featured
-    if (featured === 'true') {
-      allSkills = allSkills.filter((skill) => skill.featured);
-    }
-
-    // Sort
-    allSkills.sort((a, b) => {
-      let comparison = 0;
-      switch (sortBy) {
-        case 'downloads':
-          comparison = a.downloads - b.downloads;
-          break;
-        case 'rating':
-          comparison = a.rating - b.rating;
-          break;
-        case 'recent':
-          comparison = (a.publishedAt || 0) - (b.publishedAt || 0);
-          break;
-        case 'name':
-          comparison = a.displayName.localeCompare(b.displayName);
-          break;
-      }
-      return sortOrder === 'desc' ? -comparison : comparison;
-    });
-
-    // Paginate
-    const total = allSkills.length;
-    const totalPages = Math.ceil(total / pageSize);
-    const start = (page - 1) * pageSize;
-    const items: SkillCard[] = allSkills.slice(start, start + pageSize).map((skill) => ({
-      id: skill.id,
-      name: skill.name,
-      displayName: skill.displayName,
-      description: skill.description,
-      icon: skill.icon,
-      category: skill.category,
-      authorName: skill.authorName,
-      authorAvatar: skill.authorAvatar,
-      downloads: skill.downloads,
-      rating: skill.rating,
-      ratingCount: skill.ratingCount,
-      featured: skill.featured,
-      version: skill.version,
-      tags: skill.tags,
-    }));
-
-    return NextResponse.json({
-      items,
-      total,
-      page,
-      pageSize,
-      totalPages,
-    });
-  } catch (error) {
-    console.error('Marketplace search error:', error);
-    return NextResponse.json(
-      { error: 'Failed to search marketplace' },
-      { status: 500 },
+  // Filter by query
+  if (query) {
+    filtered = filtered.filter(s =>
+      s.displayName.toLowerCase().includes(query) ||
+      s.description.toLowerCase().includes(query) ||
+      s.tags?.some(t => t.toLowerCase().includes(query))
     );
   }
-}
 
-/**
- * POST /api/skills/marketplace
- * Submit a new skill
- */
-export async function POST(request: NextRequest) {
-  try {
-    const body = await request.json();
-    const { config, code, authorId, authorName } = body;
-
-    // Basic validation
-    if (!config || !code || !authorId || !authorName) {
-      return NextResponse.json(
-        { error: 'Missing required fields: config, code, authorId, authorName' },
-        { status: 400 },
-      );
-    }
-
-    // Check for duplicate name
-    const existing = [...demoSkills, ...userSkills].find(
-      (s) => s.name === config.name,
-    );
-    if (existing) {
-      return NextResponse.json(
-        { error: `Skill with name "${config.name}" already exists` },
-        { status: 409 },
-      );
-    }
-
-    // Create new skill
-    const now = Date.now();
-    const newSkill: MarketplaceSkill = {
-      id: `skill_${now}_${Math.random().toString(36).substring(2, 9)}`,
-      name: config.name,
-      displayName: config.displayName,
-      description: config.description,
-      icon: config.icon,
-      category: config.category,
-      authorId,
-      authorName,
-      downloads: 0,
-      rating: 0,
-      ratingCount: 0,
-      featured: false,
-      version: config.version || '1.0.0',
-      tags: config.tags,
-      code,
-      status: 'published',
-      createdAt: now,
-      updatedAt: now,
-      publishedAt: now,
-    };
-
-    userSkills.push(newSkill);
-
-    return NextResponse.json({
-      success: true,
-      skill: {
-        id: newSkill.id,
-        name: newSkill.name,
-        displayName: newSkill.displayName,
-      },
-    });
-  } catch (error) {
-    console.error('Skill submission error:', error);
-    return NextResponse.json(
-      { error: 'Failed to submit skill' },
-      { status: 500 },
-    );
+  // Filter by category
+  if (category) {
+    filtered = filtered.filter(s => s.category === category);
   }
+
+  // Sort
+  switch (sortBy) {
+    case 'rating':
+      filtered.sort((a, b) => b.rating - a.rating);
+      break;
+    case 'recent':
+      // Reverse order for "recent" (newest skills at end of array)
+      filtered.reverse();
+      break;
+    case 'name':
+      filtered.sort((a, b) => a.displayName.localeCompare(b.displayName));
+      break;
+    case 'downloads':
+    default:
+      filtered.sort((a, b) => b.downloads - a.downloads);
+  }
+
+  // Paginate
+  const total = filtered.length;
+  const totalPages = Math.ceil(total / pageSize);
+  const startIndex = (page - 1) * pageSize;
+  const items = filtered.slice(startIndex, startIndex + pageSize);
+
+  return NextResponse.json({
+    items,
+    total,
+    page,
+    pageSize,
+    totalPages,
+  });
 }

@@ -36,11 +36,11 @@ interface SearchResponse {
 const CATEGORIES = [
   { id: '', label: 'All Categories', icon: '🌐' },
   { id: 'productivity', label: 'Productivity', icon: '📈' },
-  { id: 'developer', label: 'Developer', icon: '💻' },
   { id: 'communication', label: 'Communication', icon: '💬' },
-  { id: 'data', label: 'Data', icon: '📊' },
+  { id: 'research', label: 'Research', icon: '🔍' },
+  { id: 'data', label: 'Data & Analysis', icon: '📊' },
+  { id: 'personal', label: 'Personal', icon: '🏠' },
   { id: 'automation', label: 'Automation', icon: '⚡' },
-  { id: 'custom', label: 'Custom', icon: '🔧' },
 ];
 
 const SORT_OPTIONS = [

@@ -11,7 +11,9 @@ export const SKILL_CATEGORIES = [
   'productivity',
   'developer',
   'communication',
+  'research',
   'data',
+  'personal',
   'automation',
   'custom',
 ] as const;
@@ -216,4 +218,46 @@ export interface MarketplaceStats {
   categoryCounts: Record<SkillCategory, number>;
   topSkills: SkillCard[];
   recentSkills: SkillCard[];
+}
+
+// ==========================================
+// Built-in Skill Types
+// ==========================================
+
+/**
+ * Skill command definition for built-in skills
+ */
+export interface SkillCommand {
+  command?: string;
+  name?: string;
+  description: string;
+  usage?: string;
+  examples?: string[];
+}
+
+/**
+ * Result from executing a skill command
+ */
+export interface SkillExecuteResult {
+  success: boolean;
+  message: string;
+  data?: unknown;
+}
+
+/**
+ * Built-in marketplace skill (self-contained with execute function)
+ */
+export interface BuiltInSkill {
+  id: string;
+  name: string;
+  description: string;
+  version: string;
+  author: string;
+  category: SkillCategory;
+  tags?: string[];
+  icon: string;
+  installCount: number;
+  rating: number;
+  commands: SkillCommand[];
+  execute: (action: string, params: Record<string, unknown>) => Promise<SkillExecuteResult>;
 }
