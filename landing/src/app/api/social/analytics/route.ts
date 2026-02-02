@@ -23,7 +23,7 @@ export async function GET(request: NextRequest) {
         comments: Math.floor(Math.random() * 50) + 5,
         shares: Math.floor(Math.random() * 100) + 10,
         clicks: Math.floor(Math.random() * 200) + 20,
-        engagementRate: (Math.random() * 5 + 1).toFixed(2),
+        engagementRate: Math.round((Math.random() * 5 + 1) * 100) / 100,
         updatedAt: Date.now(),
       };
 
@@ -46,10 +46,10 @@ export async function GET(request: NextRequest) {
       totalFollowers: Math.floor(Math.random() * 10000 + 2000),
       newFollowers: Math.floor((Math.random() * 500 + 100) * multiplier),
 
-      // Growth metrics
-      growthRate: (Math.random() * 10 + 2).toFixed(2),
-      impressionsGrowth: (Math.random() * 20 - 5).toFixed(2),
-      engagementGrowth: (Math.random() * 15 - 3).toFixed(2),
+      // Growth metrics (return as numbers, not strings)
+      growthRate: Math.round((Math.random() * 10 + 2) * 100) / 100,
+      impressionsGrowth: Math.round((Math.random() * 20 - 5) * 100) / 100,
+      engagementGrowth: Math.round((Math.random() * 15 - 3) * 100) / 100,
 
       // Platform breakdown
       platformBreakdown: {
@@ -57,32 +57,32 @@ export async function GET(request: NextRequest) {
           impressions: Math.floor((Math.random() * 15000 + 3000) * multiplier),
           engagement: Math.floor((Math.random() * 1500 + 300) * multiplier),
           followers: Math.floor(Math.random() * 5000 + 1000),
-          engagementRate: (Math.random() * 4 + 1).toFixed(2),
+          engagementRate: Math.round((Math.random() * 4 + 1) * 100) / 100,
         },
         linkedin: {
           impressions: Math.floor((Math.random() * 10000 + 2000) * multiplier),
           engagement: Math.floor((Math.random() * 800 + 200) * multiplier),
           followers: Math.floor(Math.random() * 3000 + 500),
-          engagementRate: (Math.random() * 3 + 1).toFixed(2),
+          engagementRate: Math.round((Math.random() * 3 + 1) * 100) / 100,
         },
         bluesky: {
           impressions: Math.floor((Math.random() * 5000 + 1000) * multiplier),
           engagement: Math.floor((Math.random() * 500 + 100) * multiplier),
           followers: Math.floor(Math.random() * 1000 + 200),
-          engagementRate: (Math.random() * 5 + 2).toFixed(2),
+          engagementRate: Math.round((Math.random() * 5 + 2) * 100) / 100,
         },
         youtube: {
           impressions: Math.floor((Math.random() * 20000 + 5000) * multiplier),
           engagement: Math.floor((Math.random() * 2000 + 500) * multiplier),
           followers: Math.floor(Math.random() * 2000 + 500),
-          engagementRate: (Math.random() * 6 + 2).toFixed(2),
+          engagementRate: Math.round((Math.random() * 6 + 2) * 100) / 100,
           videoViews: Math.floor((Math.random() * 10000 + 2000) * multiplier),
         },
         instagram: {
           impressions: Math.floor((Math.random() * 12000 + 3000) * multiplier),
           engagement: Math.floor((Math.random() * 1200 + 300) * multiplier),
           followers: Math.floor(Math.random() * 4000 + 800),
-          engagementRate: (Math.random() * 5 + 2).toFixed(2),
+          engagementRate: Math.round((Math.random() * 5 + 2) * 100) / 100,
         },
       },
 
@@ -94,7 +94,7 @@ export async function GET(request: NextRequest) {
           content: 'Excited to announce our new product launch!',
           impressions: Math.floor(Math.random() * 5000 + 2000),
           engagement: Math.floor(Math.random() * 300 + 100),
-          engagementRate: (Math.random() * 8 + 3).toFixed(2),
+          engagementRate: Math.round((Math.random() * 8 + 3) * 100) / 100,
         },
         {
           id: 'post_2',
@@ -102,7 +102,7 @@ export async function GET(request: NextRequest) {
           content: 'Sharing insights from our latest research...',
           impressions: Math.floor(Math.random() * 4000 + 1500),
           engagement: Math.floor(Math.random() * 250 + 80),
-          engagementRate: (Math.random() * 6 + 2).toFixed(2),
+          engagementRate: Math.round((Math.random() * 6 + 2) * 100) / 100,
         },
         {
           id: 'post_3',
@@ -110,7 +110,7 @@ export async function GET(request: NextRequest) {
           content: 'Behind the scenes at our office',
           impressions: Math.floor(Math.random() * 3500 + 1200),
           engagement: Math.floor(Math.random() * 200 + 60),
-          engagementRate: (Math.random() * 7 + 3).toFixed(2),
+          engagementRate: Math.round((Math.random() * 7 + 3) * 100) / 100,
         },
       ],
 
