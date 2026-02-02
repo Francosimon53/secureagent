@@ -154,6 +154,27 @@ export default function VoiceCallsPage() {
         </button>
       </div>
 
+      {/* Setup Required Banner */}
+      <div className="bg-gradient-to-r from-purple-500/10 to-violet-500/10 border border-purple-500/30 rounded-xl p-6">
+        <div className="flex items-start gap-4">
+          <div className="w-12 h-12 bg-purple-500/20 rounded-xl flex items-center justify-center text-2xl shrink-0">
+            📞
+          </div>
+          <div className="flex-1">
+            <div className="flex items-center gap-2 mb-1">
+              <h3 className="text-lg font-semibold text-white">Setup Required</h3>
+              <span className="px-2 py-0.5 bg-purple-500/20 text-purple-400 text-xs font-medium rounded-full">Coming Soon</span>
+            </div>
+            <p className="text-gray-400 text-sm mb-4">
+              AI-powered voice calls require integration with telephony services like Twilio or Bland.ai. This feature is in development and will allow SecureAgent to make and receive calls on your behalf.
+            </p>
+            <p className="text-gray-500 text-xs">
+              Planned features: AI call handling, voicemail transcription, call screening, custom voice cloning • ETA: Q2 2025
+            </p>
+          </div>
+        </div>
+      </div>
+
       {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <div className="bg-gray-900 rounded-xl p-4 border border-gray-800">

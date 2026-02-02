@@ -318,6 +318,8 @@ export default function SocialMediaPage() {
   const connectedAccounts = accounts.filter(a => a.connected);
   const availablePlatforms = accounts.filter(a => a.connected).map(a => a.platform);
 
+  const hasConnectedAccounts = accounts.some(a => a.connected);
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -325,6 +327,29 @@ export default function SocialMediaPage() {
         <h1 className="text-2xl font-bold text-white">Social Media</h1>
         <p className="text-gray-400 mt-1">Manage your social media presence across platforms</p>
       </div>
+
+      {/* Setup Required Banner */}
+      {!hasConnectedAccounts && (
+        <div className="bg-gradient-to-r from-amber-500/10 to-orange-500/10 border border-amber-500/30 rounded-xl p-6">
+          <div className="flex items-start gap-4">
+            <div className="w-12 h-12 bg-amber-500/20 rounded-xl flex items-center justify-center text-2xl shrink-0">
+              ⚠️
+            </div>
+            <div className="flex-1">
+              <div className="flex items-center gap-2 mb-1">
+                <h3 className="text-lg font-semibold text-white">Setup Required</h3>
+                <span className="px-2 py-0.5 bg-amber-500/20 text-amber-400 text-xs font-medium rounded-full">Coming Soon</span>
+              </div>
+              <p className="text-gray-400 text-sm mb-4">
+                Social media integrations require OAuth setup with each platform. Connect your accounts in the Accounts tab below to enable posting, scheduling, and analytics.
+              </p>
+              <p className="text-gray-500 text-xs">
+                Supported platforms: Twitter/X, LinkedIn, Bluesky, YouTube, Instagram • OAuth integrations coming in a future release
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">

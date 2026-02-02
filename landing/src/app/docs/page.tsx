@@ -163,12 +163,12 @@ export default function DocsPage() {
               >
                 Contact Support
               </a>
-              <a
-                href="https://discord.gg/secureagent"
-                className="px-6 py-3 bg-gray-800 text-white rounded-lg font-medium hover:bg-gray-700 transition-colors border border-gray-700"
+              <span
+                className="px-6 py-3 bg-gray-800 text-gray-400 rounded-lg font-medium border border-gray-700 cursor-not-allowed flex items-center gap-2"
+                title="Discord community coming soon"
               >
-                Join Discord
-              </a>
+                Join Discord <span className="text-amber-400 text-xs">(Coming Soon)</span>
+              </span>
             </div>
           </div>
         </div>

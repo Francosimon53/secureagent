@@ -256,6 +256,8 @@ export default function MusicDashboard() {
     );
   }
 
+  const hasConnectedProviders = providers.some(p => p.connected);
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -279,6 +281,29 @@ export default function MusicDashboard() {
           Connect Spotify
         </button>
       </div>
+
+      {/* Setup Required Banner */}
+      {!hasConnectedProviders && (
+        <div className="bg-gradient-to-r from-green-500/10 to-emerald-500/10 border border-green-500/30 rounded-xl p-6">
+          <div className="flex items-start gap-4">
+            <div className="w-12 h-12 bg-green-500/20 rounded-xl flex items-center justify-center text-2xl shrink-0">
+              🎵
+            </div>
+            <div className="flex-1">
+              <div className="flex items-center gap-2 mb-1">
+                <h3 className="text-lg font-semibold text-white">Connect a Music Service</h3>
+                <span className="px-2 py-0.5 bg-green-500/20 text-green-400 text-xs font-medium rounded-full">Setup Required</span>
+              </div>
+              <p className="text-gray-400 text-sm mb-4">
+                Click "Connect Spotify" above to link your Spotify account. Requires SPOTIFY_CLIENT_ID and SPOTIFY_CLIENT_SECRET environment variables to be configured.
+              </p>
+              <p className="text-gray-500 text-xs">
+                Supported services: Spotify (OAuth), Sonos (local network), Apple Music (coming soon)
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Error display */}
       {error && (

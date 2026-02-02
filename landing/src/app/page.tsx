@@ -1079,8 +1079,9 @@ export default function Home() {
             <div>
               <h4 className="font-semibold text-white mb-4">Connect</h4>
               <ul className="space-y-2 text-gray-400 text-sm">
-                <li><a href="https://t.me/Secure_Agent_bot" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">Telegram Bot</a></li>
-                <li><a href="https://github.com/Francosimon53/secureagent/issues" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">Community</a></li>
+                <li><a href="https://t.me/Secure_Agent_bot" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors flex items-center gap-1">Telegram Bot <span className="text-green-400 text-xs">✓ Live</span></a></li>
+                <li><span className="text-gray-500 flex items-center gap-1">Discord <span className="text-amber-400 text-xs">(Coming Soon)</span></span></li>
+                <li><span className="text-gray-500 flex items-center gap-1">Slack Integration <span className="text-amber-400 text-xs">(Coming Soon)</span></span></li>
               </ul>
             </div>
           </div>

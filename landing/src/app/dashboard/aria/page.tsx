@@ -150,6 +150,27 @@ ${sessionNotes}
           </Link>
         </div>
 
+        {/* Beta Notice Banner */}
+        <div className="mb-8 p-6 bg-gradient-to-r from-cyan-500/10 to-blue-500/10 border border-cyan-500/30 rounded-xl">
+          <div className="flex items-start gap-4">
+            <div className="w-12 h-12 bg-cyan-500/20 rounded-xl flex items-center justify-center text-2xl shrink-0">
+              🏥
+            </div>
+            <div className="flex-1">
+              <div className="flex items-center gap-2 mb-1">
+                <h3 className="text-lg font-semibold text-white">ARIA Integration</h3>
+                <span className="px-2 py-0.5 bg-cyan-500/20 text-cyan-400 text-xs font-medium rounded-full">Specialized Feature</span>
+              </div>
+              <p className="text-gray-400 text-sm mb-4">
+                Esta integración está diseñada para usuarios de ARIA (ariaba.app). Requiere una cuenta activa de ARIA para funcionar. Los reportes generados son asistidos por IA y deben ser revisados antes de guardar.
+              </p>
+              <p className="text-gray-500 text-xs">
+                Conecta tu cuenta de ARIA abajo para habilitar la generación de reportes con IA
+              </p>
+            </div>
+          </div>
+        </div>
+
         {/* Connection Status */}
         <div className="mb-8 p-6 bg-white/5 border border-white/10 rounded-xl">
           <div className="flex items-center justify-between mb-4">

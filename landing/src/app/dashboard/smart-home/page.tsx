@@ -180,6 +180,8 @@ export default function SmartHomePage() {
     );
   }
 
+  const hasConnectedIntegrations = integrations.some(i => i.connected);
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -196,6 +198,29 @@ export default function SmartHomePage() {
           <span>Add Integration</span>
         </button>
       </div>
+
+      {/* Setup Required Banner */}
+      {!hasConnectedIntegrations && (
+        <div className="bg-gradient-to-r from-amber-500/10 to-orange-500/10 border border-amber-500/30 rounded-xl p-6">
+          <div className="flex items-start gap-4">
+            <div className="w-12 h-12 bg-amber-500/20 rounded-xl flex items-center justify-center text-2xl shrink-0">
+              🏠
+            </div>
+            <div className="flex-1">
+              <div className="flex items-center gap-2 mb-1">
+                <h3 className="text-lg font-semibold text-white">Setup Required</h3>
+                <span className="px-2 py-0.5 bg-amber-500/20 text-amber-400 text-xs font-medium rounded-full">Coming Soon</span>
+              </div>
+              <p className="text-gray-400 text-sm mb-4">
+                Smart home control requires connecting to your home automation platforms. The demo below shows mock data. Real integrations require local network access or API configuration.
+              </p>
+              <p className="text-gray-500 text-xs">
+                Supported platforms: Philips Hue, Home Assistant, TP-Link Kasa, Google Nest, Ring • Integrations in development
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Quick Stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">

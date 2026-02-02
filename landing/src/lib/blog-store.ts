@@ -107,7 +107,7 @@ SecureAgent will now send you a daily calendar summary every morning at 9 AM!
 ## Next Steps
 
 - Explore our [documentation](/docs) for advanced features
-- Join our [community Discord](https://discord.gg/secureagent) for tips and support
+- Follow our [GitHub discussions](https://github.com/Francosimon53/secureagent/discussions) for tips and support
 - Check out our other guides for specific use cases
 
 Welcome to the future of personal automation!
