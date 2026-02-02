@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { useState } from 'react';
+import UserNav from '@/components/UserNav';
 
 // Animation variants
 const fadeInUp = {
@@ -200,18 +201,9 @@ export default function Home() {
             </div>
 
             <div className="flex items-center gap-3">
-              <Link
-                href="/dashboard"
-                className="hidden sm:inline-flex px-4 py-2 text-sm text-gray-300 hover:text-white transition-colors"
-              >
-                Dashboard
-              </Link>
-              <Link
-                href="/dashboard/chat"
-                className="px-4 py-2 bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-500 hover:to-cyan-500 rounded-lg font-medium text-sm transition-all hover:shadow-lg hover:shadow-blue-500/25"
-              >
-                Try Now
-              </Link>
+              <div className="hidden sm:block">
+                <UserNav />
+              </div>
 
               {/* Mobile menu button */}
               <button
