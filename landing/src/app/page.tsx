@@ -5,101 +5,275 @@ import { motion } from 'framer-motion';
 import { useState, useEffect } from 'react';
 import UserNav from '@/components/UserNav';
 
-// Animated Chat Demo Component
-const chatMessages = [
-  { type: 'user', text: 'Schedule a reminder for 5pm', delay: 0 },
-  { type: 'bot', text: '✅ Reminder scheduled for 5:00 PM today. I\'ll notify you!', delay: 1500 },
-  { type: 'user', text: 'What\'s the weather today?', delay: 3500 },
-  { type: 'bot', text: '☀️ 75°F in Miami - Sunny skies, perfect day!', delay: 5000 },
-  { type: 'user', text: 'Send a message to the team on Slack', delay: 7000 },
-  { type: 'bot', text: '💬 Message sent to #general: "Quick sync at 3pm today"', delay: 8500 },
+// Comprehensive Animated Chat Demo Component
+const demoScenes = [
+  {
+    id: 'intro',
+    title: 'Meet SecureAgent',
+    icon: '👋',
+    color: 'from-blue-500 to-cyan-500',
+    messages: [
+      { type: 'user', text: 'Hey SecureAgent, what can you do?' },
+      { type: 'bot', text: 'I can automate tasks, control smart devices, manage social media, make calls, play music, and much more! Let me show you...' },
+    ],
+  },
+  {
+    id: 'scheduling',
+    title: 'Task Scheduling',
+    icon: '📅',
+    color: 'from-green-500 to-emerald-500',
+    messages: [
+      { type: 'user', text: 'Remind me to call mom every Sunday at 10am' },
+      { type: 'bot', text: '✅ Recurring reminder set: Call mom - Every Sunday at 10:00 AM' },
+    ],
+  },
+  {
+    id: 'search',
+    title: 'Web Search',
+    icon: '🔍',
+    color: 'from-purple-500 to-violet-500',
+    messages: [
+      { type: 'user', text: 'What are the latest AI news today?' },
+      { type: 'bot', text: '🔍 Found 5 top stories: 1) OpenAI announces GPT-5... 2) Google\'s Gemini update... [Real-time web search]' },
+    ],
+  },
+  {
+    id: 'smarthome',
+    title: 'Smart Home',
+    icon: '🏠',
+    color: 'from-amber-500 to-orange-500',
+    messages: [
+      { type: 'user', text: 'Turn off all lights and set thermostat to 72°' },
+      { type: 'bot', text: '🏠 Done! Turned off 6 lights. Thermostat set to 72°F. Goodnight!' },
+    ],
+  },
+  {
+    id: 'music',
+    title: 'Music Control',
+    icon: '🎵',
+    color: 'from-pink-500 to-rose-500',
+    messages: [
+      { type: 'user', text: 'Play some relaxing jazz on Spotify' },
+      { type: 'bot', text: '🎵 Playing "Relaxing Jazz Playlist" on Living Room speaker' },
+    ],
+  },
+  {
+    id: 'social',
+    title: 'Social Media',
+    icon: '📱',
+    color: 'from-sky-500 to-blue-500',
+    messages: [
+      { type: 'user', text: 'Post to Twitter: Just launched my new app! 🚀' },
+      { type: 'bot', text: '🐦 Posted to Twitter! Already 5 likes and 2 retweets' },
+    ],
+  },
+  {
+    id: 'calendar',
+    title: 'Calendar',
+    icon: '📆',
+    color: 'from-indigo-500 to-purple-500',
+    messages: [
+      { type: 'user', text: 'What meetings do I have tomorrow?' },
+      { type: 'bot', text: '📅 Tomorrow: 9am Team Standup, 2pm Client Call, 4pm Product Review' },
+    ],
+  },
+  {
+    id: 'calls',
+    title: 'Voice Calls',
+    icon: '📞',
+    color: 'from-teal-500 to-cyan-500',
+    messages: [
+      { type: 'user', text: 'Call the restaurant and make a reservation for 7pm' },
+      { type: 'bot', text: '📞 Calling Luigi\'s Italian... Reservation confirmed for 7:00 PM, party of 2' },
+    ],
+  },
+  {
+    id: 'multimodel',
+    title: 'Multi-Model AI',
+    icon: '🤖',
+    color: 'from-violet-500 to-fuchsia-500',
+    messages: [
+      { type: 'user', text: 'Compare what GPT-4 and Claude think about this code' },
+      { type: 'bot', text: '🤖 Running comparison... GPT-4 suggests refactoring, Claude recommends tests. See side-by-side analysis →' },
+    ],
+  },
+  {
+    id: 'proactive',
+    title: 'Proactive Alerts',
+    icon: '⚡',
+    color: 'from-yellow-500 to-amber-500',
+    messages: [
+      { type: 'bot', text: '⚡ Heads up! Bitcoin dropped 5% below your target. Your Uber arrives in 3 min. Don\'t forget: Mom\'s birthday tomorrow!' },
+    ],
+  },
 ];
 
 function AnimatedChatDemo() {
+  const [currentScene, setCurrentScene] = useState(0);
   const [visibleMessages, setVisibleMessages] = useState<number[]>([]);
   const [isTyping, setIsTyping] = useState(false);
-  const [cycleKey, setCycleKey] = useState(0);
+  const [isPaused, setIsPaused] = useState(false);
+  const [progress, setProgress] = useState(0);
+
+  const scene = demoScenes[currentScene];
+  const sceneDuration = 4500; // 4.5 seconds per scene
 
   useEffect(() => {
-    const timers: NodeJS.Timeout[] = [];
+    if (isPaused) return;
 
-    // Reset messages at start of each cycle
+    const timers: NodeJS.Timeout[] = [];
     setVisibleMessages([]);
     setIsTyping(false);
+    setProgress(0);
 
-    chatMessages.forEach((msg, index) => {
-      // Show typing indicator before bot messages
+    // Progress bar animation
+    const progressInterval = setInterval(() => {
+      setProgress(prev => Math.min(prev + 2, 100));
+    }, sceneDuration / 50);
+    timers.push(progressInterval as unknown as NodeJS.Timeout);
+
+    // Show messages with timing
+    scene.messages.forEach((msg, index) => {
+      const baseDelay = index * 1800;
+
       if (msg.type === 'bot') {
-        const typingTimer = setTimeout(() => {
-          setIsTyping(true);
-        }, msg.delay - 800);
+        const typingTimer = setTimeout(() => setIsTyping(true), baseDelay);
         timers.push(typingTimer);
-      }
 
-      // Show the message
-      const msgTimer = setTimeout(() => {
-        setIsTyping(false);
-        setVisibleMessages(prev => [...prev, index]);
-      }, msg.delay);
-      timers.push(msgTimer);
+        const msgTimer = setTimeout(() => {
+          setIsTyping(false);
+          setVisibleMessages(prev => [...prev, index]);
+        }, baseDelay + 800);
+        timers.push(msgTimer);
+      } else {
+        const msgTimer = setTimeout(() => {
+          setVisibleMessages(prev => [...prev, index]);
+        }, baseDelay);
+        timers.push(msgTimer);
+      }
     });
 
-    // Restart the animation after all messages are shown
-    const restartTimer = setTimeout(() => {
-      setCycleKey(prev => prev + 1);
-    }, 12000);
-    timers.push(restartTimer);
+    // Move to next scene
+    const nextSceneTimer = setTimeout(() => {
+      setCurrentScene(prev => (prev + 1) % demoScenes.length);
+    }, sceneDuration);
+    timers.push(nextSceneTimer);
 
-    return () => timers.forEach(t => clearTimeout(t));
-  }, [cycleKey]);
+    return () => {
+      timers.forEach(t => clearTimeout(t));
+      clearInterval(progressInterval);
+    };
+  }, [currentScene, isPaused, scene.messages]);
+
+  const goToScene = (index: number) => {
+    setCurrentScene(index);
+    setProgress(0);
+  };
+
+  const nextScene = () => {
+    setCurrentScene(prev => (prev + 1) % demoScenes.length);
+    setProgress(0);
+  };
 
   return (
-    <div className="absolute inset-0 top-10 p-4 overflow-hidden bg-gradient-to-b from-gray-900 to-gray-950">
-      <div className="h-full flex flex-col justify-end space-y-3 pb-2">
-        {chatMessages.map((msg, index) => (
-          <div
-            key={`${cycleKey}-${index}`}
-            className={`flex ${msg.type === 'user' ? 'justify-end' : 'justify-start'} transition-all duration-300 ${
-              visibleMessages.includes(index) ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
-            }`}
+    <div
+      className="absolute inset-0 top-10 flex flex-col bg-gradient-to-b from-gray-900 to-gray-950"
+      onMouseEnter={() => setIsPaused(true)}
+      onMouseLeave={() => setIsPaused(false)}
+    >
+      {/* Scene header */}
+      <div className={`flex items-center justify-between px-4 py-2 bg-gradient-to-r ${scene.color} bg-opacity-20`}>
+        <div className="flex items-center gap-2">
+          <span className="text-lg">{scene.icon}</span>
+          <span className="text-white text-sm font-medium">{scene.title}</span>
+        </div>
+        <div className="flex items-center gap-2">
+          {isPaused && (
+            <span className="text-xs text-white/60 bg-white/10 px-2 py-0.5 rounded">Paused</span>
+          )}
+          <button
+            onClick={nextScene}
+            className="text-white/60 hover:text-white text-xs px-2 py-1 rounded hover:bg-white/10 transition-colors"
           >
-            {msg.type === 'bot' && (
-              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center text-white text-sm font-bold mr-2 shrink-0">
-                S
-              </div>
-            )}
+            Skip →
+          </button>
+        </div>
+      </div>
+
+      {/* Progress bar */}
+      <div className="h-0.5 bg-gray-800">
+        <div
+          className={`h-full bg-gradient-to-r ${scene.color} transition-all duration-100`}
+          style={{ width: `${progress}%` }}
+        />
+      </div>
+
+      {/* Chat messages */}
+      <div className="flex-1 p-4 overflow-hidden">
+        <div className="h-full flex flex-col justify-center space-y-3">
+          {scene.messages.map((msg, index) => (
             <div
-              className={`max-w-[70%] px-4 py-2 rounded-2xl text-sm ${
-                msg.type === 'user'
-                  ? 'bg-blue-600 text-white rounded-br-md'
-                  : 'bg-gray-800 text-gray-100 rounded-bl-md border border-gray-700'
+              key={`${currentScene}-${index}`}
+              className={`flex ${msg.type === 'user' ? 'justify-end' : 'justify-start'} transition-all duration-500 ${
+                visibleMessages.includes(index)
+                  ? 'opacity-100 translate-y-0 scale-100'
+                  : 'opacity-0 translate-y-8 scale-95'
               }`}
             >
-              {msg.text}
-            </div>
-            {msg.type === 'user' && (
-              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white text-sm font-bold ml-2 shrink-0">
-                U
+              {msg.type === 'bot' && (
+                <div className={`w-9 h-9 rounded-full bg-gradient-to-br ${scene.color} flex items-center justify-center text-white text-sm font-bold mr-2 shrink-0 shadow-lg`}>
+                  S
+                </div>
+              )}
+              <div
+                className={`max-w-[75%] px-4 py-2.5 rounded-2xl text-sm leading-relaxed ${
+                  msg.type === 'user'
+                    ? 'bg-blue-600 text-white rounded-br-md shadow-lg shadow-blue-500/20'
+                    : 'bg-gray-800/80 text-gray-100 rounded-bl-md border border-gray-700/50 shadow-lg'
+                }`}
+              >
+                {msg.text}
               </div>
-            )}
-          </div>
-        ))}
+              {msg.type === 'user' && (
+                <div className="w-9 h-9 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white text-sm font-bold ml-2 shrink-0 shadow-lg">
+                  U
+                </div>
+              )}
+            </div>
+          ))}
 
-        {/* Typing indicator */}
-        {isTyping && (
-          <div className="flex justify-start">
-            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center text-white text-sm font-bold mr-2 shrink-0">
-              S
-            </div>
-            <div className="bg-gray-800 text-gray-400 px-4 py-2 rounded-2xl rounded-bl-md border border-gray-700">
-              <div className="flex items-center gap-1">
-                <span className="w-2 h-2 bg-gray-500 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></span>
-                <span className="w-2 h-2 bg-gray-500 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></span>
-                <span className="w-2 h-2 bg-gray-500 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></span>
+          {/* Typing indicator */}
+          {isTyping && (
+            <div className="flex justify-start transition-all duration-300">
+              <div className={`w-9 h-9 rounded-full bg-gradient-to-br ${scene.color} flex items-center justify-center text-white text-sm font-bold mr-2 shrink-0 shadow-lg`}>
+                S
+              </div>
+              <div className="bg-gray-800/80 text-gray-400 px-4 py-3 rounded-2xl rounded-bl-md border border-gray-700/50">
+                <div className="flex items-center gap-1.5">
+                  <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></span>
+                  <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></span>
+                  <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></span>
+                </div>
               </div>
             </div>
-          </div>
-        )}
+          )}
+        </div>
+      </div>
+
+      {/* Scene indicator dots */}
+      <div className="flex items-center justify-center gap-1.5 py-3 bg-gray-900/50">
+        {demoScenes.map((s, index) => (
+          <button
+            key={s.id}
+            onClick={() => goToScene(index)}
+            className={`transition-all duration-300 rounded-full ${
+              index === currentScene
+                ? `w-6 h-2 bg-gradient-to-r ${s.color}`
+                : 'w-2 h-2 bg-gray-600 hover:bg-gray-500'
+            }`}
+            title={s.title}
+          />
+        ))}
       </div>
     </div>
   );
