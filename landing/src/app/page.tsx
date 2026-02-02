@@ -2,8 +2,108 @@
 
 import Link from 'next/link';
 import { motion } from 'framer-motion';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import UserNav from '@/components/UserNav';
+
+// Animated Chat Demo Component
+const chatMessages = [
+  { type: 'user', text: 'Schedule a reminder for 5pm', delay: 0 },
+  { type: 'bot', text: '✅ Reminder scheduled for 5:00 PM today. I\'ll notify you!', delay: 1500 },
+  { type: 'user', text: 'What\'s the weather today?', delay: 3500 },
+  { type: 'bot', text: '☀️ 75°F in Miami - Sunny skies, perfect day!', delay: 5000 },
+  { type: 'user', text: 'Send a message to the team on Slack', delay: 7000 },
+  { type: 'bot', text: '💬 Message sent to #general: "Quick sync at 3pm today"', delay: 8500 },
+];
+
+function AnimatedChatDemo() {
+  const [visibleMessages, setVisibleMessages] = useState<number[]>([]);
+  const [isTyping, setIsTyping] = useState(false);
+  const [cycleKey, setCycleKey] = useState(0);
+
+  useEffect(() => {
+    const timers: NodeJS.Timeout[] = [];
+
+    // Reset messages at start of each cycle
+    setVisibleMessages([]);
+    setIsTyping(false);
+
+    chatMessages.forEach((msg, index) => {
+      // Show typing indicator before bot messages
+      if (msg.type === 'bot') {
+        const typingTimer = setTimeout(() => {
+          setIsTyping(true);
+        }, msg.delay - 800);
+        timers.push(typingTimer);
+      }
+
+      // Show the message
+      const msgTimer = setTimeout(() => {
+        setIsTyping(false);
+        setVisibleMessages(prev => [...prev, index]);
+      }, msg.delay);
+      timers.push(msgTimer);
+    });
+
+    // Restart the animation after all messages are shown
+    const restartTimer = setTimeout(() => {
+      setCycleKey(prev => prev + 1);
+    }, 12000);
+    timers.push(restartTimer);
+
+    return () => timers.forEach(t => clearTimeout(t));
+  }, [cycleKey]);
+
+  return (
+    <div className="absolute inset-0 top-10 p-4 overflow-hidden bg-gradient-to-b from-gray-900 to-gray-950">
+      <div className="h-full flex flex-col justify-end space-y-3 pb-2">
+        {chatMessages.map((msg, index) => (
+          <div
+            key={`${cycleKey}-${index}`}
+            className={`flex ${msg.type === 'user' ? 'justify-end' : 'justify-start'} transition-all duration-300 ${
+              visibleMessages.includes(index) ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
+            }`}
+          >
+            {msg.type === 'bot' && (
+              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center text-white text-sm font-bold mr-2 shrink-0">
+                S
+              </div>
+            )}
+            <div
+              className={`max-w-[70%] px-4 py-2 rounded-2xl text-sm ${
+                msg.type === 'user'
+                  ? 'bg-blue-600 text-white rounded-br-md'
+                  : 'bg-gray-800 text-gray-100 rounded-bl-md border border-gray-700'
+              }`}
+            >
+              {msg.text}
+            </div>
+            {msg.type === 'user' && (
+              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white text-sm font-bold ml-2 shrink-0">
+                U
+              </div>
+            )}
+          </div>
+        ))}
+
+        {/* Typing indicator */}
+        {isTyping && (
+          <div className="flex justify-start">
+            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center text-white text-sm font-bold mr-2 shrink-0">
+              S
+            </div>
+            <div className="bg-gray-800 text-gray-400 px-4 py-2 rounded-2xl rounded-bl-md border border-gray-700">
+              <div className="flex items-center gap-1">
+                <span className="w-2 h-2 bg-gray-500 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></span>
+                <span className="w-2 h-2 bg-gray-500 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></span>
+                <span className="w-2 h-2 bg-gray-500 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></span>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
 
 // Animation variants
 const fadeInUp = {
@@ -642,25 +742,22 @@ export default function Home() {
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            className="relative aspect-video rounded-2xl border border-white/10 bg-white/5 overflow-hidden group cursor-pointer"
+            className="relative aspect-video rounded-2xl border border-white/10 bg-gray-900 overflow-hidden"
           >
-            {/* Video placeholder */}
-            <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-blue-600/20 to-purple-600/20">
-              <div className="text-center">
-                <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-white/10 flex items-center justify-center group-hover:bg-white/20 transition-all group-hover:scale-110">
-                  <svg className="w-8 h-8 text-white ml-1" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M8 5v14l11-7z"/>
-                  </svg>
-                </div>
-                <p className="text-gray-400 text-sm">Demo video coming soon</p>
+            {/* Window chrome */}
+            <div className="absolute top-0 left-0 right-0 h-10 bg-gray-800 border-b border-gray-700 flex items-center px-4">
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 rounded-full bg-red-500/80" />
+                <div className="w-3 h-3 rounded-full bg-yellow-500/80" />
+                <div className="w-3 h-3 rounded-full bg-green-500/80" />
+              </div>
+              <div className="flex-1 text-center">
+                <span className="text-gray-400 text-sm font-medium">SecureAgent Chat</span>
               </div>
             </div>
-            {/* Decorative elements */}
-            <div className="absolute top-4 left-4 flex items-center gap-2">
-              <div className="w-3 h-3 rounded-full bg-red-500/80" />
-              <div className="w-3 h-3 rounded-full bg-yellow-500/80" />
-              <div className="w-3 h-3 rounded-full bg-green-500/80" />
-            </div>
+
+            {/* Animated Chat Demo */}
+            <AnimatedChatDemo />
           </motion.div>
         </div>
       </section>
