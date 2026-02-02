@@ -11,6 +11,7 @@ const navigation = [
   { name: 'Sessions', href: '/dashboard/sessions', icon: '👥' },
   { name: 'Channels', href: '/dashboard/channels', icon: '📡' },
   { name: 'Integrations', href: '/dashboard/integrations', icon: '🔗' },
+  { name: 'ARIA', href: '/dashboard/aria', icon: '🏥' },
   { name: 'Smart Home', href: '/dashboard/smart-home', icon: '🏠' },
   { name: 'Music', href: '/dashboard/music', icon: '🎵' },
   { name: 'Voice Calls', href: '/dashboard/voice-calls', icon: '📞' },

@@ -607,6 +607,342 @@ ${data.post.excerpt}
   }
 }
 
+// =============================================================================
+// ARIA Integration State (In-memory for serverless)
+// =============================================================================
+
+interface AriaSession {
+  email: string;
+  connected: boolean;
+  lastActivity: number;
+}
+
+const ariaSessions = new Map<string, AriaSession>();
+
+/**
+ * Handle /aria command - ARIA patient management integration
+ * Subcommands:
+ *   /aria connect <email> - Connect ARIA account
+ *   /aria patients - List recent patients
+ *   /aria report <patient> <notes> - Generate report
+ */
+async function handleAriaCommand(
+  chatId: string,
+  args: string,
+  botToken: string,
+  userName: string
+): Promise<void> {
+  const parts = args.trim().split(/\s+/);
+  const subcommand = parts[0]?.toLowerCase();
+
+  // Show help if no subcommand
+  if (!subcommand) {
+    await telegramRequest(botToken, 'sendMessage', {
+      chat_id: chatId,
+      text: `🏥 <b>ARIA Integration</b>
+
+Gestiona pacientes y reportes de ARIA desde Telegram.
+
+<b>Comandos:</b>
+• <code>/aria connect email@ejemplo.com</code> - Conectar cuenta
+• <code>/aria patients</code> - Ver pacientes recientes
+• <code>/aria search Nombre</code> - Buscar paciente
+• <code>/aria report Nombre notas...</code> - Generar reporte
+
+<b>Lenguaje natural:</b>
+También puedes decir cosas como:
+• "Genera reporte para Juan García, sesión de hoy"
+• "Busca paciente María López"
+• "Muéstrame los últimos reportes"`,
+      parse_mode: 'HTML',
+    });
+    return;
+  }
+
+  switch (subcommand) {
+    case 'connect': {
+      const email = parts[1];
+      if (!email || !email.includes('@')) {
+        await telegramRequest(botToken, 'sendMessage', {
+          chat_id: chatId,
+          text: `❌ Por favor proporciona un email válido.\n\nUso: <code>/aria connect tu@email.com</code>`,
+          parse_mode: 'HTML',
+        });
+        return;
+      }
+
+      // Store connection (in production, would trigger OAuth or password flow)
+      ariaSessions.set(chatId, {
+        email,
+        connected: true,
+        lastActivity: Date.now(),
+      });
+
+      await telegramRequest(botToken, 'sendMessage', {
+        chat_id: chatId,
+        text: `✅ <b>ARIA Conectado</b>
+
+Cuenta: <code>${email}</code>
+
+Ahora puedes:
+• Buscar pacientes con <code>/aria search</code>
+• Generar reportes con <code>/aria report</code>
+• O simplemente describir lo que necesitas en lenguaje natural`,
+        parse_mode: 'HTML',
+      });
+      return;
+    }
+
+    case 'disconnect': {
+      ariaSessions.delete(chatId);
+      await telegramRequest(botToken, 'sendMessage', {
+        chat_id: chatId,
+        text: `✅ Desconectado de ARIA.`,
+        parse_mode: 'HTML',
+      });
+      return;
+    }
+
+    case 'patients':
+    case 'pacientes': {
+      const session = ariaSessions.get(chatId);
+      if (!session?.connected) {
+        await telegramRequest(botToken, 'sendMessage', {
+          chat_id: chatId,
+          text: `❌ No estás conectado a ARIA.\n\nUsa <code>/aria connect tu@email.com</code> primero.`,
+          parse_mode: 'HTML',
+        });
+        return;
+      }
+
+      // In production, would fetch from ARIA API
+      await telegramRequest(botToken, 'sendMessage', {
+        chat_id: chatId,
+        text: `📋 <b>Pacientes Recientes</b>
+
+Para buscar un paciente específico usa:
+<code>/aria search Nombre</code>
+
+O accede al dashboard completo:
+🔗 <a href="https://secureagent.vercel.app/dashboard/aria">Ver en Dashboard</a>`,
+        parse_mode: 'HTML',
+      });
+      return;
+    }
+
+    case 'search':
+    case 'buscar': {
+      const session = ariaSessions.get(chatId);
+      if (!session?.connected) {
+        await telegramRequest(botToken, 'sendMessage', {
+          chat_id: chatId,
+          text: `❌ No estás conectado a ARIA.\n\nUsa <code>/aria connect tu@email.com</code> primero.`,
+          parse_mode: 'HTML',
+        });
+        return;
+      }
+
+      const searchQuery = parts.slice(1).join(' ');
+      if (!searchQuery) {
+        await telegramRequest(botToken, 'sendMessage', {
+          chat_id: chatId,
+          text: `❌ Por favor proporciona un nombre para buscar.\n\nUso: <code>/aria search Juan García</code>`,
+          parse_mode: 'HTML',
+        });
+        return;
+      }
+
+      await telegramRequest(botToken, 'sendChatAction', {
+        chat_id: chatId,
+        action: 'typing',
+      });
+
+      // In production, would call ARIA API
+      await telegramRequest(botToken, 'sendMessage', {
+        chat_id: chatId,
+        text: `🔍 <b>Buscando: "${searchQuery}"</b>
+
+Esta función requiere conexión completa a ARIA.
+Configura las credenciales en el dashboard:
+🔗 <a href="https://secureagent.vercel.app/dashboard/aria">Configurar ARIA</a>`,
+        parse_mode: 'HTML',
+      });
+      return;
+    }
+
+    case 'report':
+    case 'reporte': {
+      const session = ariaSessions.get(chatId);
+      if (!session?.connected) {
+        await telegramRequest(botToken, 'sendMessage', {
+          chat_id: chatId,
+          text: `❌ No estás conectado a ARIA.\n\nUsa <code>/aria connect tu@email.com</code> primero.`,
+          parse_mode: 'HTML',
+        });
+        return;
+      }
+
+      // Parse: /aria report PatientName notes here
+      const reportArgs = parts.slice(1).join(' ');
+      const notesSeparator = reportArgs.indexOf(',');
+
+      let patientName: string;
+      let notes: string;
+
+      if (notesSeparator > 0) {
+        patientName = reportArgs.substring(0, notesSeparator).trim();
+        notes = reportArgs.substring(notesSeparator + 1).trim();
+      } else {
+        // Try to extract patient name (first 2-3 words) and rest as notes
+        const words = reportArgs.split(/\s+/);
+        if (words.length < 3) {
+          await telegramRequest(botToken, 'sendMessage', {
+            chat_id: chatId,
+            text: `❌ Formato incorrecto.
+
+<b>Uso:</b>
+<code>/aria report Nombre Paciente, notas de la sesión</code>
+
+<b>Ejemplo:</b>
+<code>/aria report Juan García, Sesión de seguimiento. Paciente reporta mejora en síntomas de ansiedad.</code>`,
+            parse_mode: 'HTML',
+          });
+          return;
+        }
+
+        // Assume first 2 words are name, rest is notes
+        patientName = words.slice(0, 2).join(' ');
+        notes = words.slice(2).join(' ');
+      }
+
+      await telegramRequest(botToken, 'sendChatAction', {
+        chat_id: chatId,
+        action: 'typing',
+      });
+
+      await telegramRequest(botToken, 'sendMessage', {
+        chat_id: chatId,
+        text: `✍️ <b>Generando reporte...</b>
+
+📋 Paciente: ${patientName}
+📝 Notas: ${notes.substring(0, 100)}${notes.length > 100 ? '...' : ''}
+
+Procesando con IA...`,
+        parse_mode: 'HTML',
+      });
+
+      // Generate report using AI
+      try {
+        const apiKey = process.env.ANTHROPIC_API_KEY;
+        if (!apiKey) {
+          throw new Error('API key not configured');
+        }
+
+        const client = new Anthropic({ apiKey });
+        const response = await client.messages.create({
+          model: 'claude-sonnet-4-20250514',
+          max_tokens: 2048,
+          system: `Eres un asistente clínico especializado en documentación terapéutica para profesionales de salud mental. Genera reportes profesionales, éticos y bien estructurados en español.
+
+Formato del reporte:
+1. Datos de la sesión
+2. Motivo de consulta/Seguimiento
+3. Observaciones clínicas
+4. Intervenciones realizadas
+5. Respuesta del paciente
+6. Plan de tratamiento
+7. Próximos pasos
+
+Mantén un tono profesional y objetivo. Usa terminología clínica apropiada.`,
+          messages: [
+            {
+              role: 'user',
+              content: `Genera un reporte de sesión clínica para el siguiente paciente:
+
+Paciente: ${patientName}
+Fecha: ${new Date().toLocaleDateString('es-ES')}
+Terapeuta: ${userName}
+
+Notas de la sesión:
+${notes}
+
+Genera el reporte completo en formato estructurado.`,
+            },
+          ],
+        });
+
+        const textBlock = response.content.find((b) => b.type === 'text');
+        const reportContent = textBlock && textBlock.type === 'text' ? textBlock.text : 'Error generando reporte';
+
+        // Send report in chunks if needed
+        const maxLength = 4000;
+        if (reportContent.length <= maxLength) {
+          await telegramRequest(botToken, 'sendMessage', {
+            chat_id: chatId,
+            text: `📄 <b>Reporte Generado</b>
+
+<b>Paciente:</b> ${patientName}
+<b>Fecha:</b> ${new Date().toLocaleDateString('es-ES')}
+
+${reportContent}
+
+---
+<i>Revisa y edita el reporte antes de guardarlo en ARIA.</i>
+🔗 <a href="https://secureagent.vercel.app/dashboard/aria">Abrir en Dashboard</a>`,
+            parse_mode: 'HTML',
+          });
+        } else {
+          // Send header
+          await telegramRequest(botToken, 'sendMessage', {
+            chat_id: chatId,
+            text: `📄 <b>Reporte Generado</b>
+
+<b>Paciente:</b> ${patientName}
+<b>Fecha:</b> ${new Date().toLocaleDateString('es-ES')}`,
+            parse_mode: 'HTML',
+          });
+
+          // Send content in chunks
+          let remaining = reportContent;
+          while (remaining.length > 0) {
+            await telegramRequest(botToken, 'sendMessage', {
+              chat_id: chatId,
+              text: remaining.slice(0, maxLength),
+            });
+            remaining = remaining.slice(maxLength);
+          }
+
+          // Send footer
+          await telegramRequest(botToken, 'sendMessage', {
+            chat_id: chatId,
+            text: `---
+<i>Revisa y edita el reporte antes de guardarlo en ARIA.</i>
+🔗 <a href="https://secureagent.vercel.app/dashboard/aria">Abrir en Dashboard</a>`,
+            parse_mode: 'HTML',
+          });
+        }
+      } catch (error) {
+        console.error('ARIA report generation error:', error);
+        await telegramRequest(botToken, 'sendMessage', {
+          chat_id: chatId,
+          text: `❌ Error generando reporte. Por favor intenta de nuevo.`,
+          parse_mode: 'HTML',
+        });
+      }
+      return;
+    }
+
+    default:
+      await telegramRequest(botToken, 'sendMessage', {
+        chat_id: chatId,
+        text: `❌ Comando no reconocido: ${subcommand}
+
+Usa <code>/aria</code> para ver los comandos disponibles.`,
+        parse_mode: 'HTML',
+      });
+  }
+}
+
 /**
  * Handle /cancel command - Cancel a scheduled task
  */
@@ -692,6 +1028,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         { command: 'tasks', description: 'List your scheduled tasks' },
         { command: 'cancel', description: 'Cancel a scheduled task' },
         { command: 'blog', description: 'Generate a blog post (e.g., /blog generate "AI tips")' },
+        { command: 'aria', description: 'ARIA patient management (e.g., /aria report Patient notes)' },
         { command: 'clear', description: 'Clear conversation history' },
       ],
     });
@@ -764,6 +1101,7 @@ I can help you with:
 /tasks - View your scheduled tasks
 /cancel - Cancel a scheduled task
 /blog - Generate a blog post
+/aria - ARIA patient management
 /help - Show help
 /clear - Clear conversation
 
@@ -784,6 +1122,7 @@ Just send me a message to get started!`,
 /tasks - View your scheduled tasks
 /cancel - Cancel a scheduled task
 /blog - Generate a blog post
+/aria - ARIA patient management
 /clear - Clear conversation history
 
 <b>Scheduling Tasks:</b>
@@ -808,6 +1147,10 @@ Just type your message and I'll respond!`,
 
           case '/blog':
             await handleBlogCommand(chatId, args, botToken);
+            return res.status(200).json({ ok: true });
+
+          case '/aria':
+            await handleAriaCommand(chatId, args, botToken, userName);
             return res.status(200).json({ ok: true });
 
           case '/tasks':

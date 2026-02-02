@@ -196,6 +196,68 @@ const AVAILABLE_TOOLS: Anthropic.Tool[] = [
       required: ['selector'],
     },
   },
+  // ARIA Integration Tools (patient management)
+  {
+    name: 'aria_search_patients',
+    description: 'Search for patients in ARIA by name',
+    input_schema: {
+      type: 'object' as const,
+      properties: {
+        query: { type: 'string', description: 'Patient name or search query' },
+        limit: { type: 'number', description: 'Maximum number of results (default: 10)' },
+      },
+      required: ['query'],
+    },
+  },
+  {
+    name: 'aria_get_patient',
+    description: 'Get detailed information about a specific patient',
+    input_schema: {
+      type: 'object' as const,
+      properties: {
+        patientId: { type: 'string', description: 'Patient ID' },
+      },
+      required: ['patientId'],
+    },
+  },
+  {
+    name: 'aria_patient_history',
+    description: 'Get session history for a patient',
+    input_schema: {
+      type: 'object' as const,
+      properties: {
+        patientId: { type: 'string', description: 'Patient ID' },
+        limit: { type: 'number', description: 'Maximum number of sessions (default: 10)' },
+      },
+      required: ['patientId'],
+    },
+  },
+  {
+    name: 'aria_generate_report',
+    description: 'Generate a clinical report from session notes using AI',
+    input_schema: {
+      type: 'object' as const,
+      properties: {
+        patientName: { type: 'string', description: 'Patient name' },
+        sessionNotes: { type: 'string', description: 'Raw notes from the session' },
+        reportType: { type: 'string', enum: ['session_notes', 'progress_report', 'assessment', 'treatment_plan'], description: 'Type of report to generate' },
+      },
+      required: ['patientName', 'sessionNotes'],
+    },
+  },
+  {
+    name: 'aria_create_report',
+    description: 'Create and save a report in ARIA',
+    input_schema: {
+      type: 'object' as const,
+      properties: {
+        patientId: { type: 'string', description: 'Patient ID' },
+        content: { type: 'string', description: 'Report content' },
+        type: { type: 'string', enum: ['session_notes', 'progress_report', 'assessment', 'treatment_plan'], description: 'Report type' },
+      },
+      required: ['patientId', 'content'],
+    },
+  },
 ];
 
 // Tool execution handlers
