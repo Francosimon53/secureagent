@@ -5,7 +5,7 @@ import { useState, useEffect } from 'react';
 interface LogEntry {
   id: string;
   timestamp: Date;
-  level: 'info' | 'warn' | 'error' | 'debug';
+  level: 'info' | 'warn' | 'error' | 'debug' | 'success';
   source: string;
   message: string;
 }
@@ -19,27 +19,51 @@ export default function LogsPage() {
   // Simulated logs - in production, fetch from API
   useEffect(() => {
     const generateLog = (): LogEntry => {
-      const levels: LogEntry['level'][] = ['info', 'warn', 'error', 'debug'];
+      const levels: LogEntry['level'][] = ['info', 'info', 'success', 'success', 'warn', 'error', 'debug'];
       const sources = ['telegram', 'discord', 'slack', 'whatsapp', 'agent', 'api'];
-      const messages = [
-        'Message received from user',
-        'Processing request',
-        'Response sent successfully',
-        'Connection established',
-        'Rate limit applied',
-        'Tool execution completed',
-        'Session created',
-        'Session expired',
-        'API call to Claude',
-        'Webhook received',
-      ];
+      const messages: Record<LogEntry['level'], string[]> = {
+        info: [
+          'Message received from user',
+          'Processing request',
+          'API call to Claude',
+          'Webhook received',
+          'Session created',
+        ],
+        success: [
+          'Response sent successfully',
+          'Connection established',
+          'Tool execution completed',
+          'Authentication successful',
+          'Task completed',
+        ],
+        warn: [
+          'Rate limit applied',
+          'Session expiring soon',
+          'High latency detected',
+          'Retry attempt initiated',
+        ],
+        error: [
+          'Connection failed',
+          'Authentication error',
+          'API timeout',
+          'Invalid request',
+        ],
+        debug: [
+          'Session expired',
+          'Cache cleared',
+          'Memory usage: 45%',
+          'Request logged',
+        ],
+      };
+      const level = levels[Math.floor(Math.random() * levels.length)];
+      const levelMessages = messages[level];
 
       return {
         id: Math.random().toString(36).slice(2),
         timestamp: new Date(),
-        level: levels[Math.floor(Math.random() * levels.length)],
+        level,
         source: sources[Math.floor(Math.random() * sources.length)],
-        message: messages[Math.floor(Math.random() * messages.length)],
+        message: levelMessages[Math.floor(Math.random() * levelMessages.length)],
       };
     };
 
@@ -60,6 +84,7 @@ export default function LogsPage() {
   const getLevelColor = (level: string) => {
     switch (level) {
       case 'info': return 'text-blue-400 bg-blue-400/10';
+      case 'success': return 'text-green-400 bg-green-400/10';
       case 'warn': return 'text-yellow-400 bg-yellow-400/10';
       case 'error': return 'text-red-400 bg-red-400/10';
       case 'debug': return 'text-gray-400 bg-gray-400/10';
@@ -117,7 +142,7 @@ export default function LogsPage() {
       {/* Filters */}
       <div className="flex flex-wrap gap-4">
         <div className="flex gap-2">
-          {['all', 'info', 'warn', 'error', 'debug'].map((level) => (
+          {['all', 'info', 'success', 'warn', 'error', 'debug'].map((level) => (
             <button
               key={level}
               onClick={() => setFilter(level)}
