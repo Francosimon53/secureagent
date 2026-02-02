@@ -106,9 +106,9 @@ export default function SmartHomePage() {
       ]);
 
       setIntegrations([
-        { id: 'hue', name: 'Philips Hue', type: 'hue', connected: true, deviceCount: 3, icon: '🟠' },
-        { id: 'nest', name: 'Google Nest', type: 'nest', connected: true, deviceCount: 1, icon: '🪺' },
-        { id: 'ring', name: 'Ring', type: 'ring', connected: true, deviceCount: 2, icon: '⭕' },
+        { id: 'hue', name: 'Philips Hue', type: 'hue', connected: false, deviceCount: 0, icon: '🟠' },
+        { id: 'nest', name: 'Google Nest', type: 'nest', connected: false, deviceCount: 0, icon: '🪺' },
+        { id: 'ring', name: 'Ring', type: 'ring', connected: false, deviceCount: 0, icon: '⭕' },
         { id: 'kasa', name: 'TP-Link Kasa', type: 'kasa', connected: false, deviceCount: 0, icon: '🔵' },
         { id: 'ha', name: 'Home Assistant', type: 'home-assistant', connected: false, deviceCount: 0, icon: '🏠' },
       ]);
