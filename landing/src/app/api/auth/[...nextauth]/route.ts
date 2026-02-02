@@ -2,24 +2,7 @@ import NextAuth, { NextAuthOptions } from 'next-auth';
 import CredentialsProvider from 'next-auth/providers/credentials';
 import GoogleProvider from 'next-auth/providers/google';
 import GitHubProvider from 'next-auth/providers/github';
-import { compare, hash } from 'bcryptjs';
-
-// In-memory user store (replace with database in production)
-const users: Array<{
-  id: string;
-  name: string;
-  email: string;
-  password: string;
-  image?: string;
-}> = [
-  {
-    id: '1',
-    name: 'Demo User',
-    email: 'demo@secureagent.ai',
-    password: '$2a$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/X4.q4HJwHYKt1WHGS', // "demo123"
-    image: undefined,
-  },
-];
+import { verifyCredentials } from '@/lib/users';
 
 export const authOptions: NextAuthOptions = {
   providers: [
@@ -35,16 +18,11 @@ export const authOptions: NextAuthOptions = {
           throw new Error('Please enter your email and password');
         }
 
-        const user = users.find((u) => u.email === credentials.email);
+        // Use shared user store to verify credentials
+        const user = await verifyCredentials(credentials.email, credentials.password);
 
         if (!user) {
-          throw new Error('No user found with this email');
-        }
-
-        const isPasswordValid = await compare(credentials.password, user.password);
-
-        if (!isPasswordValid) {
-          throw new Error('Invalid password');
+          throw new Error('Invalid email or password');
         }
 
         return {
@@ -99,24 +77,6 @@ export const authOptions: NextAuthOptions = {
   },
   secret: process.env.NEXTAUTH_SECRET || 'your-development-secret-change-in-production',
 };
-
-// Registration helper (exported for use in register API)
-export async function registerUser(name: string, email: string, password: string) {
-  const existingUser = users.find((u) => u.email === email);
-  if (existingUser) {
-    throw new Error('User already exists');
-  }
-
-  const hashedPassword = await hash(password, 12);
-  const newUser = {
-    id: String(users.length + 1),
-    name,
-    email,
-    password: hashedPassword,
-  };
-  users.push(newUser);
-  return { id: newUser.id, name: newUser.name, email: newUser.email };
-}
 
 const handler = NextAuth(authOptions);
 export { handler as GET, handler as POST };

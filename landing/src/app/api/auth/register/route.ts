@@ -1,24 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { hash } from 'bcryptjs';
-
-// In-memory user store (shared with NextAuth route in production, use a database)
-const users: Array<{
-  id: string;
-  name: string;
-  email: string;
-  password: string;
-}> = [
-  {
-    id: '1',
-    name: 'Demo User',
-    email: 'demo@secureagent.ai',
-    password: '$2a$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/X4.q4HJwHYKt1WHGS', // "demo123"
-  },
-];
+import { createUser, findUserByEmail, getUserCount } from '@/lib/users';
 
 export async function POST(request: NextRequest) {
   try {
     const { name, email, password } = await request.json();
+
+    console.log(`[Register] Attempting to register: ${email}`);
+    console.log(`[Register] Current user count: ${getUserCount()}`);
 
     // Validation
     if (!name || !email || !password) {
@@ -35,24 +23,21 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Check if user exists
-    const existingUser = users.find((u) => u.email === email);
+    // Check if user exists using shared store
+    const existingUser = findUserByEmail(email);
     if (existingUser) {
+      console.log(`[Register] User already exists: ${email}`);
       return NextResponse.json(
         { error: 'An account with this email already exists' },
         { status: 409 }
       );
     }
 
-    // Hash password and create user
-    const hashedPassword = await hash(password, 12);
-    const newUser = {
-      id: String(users.length + 1),
-      name,
-      email,
-      password: hashedPassword,
-    };
-    users.push(newUser);
+    // Create user using shared store
+    const newUser = await createUser(name, email, password);
+
+    console.log(`[Register] Successfully created user: ${newUser.email}`);
+    console.log(`[Register] New user count: ${getUserCount()}`);
 
     return NextResponse.json(
       {
@@ -63,9 +48,10 @@ export async function POST(request: NextRequest) {
       { status: 201 }
     );
   } catch (error) {
-    console.error('Registration error:', error);
+    console.error('[Register] Error:', error);
+    const message = error instanceof Error ? error.message : 'An error occurred during registration';
     return NextResponse.json(
-      { error: 'An error occurred during registration' },
+      { error: message },
       { status: 500 }
     );
   }
