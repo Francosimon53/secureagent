@@ -256,7 +256,8 @@ export default function MusicDashboard() {
     );
   }
 
-  const hasConnectedProviders = providers.some(p => p.connected);
+  // Check if any actual music service (not system audio) is connected
+  const hasConnectedProviders = providers.some(p => p.connected && p.name !== 'system');
 
   return (
     <div className="space-y-6">
