@@ -4,6 +4,12 @@
  * Receives webhook updates from Telegram, processes them through the SecureAgent,
  * and sends responses back to the user.
  *
+ * Features:
+ * - Natural conversation with AI
+ * - Scheduled tasks (/schedule, /tasks, /cancel)
+ * - Proactive messaging support
+ * - Tool use (web requests, timestamps)
+ *
  * Setup:
  * 1. Get a bot token from @BotFather on Telegram
  * 2. Set TELEGRAM_BOT_TOKEN environment variable
@@ -16,6 +22,17 @@
 
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import Anthropic from '@anthropic-ai/sdk';
+import {
+  registerUser,
+  getUser,
+  createTask,
+  getUserTasks,
+  cancelTask,
+  parseSchedule,
+  formatSchedule,
+  getStats,
+  type ScheduledTask,
+} from './lib/telegram-store.js';
 
 // =============================================================================
 // Telegram Types
@@ -67,11 +84,11 @@ const conversations = new Map<string, ConversationState>();
 // Clean up old conversations (older than 1 hour)
 function cleanupConversations(): void {
   const oneHourAgo = Date.now() - 60 * 60 * 1000;
-  for (const [key, state] of conversations.entries()) {
+  conversations.forEach((state, key) => {
     if (state.lastUpdated < oneHourAgo) {
       conversations.delete(key);
     }
-  }
+  });
 }
 
 // =============================================================================
@@ -100,6 +117,31 @@ async function telegramRequest(
   return data.result;
 }
 
+/**
+ * Send a message to a Telegram chat (exported for cron jobs)
+ */
+export async function sendTelegramMessage(
+  chatId: string,
+  text: string,
+  options?: { parseMode?: 'HTML' | 'Markdown'; replyTo?: number }
+): Promise<boolean> {
+  const botToken = process.env.TELEGRAM_BOT_TOKEN;
+  if (!botToken) return false;
+
+  try {
+    await telegramRequest(botToken, 'sendMessage', {
+      chat_id: chatId,
+      text,
+      parse_mode: options?.parseMode ?? 'HTML',
+      reply_to_message_id: options?.replyTo,
+    });
+    return true;
+  } catch (error) {
+    console.error('Failed to send Telegram message:', error);
+    return false;
+  }
+}
+
 // =============================================================================
 // Agent Integration
 // =============================================================================
@@ -107,7 +149,7 @@ async function telegramRequest(
 const AVAILABLE_TOOLS: Anthropic.Tool[] = [
   {
     name: 'http_request',
-    description: 'Make an HTTP request to fetch data from public APIs',
+    description: 'Make an HTTP request to fetch data from public APIs or websites',
     input_schema: {
       type: 'object' as const,
       properties: {
@@ -124,6 +166,17 @@ const AVAILABLE_TOOLS: Anthropic.Tool[] = [
       type: 'object' as const,
       properties: {},
       required: [],
+    },
+  },
+  {
+    name: 'web_search',
+    description: 'Search the web for information',
+    input_schema: {
+      type: 'object' as const,
+      properties: {
+        query: { type: 'string', description: 'Search query' },
+      },
+      required: ['query'],
     },
   },
 ];
@@ -159,6 +212,20 @@ async function executeTool(name: string, args: Record<string, unknown>): Promise
 
   if (name === 'get_timestamp') {
     return new Date().toISOString();
+  }
+
+  if (name === 'web_search') {
+    const query = args.query as string;
+    // Simple web search via DuckDuckGo instant answer API
+    const searchUrl = `https://api.duckduckgo.com/?q=${encodeURIComponent(query)}&format=json&no_html=1`;
+    const response = await fetch(searchUrl);
+    const data = await response.json() as { AbstractText?: string; RelatedTopics?: Array<{ Text?: string }> };
+
+    let result = data.AbstractText || '';
+    if (!result && data.RelatedTopics?.length) {
+      result = data.RelatedTopics.slice(0, 3).map(t => t.Text).filter(Boolean).join('\n\n');
+    }
+    return result || 'No results found';
   }
 
   throw new Error(`Unknown tool: ${name}`);
@@ -212,6 +279,8 @@ async function processWithAgent(
 Be concise since this is a chat interface - keep responses under 300 words unless detailed explanation is needed.
 You can use tools to fetch data from the internet when helpful.
 Be friendly and helpful. Use emojis sparingly but appropriately.
+
+The user can schedule tasks with you using /schedule command. You can proactively complete tasks for them at scheduled times.
 
 Current time: ${new Date().toISOString()}`,
         messages: conversation.messages,
@@ -269,6 +338,204 @@ Current time: ${new Date().toISOString()}`,
 }
 
 // =============================================================================
+// Scheduled Task Commands
+// =============================================================================
+
+/**
+ * Handle /schedule command
+ * Format: /schedule <time> <task>
+ * Examples:
+ *   /schedule 9:00am Busca noticias de AI y envíame resumen
+ *   /schedule monday 8am Revisa mi calendario de la semana
+ *   /schedule tomorrow 3pm Recuérdame llamar al doctor
+ */
+async function handleScheduleCommand(
+  chatId: string,
+  args: string,
+  botToken: string
+): Promise<void> {
+  if (!args.trim()) {
+    await telegramRequest(botToken, 'sendMessage', {
+      chat_id: chatId,
+      text: `📅 <b>Schedule a Task</b>
+
+<b>Usage:</b> /schedule &lt;time&gt; &lt;task&gt;
+
+<b>Time formats:</b>
+• <code>9:00am</code> - Daily at 9 AM
+• <code>monday 8am</code> - Every Monday at 8 AM
+• <code>tomorrow 3pm</code> - One-time tomorrow at 3 PM
+
+<b>Examples:</b>
+• <code>/schedule 9:00am Busca noticias de AI y envíame resumen</code>
+• <code>/schedule monday 8am Revisa mi calendario de la semana</code>
+• <code>/schedule tomorrow 3pm Recuérdame llamar al doctor</code>`,
+      parse_mode: 'HTML',
+    });
+    return;
+  }
+
+  // Parse time and task from args
+  // Try to find where the time ends and task begins
+  const timePatterns = [
+    /^(\d{1,2}:\d{2}\s*(am|pm)?)/i,
+    /^(tomorrow\s+\d{1,2}(:\d{2})?\s*(am|pm)?)/i,
+    /^((every\s+)?(monday|tuesday|wednesday|thursday|friday|saturday|sunday)\s+\d{1,2}(:\d{2})?\s*(am|pm)?)/i,
+    /^(\d{1,2}\s*(am|pm))/i,
+  ];
+
+  let timeStr = '';
+  let taskStr = args;
+
+  for (const pattern of timePatterns) {
+    const match = args.match(pattern);
+    if (match) {
+      timeStr = match[1];
+      taskStr = args.slice(match[0].length).trim();
+      break;
+    }
+  }
+
+  if (!timeStr || !taskStr) {
+    await telegramRequest(botToken, 'sendMessage', {
+      chat_id: chatId,
+      text: "❌ Couldn't parse your schedule. Please use format:\n<code>/schedule 9:00am Your task here</code>",
+      parse_mode: 'HTML',
+    });
+    return;
+  }
+
+  // Parse the schedule
+  const schedule = parseSchedule(timeStr);
+  if (!schedule) {
+    await telegramRequest(botToken, 'sendMessage', {
+      chat_id: chatId,
+      text: "❌ Couldn't understand the time. Try formats like:\n• <code>9:00am</code>\n• <code>monday 8am</code>\n• <code>tomorrow 3pm</code>",
+      parse_mode: 'HTML',
+    });
+    return;
+  }
+
+  // Create the task
+  const task = createTask(chatId, taskStr, schedule);
+
+  const scheduleDescription = formatSchedule(schedule);
+  const nextRun = new Date(task.nextRunAt).toLocaleString('en-US', {
+    weekday: 'short',
+    month: 'short',
+    day: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+  });
+
+  await telegramRequest(botToken, 'sendMessage', {
+    chat_id: chatId,
+    text: `✅ <b>Task Scheduled!</b>
+
+📋 <b>Task:</b> ${taskStr}
+⏰ <b>Schedule:</b> ${scheduleDescription}
+🔜 <b>Next run:</b> ${nextRun}
+🆔 <b>ID:</b> <code>${task.id}</code>
+
+I'll execute this task and send you the results automatically.
+
+To view your tasks: /tasks
+To cancel: <code>/cancel ${task.id}</code>`,
+    parse_mode: 'HTML',
+  });
+}
+
+/**
+ * Handle /tasks command - List user's scheduled tasks
+ */
+async function handleTasksCommand(
+  chatId: string,
+  botToken: string
+): Promise<void> {
+  const tasks = getUserTasks(chatId);
+
+  if (tasks.length === 0) {
+    await telegramRequest(botToken, 'sendMessage', {
+      chat_id: chatId,
+      text: `📋 <b>Your Scheduled Tasks</b>
+
+No tasks scheduled yet.
+
+To schedule a task:
+<code>/schedule 9:00am Your task here</code>`,
+      parse_mode: 'HTML',
+    });
+    return;
+  }
+
+  let message = `📋 <b>Your Scheduled Tasks</b>\n\n`;
+
+  for (const task of tasks) {
+    const status = task.enabled ? '✅' : '⏸️';
+    const schedule = formatSchedule(task.schedule);
+    const nextRun = task.enabled && task.nextRunAt
+      ? new Date(task.nextRunAt).toLocaleString('en-US', {
+          month: 'short',
+          day: 'numeric',
+          hour: 'numeric',
+          minute: '2-digit',
+        })
+      : 'N/A';
+
+    message += `${status} <b>${task.id}</b>\n`;
+    message += `   📝 ${task.task.substring(0, 50)}${task.task.length > 50 ? '...' : ''}\n`;
+    message += `   ⏰ ${schedule}\n`;
+    message += `   🔜 Next: ${nextRun}\n`;
+    if (task.runCount > 0) {
+      message += `   📊 Runs: ${task.runCount}\n`;
+    }
+    message += '\n';
+  }
+
+  message += `To cancel a task: <code>/cancel &lt;id&gt;</code>`;
+
+  await telegramRequest(botToken, 'sendMessage', {
+    chat_id: chatId,
+    text: message,
+    parse_mode: 'HTML',
+  });
+}
+
+/**
+ * Handle /cancel command - Cancel a scheduled task
+ */
+async function handleCancelCommand(
+  chatId: string,
+  taskId: string,
+  botToken: string
+): Promise<void> {
+  if (!taskId.trim()) {
+    await telegramRequest(botToken, 'sendMessage', {
+      chat_id: chatId,
+      text: `❌ Please specify a task ID to cancel.\n\nUsage: <code>/cancel &lt;task_id&gt;</code>\n\nUse /tasks to see your task IDs.`,
+      parse_mode: 'HTML',
+    });
+    return;
+  }
+
+  const success = cancelTask(taskId.trim(), chatId);
+
+  if (success) {
+    await telegramRequest(botToken, 'sendMessage', {
+      chat_id: chatId,
+      text: `✅ Task <code>${taskId}</code> has been cancelled.`,
+      parse_mode: 'HTML',
+    });
+  } else {
+    await telegramRequest(botToken, 'sendMessage', {
+      chat_id: chatId,
+      text: `❌ Task not found or you don't have permission to cancel it.\n\nUse /tasks to see your task IDs.`,
+      parse_mode: 'HTML',
+    });
+  }
+}
+
+// =============================================================================
 // Webhook Handler
 // =============================================================================
 
@@ -291,14 +558,18 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       }
     }
 
+    // Get store stats
+    const stats = getStats();
+
     return res.status(200).json({
       name: 'SecureAgent Telegram Bot',
-      version: '1.0.0',
+      version: '2.0.0',
       status: {
         botTokenConfigured: hasToken,
         apiKeyConfigured: hasApiKey,
         ready: hasToken && hasApiKey,
         webhookInfo,
+        store: stats,
       },
       setup: {
         step1: 'Create a bot with @BotFather on Telegram',
@@ -308,16 +579,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         step5: 'Register webhook with Telegram:',
         webhookCommand: `curl -X POST "https://api.telegram.org/bot<YOUR_TOKEN>/setWebhook?url=https://<YOUR_DOMAIN>/api/telegram"`,
       },
-      botFatherCommands: [
-        '/newbot - Create a new bot',
-        '/mybots - Manage your existing bots',
-        '/setdescription - Set bot description',
-        '/setabouttext - Set bot "About" text',
-        '/setcommands - Set bot commands',
-      ],
-      suggestedCommands: [
+      commands: [
         { command: 'start', description: 'Start chatting with SecureAgent' },
         { command: 'help', description: 'Show help message' },
+        { command: 'schedule', description: 'Schedule a task (e.g., /schedule 9am Check news)' },
+        { command: 'tasks', description: 'List your scheduled tasks' },
+        { command: 'cancel', description: 'Cancel a scheduled task' },
         { command: 'clear', description: 'Clear conversation history' },
       ],
     });
@@ -332,7 +599,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     try {
-      // Parse body - wrap in try-catch for Vercel dev server compatibility
+      // Parse body
       let update: TelegramUpdate;
       try {
         const rawBody = req.body;
@@ -358,35 +625,93 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       const userName = message.from?.first_name || message.from?.username || 'User';
       const text = message.text;
 
+      // Register/update user for proactive messaging
+      registerUser(chatId, {
+        username: message.from?.username,
+        firstName: message.from?.first_name,
+        lastName: message.from?.last_name,
+      });
+
       // Handle commands
       if (text.startsWith('/')) {
-        const command = text.split(' ')[0].toLowerCase();
+        const [command, ...argParts] = text.split(' ');
+        const args = argParts.join(' ');
+        const cmd = command.toLowerCase().replace('@', '').split('@')[0]; // Remove bot mention
 
-        if (command === '/start') {
-          await telegramRequest(botToken, 'sendMessage', {
-            chat_id: chatId,
-            text: `👋 Hi ${userName}! I'm SecureAgent, your AI assistant.\n\nI can help you with:\n• Answering questions\n• Fetching data from the web\n• Having conversations\n\nJust send me a message to get started!`,
-            parse_mode: 'HTML',
-          });
-          return res.status(200).json({ ok: true });
-        }
+        switch (cmd) {
+          case '/start':
+            await telegramRequest(botToken, 'sendMessage', {
+              chat_id: chatId,
+              text: `👋 Hi ${userName}! I'm SecureAgent, your AI assistant.
 
-        if (command === '/help') {
-          await telegramRequest(botToken, 'sendMessage', {
-            chat_id: chatId,
-            text: `🤖 <b>SecureAgent Help</b>\n\n<b>Commands:</b>\n/start - Start chatting\n/help - Show this message\n/clear - Clear conversation history\n\n<b>Features:</b>\n• Natural conversation with AI\n• Web data fetching\n• Persistent conversation memory\n\nJust type your message and I'll respond!`,
-            parse_mode: 'HTML',
-          });
-          return res.status(200).json({ ok: true });
-        }
+I can help you with:
+• 💬 Answering questions
+• 🌐 Fetching data from the web
+• ⏰ <b>Scheduling tasks</b> to run automatically
 
-        if (command === '/clear') {
-          conversations.delete(chatId);
-          await telegramRequest(botToken, 'sendMessage', {
-            chat_id: chatId,
-            text: '🗑️ Conversation history cleared. Start fresh!',
-          });
-          return res.status(200).json({ ok: true });
+<b>New!</b> Schedule tasks with:
+<code>/schedule 9:00am Search for AI news and send summary</code>
+
+<b>Commands:</b>
+/schedule - Schedule a task
+/tasks - View your scheduled tasks
+/cancel - Cancel a scheduled task
+/help - Show help
+/clear - Clear conversation
+
+Just send me a message to get started!`,
+              parse_mode: 'HTML',
+            });
+            return res.status(200).json({ ok: true });
+
+          case '/help':
+            await telegramRequest(botToken, 'sendMessage', {
+              chat_id: chatId,
+              text: `🤖 <b>SecureAgent Help</b>
+
+<b>Commands:</b>
+/start - Start chatting
+/help - Show this message
+/schedule - Schedule a task
+/tasks - View your scheduled tasks
+/cancel - Cancel a scheduled task
+/clear - Clear conversation history
+
+<b>Scheduling Tasks:</b>
+<code>/schedule 9:00am Your task here</code>
+<code>/schedule monday 8am Weekly task</code>
+<code>/schedule tomorrow 3pm One-time reminder</code>
+
+<b>Features:</b>
+• Natural conversation with AI
+• Web data fetching
+• Automatic task execution
+• Proactive notifications
+
+Just type your message and I'll respond!`,
+              parse_mode: 'HTML',
+            });
+            return res.status(200).json({ ok: true });
+
+          case '/schedule':
+            await handleScheduleCommand(chatId, args, botToken);
+            return res.status(200).json({ ok: true });
+
+          case '/tasks':
+            await handleTasksCommand(chatId, botToken);
+            return res.status(200).json({ ok: true });
+
+          case '/cancel':
+            await handleCancelCommand(chatId, args, botToken);
+            return res.status(200).json({ ok: true });
+
+          case '/clear':
+            conversations.delete(chatId);
+            await telegramRequest(botToken, 'sendMessage', {
+              chat_id: chatId,
+              text: '🗑️ Conversation history cleared. Start fresh!',
+            });
+            return res.status(200).json({ ok: true });
         }
       }
 

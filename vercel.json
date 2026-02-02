@@ -47,6 +47,10 @@
       "dest": "/api/telegram.ts"
     },
     {
+      "src": "/api/telegram-tasks",
+      "dest": "/api/telegram-tasks.ts"
+    },
+    {
       "src": "/api/heartbeat",
       "dest": "/api/heartbeat.ts"
     },
@@ -90,6 +94,10 @@
     {
       "path": "/api/heartbeat",
       "schedule": "0 7,12,18 * * *"
+    },
+    {
+      "path": "/api/telegram-tasks",
+      "schedule": "*/5 * * * *"
     }
   ]
 }
