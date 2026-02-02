@@ -723,12 +723,12 @@ SecureAgent is an enterprise-grade AI assistant that works across multiple chann
 ### Is SecureAgent free?
 
 Yes! SecureAgent offers a free tier with:
-- 100 messages/day
-- Access to GPT-3.5 and Claude 3 Haiku
-- 3 integrations
-- Basic scheduling
+- 5 messages/day
+- Basic AI models
+- Web chat access
+- Community support
 
-Pro plans start at $10/month for unlimited messages and premium models.
+Paid plans start at $19/month (Starter) with 500 messages/day and all AI models.
 
 ### Which AI models are available?
 
@@ -800,9 +800,11 @@ By default, conversations are stored to maintain context. You can:
 
 ### How does billing work?
 
-- **Free**: No credit card required, 100 messages/day
-- **Pro** ($10/mo): Unlimited messages, premium models
-- **Enterprise**: Custom pricing, dedicated support
+- **Free** ($0): 5 messages/day, basic models
+- **Starter** ($19/mo): 500 messages/day, all models
+- **Pro** ($49/mo): 2,000 messages/day, priority support
+- **Power** ($99/mo): 5,000 messages/day, API access
+- **Unlimited** ($199/mo): Unlimited messages, dedicated support
 
 ### Can I cancel anytime?
 

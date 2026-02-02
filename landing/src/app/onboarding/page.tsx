@@ -27,10 +27,10 @@ const integrations = [
 ];
 
 const plans = [
-  { id: 'free', name: 'Free', price: '$0', period: '', messages: '5 messages/day', description: 'Get started', popular: false },
-  { id: 'starter', name: 'Starter', price: '$19', period: '/mo', messages: '500 messages/month', description: 'For personal use', popular: false },
-  { id: 'pro', name: 'Pro', price: '$49', period: '/mo', messages: '2,000 messages/month', description: 'For power users', popular: true },
-  { id: 'unlimited', name: 'Unlimited', price: '$199', period: '/mo', messages: 'Unlimited messages', description: 'No limits', popular: false },
+  { id: 'free', name: 'Free', price: '$0', period: '', messages: '5 messages/day', description: 'Basic models', popular: false },
+  { id: 'starter', name: 'Starter', price: '$19', period: '/mo', messages: '500 messages/day', description: 'All models', popular: false },
+  { id: 'pro', name: 'Pro', price: '$49', period: '/mo', messages: '2,000 messages/day', description: 'Priority support', popular: true },
+  { id: 'power', name: 'Power', price: '$99', period: '/mo', messages: '5,000 messages/day', description: 'API access', popular: false },
 ];
 
 const demoMessages = [

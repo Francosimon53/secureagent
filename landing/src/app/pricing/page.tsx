@@ -36,13 +36,12 @@ const individualPlans: PricingTier[] = [
     monthlyPrice: 0,
     yearlyPrice: 0,
     features: [
+      'Basic AI models',
       'Web chat access',
-      'Multi-agent routing',
-      'Canvas workspace',
       'Community support',
     ],
     limits: {
-      messages: '30/month',
+      messages: '5/day',
       voice: 'None',
       browser: 'None',
       channels: '1 channel',
@@ -58,14 +57,14 @@ const individualPlans: PricingTier[] = [
     monthlyPrice: 19,
     yearlyPrice: 190,
     features: [
+      'All AI models',
       'Everything in Free',
-      'Voice responses (ElevenLabs)',
-      'Priority queue',
+      'Voice responses',
       'Email support',
     ],
     limits: {
-      messages: '300/month',
-      voice: '25 responses',
+      messages: '500/day',
+      voice: '50 responses',
       browser: 'None',
       channels: '2 channels',
     },
@@ -76,19 +75,18 @@ const individualPlans: PricingTier[] = [
   {
     name: 'Pro',
     planId: 'pro',
-    description: 'For power users & freelancers',
+    description: 'For power users',
     monthlyPrice: 49,
     yearlyPrice: 490,
     features: [
       'Everything in Starter',
-      'Browser automation',
+      'Priority support',
       'All 7 channels',
-      'API access',
       'Webhook integrations',
     ],
     limits: {
-      messages: '1,000/month',
-      voice: '100 responses',
+      messages: '2,000/day',
+      voice: '200 responses',
       browser: '25 tasks',
       channels: 'All channels',
     },
@@ -105,15 +103,14 @@ const individualPlans: PricingTier[] = [
     yearlyPrice: 990,
     features: [
       'Everything in Pro',
-      'Higher limits',
+      'API access',
       'Priority processing',
       'Advanced analytics',
-      'Priority support',
     ],
     limits: {
-      messages: '3,000/month',
-      voice: '250 responses',
-      browser: '75 tasks',
+      messages: '5,000/day',
+      voice: '500 responses',
+      browser: '100 tasks',
       channels: 'All channels',
     },
     cta: 'Subscribe',
@@ -128,15 +125,15 @@ const individualPlans: PricingTier[] = [
     yearlyPrice: 1990,
     features: [
       'Everything in Power',
-      'Generous limits',
+      'Unlimited messages',
       'Dedicated support',
       'Custom integrations',
       'Phone support',
     ],
     limits: {
-      messages: '10,000/month',
-      voice: '500 responses',
-      browser: '150 tasks',
+      messages: 'Unlimited',
+      voice: 'Unlimited',
+      browser: 'Unlimited',
       channels: 'All channels',
     },
     cta: 'Subscribe',
@@ -191,7 +188,7 @@ const teamPlans: PricingTier[] = [
       channels: 'All channels',
     },
     cta: 'Contact Sales',
-    href: 'mailto:contact@secureagent.dev?subject=Business%20Plan%20Inquiry',
+    href: 'mailto:support@secureagent.ai?subject=Business%20Plan%20Inquiry',
     highlighted: true,
     badge: 'Best Value',
     isPerSeat: true,
@@ -218,7 +215,7 @@ const teamPlans: PricingTier[] = [
       channels: 'All + custom',
     },
     cta: 'Contact Sales',
-    href: 'mailto:contact@secureagent.dev?subject=Enterprise%20Inquiry',
+    href: 'mailto:support@secureagent.ai?subject=Enterprise%20Inquiry',
     highlighted: false,
   },
 ];
@@ -734,7 +731,7 @@ function PricingPageContent() {
                 Start Free
               </Link>
               <a
-                href="mailto:contact@secureagent.dev?subject=Sales%20Inquiry"
+                href="mailto:support@secureagent.ai?subject=Sales%20Inquiry"
                 className="px-8 py-4 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl font-semibold text-lg transition-all"
               >
                 Talk to Sales
