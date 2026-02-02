@@ -856,6 +856,23 @@ export default function SettingsPage() {
                 <p className="text-xs text-gray-500">Sessions will expire after this many seconds of inactivity</p>
               </div>
             </div>
+
+            {/* Restart Tutorial */}
+            <div className="mt-8 pt-6 border-t border-gray-800">
+              <h3 className="text-md font-semibold text-white mb-2">Tutorial & Onboarding</h3>
+              <p className="text-sm text-gray-400 mb-4">
+                Want to see the setup wizard again? Restart the tutorial to explore all features.
+              </p>
+              <button
+                onClick={() => {
+                  document.cookie = 'onboarding_completed=; path=/; max-age=0';
+                  window.location.href = '/onboarding';
+                }}
+                className="px-4 py-2 bg-gray-800 hover:bg-gray-700 border border-gray-700 text-gray-300 rounded-lg transition-colors"
+              >
+                🚀 Restart Tutorial
+              </button>
+            </div>
           </div>
         )}
       </div>
