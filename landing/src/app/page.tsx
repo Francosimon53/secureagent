@@ -1053,7 +1053,7 @@ export default function Home() {
           >
             {/* macOS Download */}
             <a
-              href="https://github.com/simonfranco/secureagent/releases/latest/download/SecureAgent_1.0.0_aarch64.dmg"
+              href="https://github.com/Francosimon53/secureagent/releases/latest/download/SecureAgent_1.0.0_aarch64.dmg"
               className="group relative p-6 bg-white/5 border border-white/10 rounded-2xl hover:border-emerald-500/50 hover:bg-emerald-500/5 transition-all text-center"
             >
               <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/10 to-transparent opacity-0 group-hover:opacity-100 rounded-2xl transition-opacity" />
@@ -1106,7 +1106,7 @@ export default function Home() {
             <p className="text-gray-500 text-sm">
               Requires <a href="https://ollama.ai" target="_blank" rel="noopener noreferrer" className="text-emerald-400 hover:underline">Ollama</a> for local AI models.
               <span className="text-gray-600 mx-2">•</span>
-              <a href="https://github.com/simonfranco/secureagent/releases" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-white transition-colors">
+              <a href="https://github.com/Francosimon53/secureagent/releases" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-white transition-colors">
                 View all releases
               </a>
             </p>
