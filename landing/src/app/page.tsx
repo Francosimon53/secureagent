@@ -349,6 +349,7 @@ const openclawComparison = [
   { feature: 'Monthly cost', openclaw: '$40-600 in API fees', secureAgent: '$49 flat, all included' },
   { feature: 'Works when laptop off', openclaw: 'No', secureAgent: 'Yes (cloud 24/7)' },
   { feature: 'Local/private option', openclaw: 'Yes', secureAgent: 'Yes (desktop app)' },
+  { feature: 'Desktop app', openclaw: 'No native app', secureAgent: 'Available for Mac' },
   { feature: 'Support', openclaw: 'None (DIY)', secureAgent: 'Included' },
 ];
 
@@ -479,7 +480,7 @@ export default function Home() {
               <a href="#features" className="text-gray-400 hover:text-white transition-colors text-sm">Features</a>
               <a href="#channels" className="text-gray-400 hover:text-white transition-colors text-sm">Channels</a>
               <Link href="/pricing" className="text-gray-400 hover:text-white transition-colors text-sm">Pricing</Link>
-              <Link href="/blog" className="text-gray-400 hover:text-white transition-colors text-sm">Blog</Link>
+              <a href="#download" className="text-gray-400 hover:text-white transition-colors text-sm">Download</a>
               <Link href="/docs" className="text-gray-400 hover:text-white transition-colors text-sm">API Docs</Link>
             </div>
 
@@ -507,7 +508,7 @@ export default function Home() {
                 <a href="#features" className="text-gray-400 hover:text-white transition-colors">Features</a>
                 <a href="#channels" className="text-gray-400 hover:text-white transition-colors">Channels</a>
                 <Link href="/pricing" className="text-gray-400 hover:text-white transition-colors">Pricing</Link>
-                <Link href="/blog" className="text-gray-400 hover:text-white transition-colors">Blog</Link>
+                <a href="#download" className="text-gray-400 hover:text-white transition-colors">Download</a>
                 <Link href="/docs" className="text-gray-400 hover:text-white transition-colors">API Docs</Link>
               </div>
             </div>
@@ -1021,6 +1022,98 @@ export default function Home() {
         </div>
       </section>
 
+      {/* Download Section */}
+      <section id="download" className="py-20 px-4 sm:px-6 lg:px-8 bg-white/[0.02]">
+        <div className="max-w-4xl mx-auto">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="text-center mb-12"
+          >
+            <div className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-500/10 border border-emerald-500/20 rounded-full text-sm mb-6">
+              <svg className="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+              </svg>
+              <span className="text-emerald-400">100% Private &amp; Offline</span>
+            </div>
+            <h2 className="text-3xl sm:text-4xl font-bold text-white mb-4">
+              Run locally for complete privacy
+            </h2>
+            <p className="text-lg text-gray-400 max-w-2xl mx-auto">
+              Download SecureAgent Desktop — works offline with Ollama. Your data never leaves your machine.
+            </p>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="grid sm:grid-cols-3 gap-4"
+          >
+            {/* macOS Download */}
+            <a
+              href="https://github.com/simonfranco/secureagent/releases/latest/download/SecureAgent_1.0.0_aarch64.dmg"
+              className="group relative p-6 bg-white/5 border border-white/10 rounded-2xl hover:border-emerald-500/50 hover:bg-emerald-500/5 transition-all text-center"
+            >
+              <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/10 to-transparent opacity-0 group-hover:opacity-100 rounded-2xl transition-opacity" />
+              <div className="relative">
+                <svg className="w-12 h-12 mx-auto mb-4 text-white" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/>
+                </svg>
+                <h3 className="text-lg font-semibold text-white mb-1">Download for Mac</h3>
+                <p className="text-sm text-gray-400 mb-3">Apple Silicon (M1/M2/M3)</p>
+                <span className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-500 hover:bg-emerald-400 text-white rounded-lg font-medium transition-colors">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                  </svg>
+                  Download .dmg
+                </span>
+              </div>
+            </a>
+
+            {/* Windows Coming Soon */}
+            <div className="relative p-6 bg-white/5 border border-white/10 rounded-2xl text-center opacity-60">
+              <svg className="w-12 h-12 mx-auto mb-4 text-gray-400" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M0 3.449L9.75 2.1v9.451H0m10.949-9.602L24 0v11.4H10.949M0 12.6h9.75v9.451L0 20.699M10.949 12.6H24V24l-12.9-1.801"/>
+              </svg>
+              <h3 className="text-lg font-semibold text-gray-400 mb-1">Windows</h3>
+              <p className="text-sm text-gray-500 mb-3">x64 &amp; ARM</p>
+              <span className="inline-flex items-center gap-2 px-4 py-2 bg-white/10 text-gray-400 rounded-lg font-medium">
+                Coming Soon
+              </span>
+            </div>
+
+            {/* Linux Coming Soon */}
+            <div className="relative p-6 bg-white/5 border border-white/10 rounded-2xl text-center opacity-60">
+              <svg className="w-12 h-12 mx-auto mb-4 text-gray-400" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12.504 0c-.155 0-.315.008-.48.021-4.226.333-3.105 4.807-3.17 6.298-.076 1.092-.3 1.953-1.05 3.02-.885 1.051-2.127 2.75-2.716 4.521-.278.832-.41 1.684-.287 2.489a.424.424 0 00-.11.135c-.26.268-.45.6-.663.839-.199.199-.485.267-.797.4-.313.136-.658.269-.864.68-.09.189-.136.394-.132.602 0 .199.027.4.055.536.058.399.116.728.04.97-.249.68-.28 1.145-.106 1.484.174.334.535.47.94.601.81.2 1.91.135 2.774.6.926.466 1.866.67 2.616.47.526-.116.97-.464 1.208-.946.587-.003 1.23-.269 2.26-.334.699-.058 1.574.267 2.577.2.025.134.063.198.114.333l.003.003c.391.778 1.113 1.132 1.884 1.071.771-.06 1.592-.536 2.257-1.306.631-.765 1.683-1.084 2.378-1.503.348-.199.629-.469.649-.853.023-.4-.2-.811-.714-1.376v-.097l-.003-.003c-.17-.2-.25-.535-.338-.926-.085-.401-.182-.786-.492-1.046h-.003c-.059-.054-.123-.067-.188-.135a.357.357 0 00-.19-.064c.431-1.278.264-2.55-.173-3.694-.533-1.41-1.465-2.638-2.175-3.483-.796-1.005-1.576-1.957-1.56-3.368.026-2.152.236-6.133-3.544-6.139zm.529 3.405h.013c.213 0 .396.062.584.198.19.135.33.332.438.533.105.259.158.459.166.724 0-.02.006-.04.006-.06v.105a.086.086 0 01-.004-.021l-.004-.024a1.807 1.807 0 01-.15.706.953.953 0 01-.213.335.71.71 0 00-.088-.042c-.104-.045-.198-.064-.284-.133a1.312 1.312 0 00-.22-.066c.05-.06.146-.133.183-.198.053-.128.082-.264.088-.402v-.02a1.21 1.21 0 00-.061-.4c-.045-.134-.101-.2-.183-.333-.084-.066-.167-.132-.267-.132h-.016c-.093 0-.176.03-.262.132a.8.8 0 00-.205.334 1.18 1.18 0 00-.09.4v.019c.002.089.008.179.02.267-.193-.067-.438-.135-.607-.202a1.635 1.635 0 01-.018-.2v-.02a1.772 1.772 0 01.15-.768c.082-.22.232-.406.43-.533a.985.985 0 01.594-.2zm-2.962.059h.036c.142 0 .27.048.399.135.146.129.264.288.344.465.09.199.14.4.153.667l.002.034.001.168-.001.002v.006l-.004.025a1.956 1.956 0 01-.168.768 1.15 1.15 0 01-.053.087c-.072-.045-.134-.09-.2-.135-.078-.046-.158-.135-.238-.199a1.482 1.482 0 00-.083-.166.785.785 0 00.053-.132c.033-.1.049-.2.049-.303v-.003a1.164 1.164 0 00-.053-.333c-.03-.089-.072-.178-.133-.2h-.001a.569.569 0 00-.195-.066h-.02a.317.317 0 00-.191.066c-.059.022-.1.11-.133.199a1.145 1.145 0 00-.053.333v.003c0 .066.005.133.015.199a1.31 1.31 0 01-.201.07c-.146.049-.293.135-.393.2a.076.076 0 00-.003-.025v-.002a1.773 1.773 0 01.135-.768c.082-.178.2-.345.345-.465.142-.09.284-.135.426-.135zm2.654 2.946c.067 0 .133.002.2.006a.703.703 0 01.3.097c.105.049.191.135.25.199a.83.83 0 01.108.133c-.105.088-.2.2-.287.333l-.017.025c-.09.132-.15.2-.217.333-.105.2-.182.4-.22.6-.033.134-.049.268-.049.4 0 .2.033.4.1.6.066.2.166.4.29.533.127.2.277.333.454.466.175.132.367.2.566.2.133 0 .266-.035.4-.066.135-.034.267-.1.384-.2a.907.907 0 00.165-.165c.04-.066.073-.1.1-.132.09-.066.2-.1.3-.1.034 0 .066.002.1.006a.961.961 0 01.26.065c.09.033.166.1.24.2.076.099.137.199.165.332.063.195.09.39.09.59 0 .2-.03.4-.106.598a1.257 1.257 0 01-.303.466c-.119.132-.265.2-.432.3-.166.1-.354.134-.532.2-.183.066-.366.1-.566.1a1.4 1.4 0 01-.566-.1 2.25 2.25 0 01-.465-.2c-.203-.127-.364-.265-.5-.466a2.24 2.24 0 01-.232-.466 1.99 1.99 0 01-.1-.598v-.003c0-.2.03-.4.09-.6a1.35 1.35 0 01.266-.497c-.14-.15-.273-.347-.387-.5a2.404 2.404 0 01-.265-.565 2.07 2.07 0 01-.1-.667v-.02c0-.2.033-.4.1-.598.066-.2.158-.4.283-.533.124-.166.287-.3.466-.4.188-.1.389-.166.598-.2.07-.002.13-.002.2-.002z"/>
+              </svg>
+              <h3 className="text-lg font-semibold text-gray-400 mb-1">Linux</h3>
+              <p className="text-sm text-gray-500 mb-3">AppImage &amp; .deb</p>
+              <span className="inline-flex items-center gap-2 px-4 py-2 bg-white/10 text-gray-400 rounded-lg font-medium">
+                Coming Soon
+              </span>
+            </div>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
+            viewport={{ once: true }}
+            className="mt-8 text-center"
+          >
+            <p className="text-gray-500 text-sm">
+              Requires <a href="https://ollama.ai" target="_blank" rel="noopener noreferrer" className="text-emerald-400 hover:underline">Ollama</a> for local AI models.
+              <span className="text-gray-600 mx-2">•</span>
+              <a href="https://github.com/simonfranco/secureagent/releases" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-white transition-colors">
+                View all releases
+              </a>
+            </p>
+          </motion.div>
+        </div>
+      </section>
+
       {/* CTA Section */}
       <section className="py-20 px-4 sm:px-6 lg:px-8">
         <motion.div
@@ -1046,12 +1139,13 @@ export default function Home() {
                   Try Web Chat Free
                 </Link>
                 <a
-                  href="https://t.me/Secure_Agent_bot"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="px-8 py-4 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl font-semibold text-lg transition-all hover:scale-105"
+                  href="#download"
+                  className="px-8 py-4 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl font-semibold text-lg transition-all hover:scale-105 flex items-center justify-center gap-2"
                 >
-                  Try on Telegram
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                  </svg>
+                  Download Desktop App
                 </a>
               </div>
             </div>
