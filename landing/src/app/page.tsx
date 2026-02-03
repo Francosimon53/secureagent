@@ -577,11 +577,11 @@ export default function Home() {
               className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold tracking-tight mb-6"
             >
               <span className="bg-gradient-to-r from-emerald-400 via-cyan-400 to-blue-400 bg-clip-text text-transparent">
-                OpenClaw Power.
+                Your AI Assistant.
               </span>
               <br />
               <span className="text-white">
-                Zero Complexity.
+                Your Rules.
               </span>
             </motion.h1>
 
@@ -590,7 +590,7 @@ export default function Home() {
               variants={fadeInUp}
               className="text-lg sm:text-xl text-gray-400 max-w-2xl mx-auto mb-10"
             >
-              All the features of OpenClaw without buying hardware, managing servers, or surprise API bills.
+              Run locally for complete privacy, or use our cloud. No hardware to buy, no surprise API bills.
             </motion.p>
 
             {/* CTA Buttons */}
