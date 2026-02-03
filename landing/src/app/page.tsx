@@ -342,19 +342,14 @@ const features = [
   },
 ];
 
-// Comparison data - AI Agent Platforms
-const comparison = [
-  { feature: 'Multi-model support (GPT, Claude, Gemini, Llama)', secureAgent: true, openclaw: false, autogpt: true, langchain: true },
-  { feature: 'Multi-channel (Telegram, Discord, Slack, Teams)', secureAgent: true, openclaw: true, autogpt: false, langchain: false },
-  { feature: 'Enterprise security (OWASP, Zero Trust)', secureAgent: true, openclaw: false, autogpt: false, langchain: false },
-  { feature: 'Browser automation', secureAgent: true, openclaw: true, autogpt: true, langchain: true },
-  { feature: 'Voice activation', secureAgent: true, openclaw: false, autogpt: false, langchain: false },
-  { feature: 'Self-hosted option', secureAgent: true, openclaw: true, autogpt: true, langchain: true },
-  { feature: 'No-code setup', secureAgent: true, openclaw: true, autogpt: false, langchain: false },
-  { feature: 'Multi-agent routing', secureAgent: true, openclaw: false, autogpt: true, langchain: true },
-  { feature: 'Built-in billing/subscriptions', secureAgent: true, openclaw: false, autogpt: false, langchain: false },
-  { feature: 'Cost estimation & budgets', secureAgent: true, openclaw: false, autogpt: false, langchain: false },
-  { feature: 'Production ready', secureAgent: true, openclaw: true, autogpt: false, langchain: false },
+// Comparison data - SecureAgent vs OpenClaw
+const openclawComparison = [
+  { feature: 'Setup time', openclaw: '30+ min terminal', secureAgent: '2 minutes' },
+  { feature: 'Hardware needed', openclaw: 'Mac Mini ($600+)', secureAgent: 'None (cloud included)' },
+  { feature: 'Monthly cost', openclaw: '$40-600 in API fees', secureAgent: '$49 flat, all included' },
+  { feature: 'Works when laptop off', openclaw: 'No', secureAgent: 'Yes (cloud 24/7)' },
+  { feature: 'Local/private option', openclaw: 'Yes', secureAgent: 'Yes (desktop app)' },
+  { feature: 'Support', openclaw: 'None (DIY)', secureAgent: 'Included' },
 ];
 
 // Pricing data - aligned with dedicated pricing page
@@ -448,9 +443,34 @@ export default function Home() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <Link href="/" className="flex items-center gap-2 group">
-              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center text-lg font-bold">
-                S
-              </div>
+              <svg width="35" height="40" viewBox="0 0 70 80" xmlns="http://www.w3.org/2000/svg" className="w-9 h-10">
+                <defs>
+                  <linearGradient id="owlGradNav" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" style={{stopColor:'#00d4aa'}}/>
+                    <stop offset="100%" style={{stopColor:'#00b4d8'}}/>
+                  </linearGradient>
+                  <linearGradient id="bodyGradNav" x1="0%" y1="0%" x2="0%" y2="100%">
+                    <stop offset="0%" style={{stopColor:'#00d4aa'}}/>
+                    <stop offset="100%" style={{stopColor:'#009988'}}/>
+                  </linearGradient>
+                </defs>
+                <ellipse cx="35" cy="45" rx="24" ry="28" fill="url(#bodyGradNav)"/>
+                <ellipse cx="35" cy="52" rx="14" ry="18" fill="#0a0a0f" opacity="0.15"/>
+                <ellipse cx="18" cy="18" rx="6" ry="10" fill="url(#owlGradNav)" transform="rotate(-20 18 18)"/>
+                <ellipse cx="52" cy="18" rx="6" ry="10" fill="url(#owlGradNav)" transform="rotate(20 52 18)"/>
+                <ellipse cx="35" cy="32" rx="18" ry="16" fill="#0a0a0f" opacity="0.2"/>
+                <ellipse cx="26" cy="30" rx="8" ry="9" fill="#fff"/>
+                <ellipse cx="26" cy="31" rx="5" ry="6" fill="#0a0a0f"/>
+                <circle cx="24" cy="29" r="2" fill="#fff"/>
+                <ellipse cx="44" cy="30" rx="8" ry="9" fill="#fff"/>
+                <ellipse cx="44" cy="31" rx="5" ry="6" fill="#0a0a0f"/>
+                <circle cx="42" cy="29" r="2" fill="#fff"/>
+                <path d="M35 38 L32 44 L35 46 L38 44 Z" fill="#ffaa00"/>
+                <path d="M12 50 Q8 45 12 38" stroke="#009977" strokeWidth="3" fill="none" strokeLinecap="round"/>
+                <path d="M58 50 Q62 45 58 38" stroke="#009977" strokeWidth="3" fill="none" strokeLinecap="round"/>
+                <ellipse cx="28" cy="72" rx="5" ry="3" fill="#ffaa00"/>
+                <ellipse cx="42" cy="72" rx="5" ry="3" fill="#ffaa00"/>
+              </svg>
               <span className="text-xl font-bold">SecureAgent</span>
             </Link>
 
@@ -518,15 +538,49 @@ export default function Home() {
               <span className="text-gray-400">8K+ messages today</span>
             </motion.div>
 
+            {/* Owl Mascot */}
+            <motion.div variants={fadeInUp} className="mb-8">
+              <svg width="70" height="80" viewBox="0 0 70 80" xmlns="http://www.w3.org/2000/svg" className="mx-auto">
+                <defs>
+                  <linearGradient id="owlGradHero" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" style={{stopColor:'#00d4aa'}}/>
+                    <stop offset="100%" style={{stopColor:'#00b4d8'}}/>
+                  </linearGradient>
+                  <linearGradient id="bodyGradHero" x1="0%" y1="0%" x2="0%" y2="100%">
+                    <stop offset="0%" style={{stopColor:'#00d4aa'}}/>
+                    <stop offset="100%" style={{stopColor:'#009988'}}/>
+                  </linearGradient>
+                </defs>
+                <ellipse cx="35" cy="45" rx="24" ry="28" fill="url(#bodyGradHero)"/>
+                <ellipse cx="35" cy="52" rx="14" ry="18" fill="#0a0a0f" opacity="0.15"/>
+                <ellipse cx="18" cy="18" rx="6" ry="10" fill="url(#owlGradHero)" transform="rotate(-20 18 18)"/>
+                <ellipse cx="52" cy="18" rx="6" ry="10" fill="url(#owlGradHero)" transform="rotate(20 52 18)"/>
+                <ellipse cx="35" cy="32" rx="18" ry="16" fill="#0a0a0f" opacity="0.2"/>
+                <ellipse cx="26" cy="30" rx="8" ry="9" fill="#fff"/>
+                <ellipse cx="26" cy="31" rx="5" ry="6" fill="#0a0a0f"/>
+                <circle cx="24" cy="29" r="2" fill="#fff"/>
+                <ellipse cx="44" cy="30" rx="8" ry="9" fill="#fff"/>
+                <ellipse cx="44" cy="31" rx="5" ry="6" fill="#0a0a0f"/>
+                <circle cx="42" cy="29" r="2" fill="#fff"/>
+                <path d="M35 38 L32 44 L35 46 L38 44 Z" fill="#ffaa00"/>
+                <path d="M12 50 Q8 45 12 38" stroke="#009977" strokeWidth="3" fill="none" strokeLinecap="round"/>
+                <path d="M58 50 Q62 45 58 38" stroke="#009977" strokeWidth="3" fill="none" strokeLinecap="round"/>
+                <ellipse cx="28" cy="72" rx="5" ry="3" fill="#ffaa00"/>
+                <ellipse cx="42" cy="72" rx="5" ry="3" fill="#ffaa00"/>
+              </svg>
+            </motion.div>
+
             {/* Headline */}
             <motion.h1
               variants={fadeInUp}
               className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold tracking-tight mb-6"
             >
-              <span className="text-white">Your AI Assistant That</span>
+              <span className="bg-gradient-to-r from-emerald-400 via-cyan-400 to-blue-400 bg-clip-text text-transparent">
+                OpenClaw Power.
+              </span>
               <br />
-              <span className="bg-gradient-to-r from-blue-400 via-cyan-400 to-emerald-400 bg-clip-text text-transparent">
-                Actually Does Things
+              <span className="text-white">
+                Zero Complexity.
               </span>
             </motion.h1>
 
@@ -535,9 +589,7 @@ export default function Home() {
               variants={fadeInUp}
               className="text-lg sm:text-xl text-gray-400 max-w-2xl mx-auto mb-10"
             >
-              Enterprise-grade security. Multi-channel support. Browser automation.
-              <br className="hidden sm:block" />
-              <span className="text-gray-300">One AI that works everywhere you do.</span>
+              All the features of OpenClaw without buying hardware, managing servers, or surprise API bills.
             </motion.p>
 
             {/* CTA Buttons */}
@@ -730,9 +782,9 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Comparison Section */}
+      {/* Comparison Section - Why SecureAgent vs OpenClaw */}
       <section className="py-20 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-5xl mx-auto">
+        <div className="max-w-4xl mx-auto">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -743,7 +795,7 @@ export default function Home() {
               Why SecureAgent?
             </h2>
             <p className="text-lg text-gray-400 max-w-2xl mx-auto">
-              See how we compare to other AI agent platforms.
+              All the power of OpenClaw, none of the hassle.
             </p>
           </motion.div>
 
@@ -751,57 +803,30 @@ export default function Home() {
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            className="bg-white/5 border border-white/10 rounded-2xl overflow-hidden overflow-x-auto"
+            className="bg-white/5 border border-white/10 rounded-2xl overflow-hidden"
           >
-            <div className="grid grid-cols-5 gap-2 sm:gap-4 p-4 bg-white/5 border-b border-white/10 text-xs sm:text-sm font-medium min-w-[600px]">
+            <div className="grid grid-cols-3 gap-4 p-4 bg-white/5 border-b border-white/10 text-sm sm:text-base font-semibold">
               <div className="text-gray-400">Feature</div>
-              <div className="text-center text-white">SecureAgent</div>
               <div className="text-center text-gray-400">OpenClaw</div>
-              <div className="text-center text-gray-400">AutoGPT</div>
-              <div className="text-center text-gray-400">LangChain</div>
+              <div className="text-center text-emerald-400">SecureAgent</div>
             </div>
-            {comparison.map((row, index) => (
-              <div key={row.feature} className={`grid grid-cols-5 gap-2 sm:gap-4 p-4 text-xs sm:text-sm min-w-[600px] ${index !== comparison.length - 1 ? 'border-b border-white/5' : ''}`}>
-                <div className="text-gray-300">{row.feature}</div>
-                <div className="text-center">
-                  {row.secureAgent ? (
-                    <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-green-500/20 text-green-400">✓</span>
-                  ) : (
-                    <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-red-500/20 text-red-400">✗</span>
-                  )}
-                </div>
-                <div className="text-center">
-                  {row.openclaw ? (
-                    <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-green-500/20 text-green-400">✓</span>
-                  ) : (
-                    <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-red-500/20 text-red-400">✗</span>
-                  )}
-                </div>
-                <div className="text-center">
-                  {row.autogpt ? (
-                    <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-green-500/20 text-green-400">✓</span>
-                  ) : (
-                    <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-red-500/20 text-red-400">✗</span>
-                  )}
-                </div>
-                <div className="text-center">
-                  {row.langchain ? (
-                    <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-green-500/20 text-green-400">✓</span>
-                  ) : (
-                    <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-red-500/20 text-red-400">✗</span>
-                  )}
-                </div>
+            {openclawComparison.map((row, index) => (
+              <div key={row.feature} className={`grid grid-cols-3 gap-4 p-4 text-sm sm:text-base ${index !== openclawComparison.length - 1 ? 'border-b border-white/5' : ''}`}>
+                <div className="text-gray-300 font-medium">{row.feature}</div>
+                <div className="text-center text-gray-500">{row.openclaw}</div>
+                <div className="text-center text-emerald-400 font-medium">{row.secureAgent}</div>
               </div>
             ))}
           </motion.div>
 
-          {/* Legend */}
-          <div className="mt-6 flex flex-wrap justify-center gap-4 text-xs text-gray-500">
-            <span><strong className="text-blue-400">SecureAgent:</strong> Enterprise-ready, secure</span>
-            <span><strong className="text-gray-400">OpenClaw:</strong> Most channels</span>
-            <span><strong className="text-gray-400">AutoGPT:</strong> Autonomous agents</span>
-            <span><strong className="text-gray-400">LangChain:</strong> Developer flexibility</span>
-          </div>
+          <motion.p
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
+            viewport={{ once: true }}
+            className="text-center text-gray-500 text-sm mt-6"
+          >
+            Love OpenClaw&apos;s features? Get them all with SecureAgent — no terminal, no hardware, no surprise bills.
+          </motion.p>
         </div>
       </section>
 
@@ -1040,13 +1065,38 @@ export default function Home() {
           <div className="grid md:grid-cols-4 gap-8 mb-12">
             <div>
               <Link href="/" className="flex items-center gap-2 mb-4">
-                <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center text-lg font-bold">
-                  S
-                </div>
+                <svg width="32" height="36" viewBox="0 0 70 80" xmlns="http://www.w3.org/2000/svg">
+                  <defs>
+                    <linearGradient id="owlGradFooter" x1="0%" y1="0%" x2="100%" y2="100%">
+                      <stop offset="0%" style={{stopColor:'#00d4aa'}}/>
+                      <stop offset="100%" style={{stopColor:'#00b4d8'}}/>
+                    </linearGradient>
+                    <linearGradient id="bodyGradFooter" x1="0%" y1="0%" x2="0%" y2="100%">
+                      <stop offset="0%" style={{stopColor:'#00d4aa'}}/>
+                      <stop offset="100%" style={{stopColor:'#009988'}}/>
+                    </linearGradient>
+                  </defs>
+                  <ellipse cx="35" cy="45" rx="24" ry="28" fill="url(#bodyGradFooter)"/>
+                  <ellipse cx="35" cy="52" rx="14" ry="18" fill="#0a0a0f" opacity="0.15"/>
+                  <ellipse cx="18" cy="18" rx="6" ry="10" fill="url(#owlGradFooter)" transform="rotate(-20 18 18)"/>
+                  <ellipse cx="52" cy="18" rx="6" ry="10" fill="url(#owlGradFooter)" transform="rotate(20 52 18)"/>
+                  <ellipse cx="35" cy="32" rx="18" ry="16" fill="#0a0a0f" opacity="0.2"/>
+                  <ellipse cx="26" cy="30" rx="8" ry="9" fill="#fff"/>
+                  <ellipse cx="26" cy="31" rx="5" ry="6" fill="#0a0a0f"/>
+                  <circle cx="24" cy="29" r="2" fill="#fff"/>
+                  <ellipse cx="44" cy="30" rx="8" ry="9" fill="#fff"/>
+                  <ellipse cx="44" cy="31" rx="5" ry="6" fill="#0a0a0f"/>
+                  <circle cx="42" cy="29" r="2" fill="#fff"/>
+                  <path d="M35 38 L32 44 L35 46 L38 44 Z" fill="#ffaa00"/>
+                  <path d="M12 50 Q8 45 12 38" stroke="#009977" strokeWidth="3" fill="none" strokeLinecap="round"/>
+                  <path d="M58 50 Q62 45 58 38" stroke="#009977" strokeWidth="3" fill="none" strokeLinecap="round"/>
+                  <ellipse cx="28" cy="72" rx="5" ry="3" fill="#ffaa00"/>
+                  <ellipse cx="42" cy="72" rx="5" ry="3" fill="#ffaa00"/>
+                </svg>
                 <span className="text-xl font-bold">SecureAgent</span>
               </Link>
               <p className="text-gray-500 text-sm">
-                Enterprise-grade AI assistant with security at its core.
+                OpenClaw power with zero complexity.
               </p>
             </div>
             <div>
