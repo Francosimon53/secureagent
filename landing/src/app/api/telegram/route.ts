@@ -2,14 +2,28 @@ import { NextRequest, NextResponse } from 'next/server';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 
 const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
+const GROQ_API_KEY = process.env.GROQ_API_KEY;
 const GOOGLE_AI_API_KEY = process.env.GOOGLE_AI_API_KEY;
 const TELEGRAM_API = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}`;
 
-// Initialize Gemini AI
+// Initialize Gemini AI (fallback)
 const genAI = GOOGLE_AI_API_KEY ? new GoogleGenerativeAI(GOOGLE_AI_API_KEY) : null;
 
 // In-memory storage for scheduled messages (in production, use a database)
 const scheduledMessages: Map<string, NodeJS.Timeout> = new Map();
+
+// System prompt for AI
+const SYSTEM_PROMPT = `Eres SecureAgent, un asistente de IA amigable y útil.
+Responde de forma concisa y natural en el mismo idioma que el usuario.
+Tu personalidad es amigable, profesional y un poco divertida.
+Puedes ayudar con:
+- Programar recordatorios (usando /schedule)
+- Responder preguntas generales
+- Dar información útil
+- Contar chistes y entretener
+- Ayudar con tareas del día a día
+
+Mantén las respuestas cortas (máximo 2-3 párrafos) a menos que se pida más detalle.`;
 
 /**
  * Send a message to a Telegram chat
@@ -87,40 +101,80 @@ function scheduleMessage(chatId: number, delayMs: number, message: string): stri
 }
 
 /**
- * Generate AI response using Gemini
+ * Generate AI response using Groq (primary)
+ */
+async function generateGroqResponse(text: string, userName: string): Promise<string> {
+  const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${GROQ_API_KEY}`,
+    },
+    body: JSON.stringify({
+      model: 'llama-3.3-70b-versatile',
+      messages: [
+        { role: 'system', content: `${SYSTEM_PROMPT}\n\nEl usuario se llama ${userName || 'amigo'}.` },
+        { role: 'user', content: text }
+      ],
+      max_tokens: 1024,
+      temperature: 0.7,
+    }),
+  });
+
+  if (!response.ok) {
+    const error = await response.text();
+    throw new Error(`Groq API error: ${response.status} - ${error}`);
+  }
+
+  const data = await response.json();
+  return data.choices?.[0]?.message?.content || 'Lo siento, no pude generar una respuesta.';
+}
+
+/**
+ * Generate AI response using Gemini (fallback)
+ */
+async function generateGeminiResponse(text: string, userName: string): Promise<string> {
+  if (!genAI) {
+    throw new Error('Gemini not configured');
+  }
+
+  const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+  const result = await model.generateContent([
+    { text: `${SYSTEM_PROMPT}\n\nEl usuario se llama ${userName || 'amigo'}.` },
+    { text: `Usuario: ${text}` }
+  ]);
+
+  return result.response.text() || 'Lo siento, no pude generar una respuesta.';
+}
+
+/**
+ * Generate AI response with fallback
+ * Primary: Groq (faster)
+ * Fallback: Gemini
  */
 async function generateAIResponse(text: string, userName: string): Promise<string> {
-  if (!genAI) {
-    return `Lo siento, el servicio de IA no está configurado. Por favor contacta al administrador.`;
+  // Try Groq first (primary)
+  if (GROQ_API_KEY) {
+    try {
+      console.log('[Telegram] Using Groq AI...');
+      return await generateGroqResponse(text, userName);
+    } catch (error) {
+      console.error('[Telegram] Groq error, falling back to Gemini:', error);
+    }
   }
 
-  try {
-    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
-
-    const systemPrompt = `Eres SecureAgent, un asistente de IA amigable y útil.
-Responde de forma concisa y natural en el mismo idioma que el usuario.
-Tu personalidad es amigable, profesional y un poco divertida.
-Puedes ayudar con:
-- Programar recordatorios (usando /schedule)
-- Responder preguntas generales
-- Dar información útil
-- Contar chistes y entretener
-- Ayudar con tareas del día a día
-
-El usuario se llama ${userName || 'amigo'}.
-Mantén las respuestas cortas (máximo 2-3 párrafos) a menos que se pida más detalle.`;
-
-    const result = await model.generateContent([
-      { text: systemPrompt },
-      { text: `Usuario: ${text}` }
-    ]);
-
-    const response = result.response.text();
-    return response || 'Lo siento, no pude generar una respuesta.';
-  } catch (error) {
-    console.error('[Telegram] AI error:', error);
-    return `Lo siento, hubo un error al procesar tu mensaje. Por favor intenta de nuevo.`;
+  // Fallback to Gemini
+  if (genAI) {
+    try {
+      console.log('[Telegram] Using Gemini AI (fallback)...');
+      return await generateGeminiResponse(text, userName);
+    } catch (error) {
+      console.error('[Telegram] Gemini error:', error);
+    }
   }
+
+  // No AI available
+  return `Lo siento, el servicio de IA no está disponible en este momento. Por favor intenta de nuevo más tarde.`;
 }
 
 /**
@@ -166,11 +220,13 @@ Escribe /help para ver todos los comandos.`;
 
   // Handle /status command
   if (lowerText === '/status') {
-    const aiStatus = genAI ? '✅ Conectado (Gemini 1.5 Flash)' : '❌ No configurado';
+    const groqStatus = GROQ_API_KEY ? '✅ Groq (Llama 3.3 70B)' : '❌ No configurado';
+    const geminiStatus = genAI ? '✅ Gemini (fallback)' : '❌ No configurado';
     return `✅ *Estado de SecureAgent*
 
 🤖 Bot: En línea
-🧠 IA: ${aiStatus}
+🧠 IA Principal: ${groqStatus}
+🔄 IA Fallback: ${geminiStatus}
 👤 Usuario: \`${userId}\`
 ⏰ Hora: ${new Date().toLocaleString('es-ES')}
 📋 Recordatorios activos: ${scheduledMessages.size}
@@ -235,11 +291,16 @@ Te avisaré cuando sea el momento. 🔔`;
  * Health check endpoint
  */
 export async function GET() {
+  const aiProviders = [];
+  if (GROQ_API_KEY) aiProviders.push('groq:llama-3.3-70b');
+  if (GOOGLE_AI_API_KEY) aiProviders.push('gemini:1.5-flash');
+
   return NextResponse.json({
     status: 'ok',
     service: 'telegram',
     configured: !!TELEGRAM_BOT_TOKEN,
-    ai: !!GOOGLE_AI_API_KEY ? 'gemini-1.5-flash' : 'not configured',
+    ai: aiProviders.length > 0 ? aiProviders : 'not configured',
+    primary: GROQ_API_KEY ? 'groq' : GOOGLE_AI_API_KEY ? 'gemini' : 'none',
     message: TELEGRAM_BOT_TOKEN
       ? 'Telegram webhook endpoint ready'
       : 'TELEGRAM_BOT_TOKEN not configured',
