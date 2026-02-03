@@ -205,13 +205,6 @@ export default function PrivacyPolicyPage() {
               <p className="text-gray-300">
                 <strong className="text-white">Email:</strong> privacy@secureagent.ai
               </p>
-              <p className="text-gray-300 mt-2">
-                <strong className="text-white">GitHub:</strong>{' '}
-                <a href="https://github.com/Francosimon53/secureagent" target="_blank" rel="noopener noreferrer"
-                   className="text-blue-400 hover:text-blue-300">
-                  github.com/Francosimon53/secureagent
-                </a>
-              </p>
             </div>
           </section>
 

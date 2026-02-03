@@ -99,7 +99,6 @@ SecureAgent is an enterprise-grade AI assistant that actually does things. While
 
 **Website:** https://secureagent.vercel.app
 **Telegram:** @Secure_Agent_bot
-**GitHub:** https://github.com/Francosimon53/secureagent
 
 ---
 

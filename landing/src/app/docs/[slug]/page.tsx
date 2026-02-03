@@ -111,7 +111,6 @@ SecureAgent understands natural language. Just type:
 
 - **FAQ**: Common questions answered at [/docs/faq](/docs/faq)
 - **Support**: Contact us at support@secureagent.ai
-- **GitHub**: [Open an issue](https://github.com/Francosimon53/secureagent/issues)
     `,
   },
   'features': {
@@ -813,7 +812,6 @@ Yes! Cancel from Settings > Subscription.
 ## Contact & Support
 
 - **Email**: support@secureagent.ai
-- **GitHub**: [Issues & Discussions](https://github.com/Francosimon53/secureagent)
 - **Telegram**: [Try the Bot](https://t.me/Secure_Agent_bot)
 - **Discord**: Coming Soon
 - **Twitter**: Coming Soon

@@ -750,7 +750,7 @@ function PricingPageContent() {
           <div className="flex gap-6 text-gray-400 text-sm">
             <Link href="/" className="hover:text-white">Home</Link>
             <Link href="/dashboard" className="hover:text-white">Dashboard</Link>
-            <a href="https://github.com/Francosimon53/secureagent" target="_blank" rel="noopener noreferrer" className="hover:text-white">GitHub</a>
+            <Link href="/docs" className="hover:text-white">Docs</Link>
           </div>
         </div>
       </footer>
