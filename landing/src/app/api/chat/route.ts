@@ -127,31 +127,112 @@ const AVAILABLE_TOOLS: Anthropic.Tool[] = [
       required: ['expression'],
     },
   },
+  // Date/Time
+  {
+    name: 'get_datetime',
+    description: 'Get current date and time in any timezone',
+    input_schema: {
+      type: 'object' as const,
+      properties: {
+        timezone: { type: 'string', description: 'Timezone (e.g., "America/New_York", "Europe/London", "Asia/Tokyo")' },
+        format: { type: 'string', description: 'Output format: "full", "date", "time", "iso"' },
+      },
+      required: [],
+    },
+  },
+  // Text analysis
+  {
+    name: 'analyze_text',
+    description: 'Analyze text: word count, character count, reading time, etc.',
+    input_schema: {
+      type: 'object' as const,
+      properties: {
+        text: { type: 'string', description: 'Text to analyze' },
+      },
+      required: ['text'],
+    },
+  },
+  // URL tools
+  {
+    name: 'parse_url',
+    description: 'Parse a URL into its components (protocol, host, path, query params)',
+    input_schema: {
+      type: 'object' as const,
+      properties: {
+        url: { type: 'string', description: 'URL to parse' },
+      },
+      required: ['url'],
+    },
+  },
+  // QR Code
+  {
+    name: 'generate_qr',
+    description: 'Generate a QR code URL for any text or URL',
+    input_schema: {
+      type: 'object' as const,
+      properties: {
+        data: { type: 'string', description: 'Text or URL to encode in QR code' },
+        size: { type: 'number', description: 'Size in pixels (default 200)' },
+      },
+      required: ['data'],
+    },
+  },
+  // Weather (using Open-Meteo, no API key needed)
+  {
+    name: 'get_weather',
+    description: 'Get current weather for a location',
+    input_schema: {
+      type: 'object' as const,
+      properties: {
+        city: { type: 'string', description: 'City name' },
+        country: { type: 'string', description: 'Country code (e.g., US, ES, MX)' },
+      },
+      required: ['city'],
+    },
+  },
+  // Currency conversion
+  {
+    name: 'convert_currency',
+    description: 'Convert between currencies using current exchange rates',
+    input_schema: {
+      type: 'object' as const,
+      properties: {
+        amount: { type: 'number', description: 'Amount to convert' },
+        from: { type: 'string', description: 'Source currency code (e.g., USD, EUR, MXN)' },
+        to: { type: 'string', description: 'Target currency code' },
+      },
+      required: ['amount', 'from', 'to'],
+    },
+  },
 ];
 
 // System prompt for SecureAgent
 const SYSTEM_PROMPT = `You are SecureAgent, an enterprise-grade AI assistant with powerful tool capabilities.
 
-Your capabilities:
-- Execute code and calculations
-- Search the web for current information
-- Make HTTP requests to APIs
-- Process data (JSON, base64, hashing)
-- Generate UUIDs and timestamps
+YOUR TOOLS:
+- **Calculator**: Math expressions, percentages, scientific calculations
+- **Web Search**: Find information on Wikipedia and the web
+- **HTTP Requests**: Fetch data from any public API
+- **Weather**: Get current weather for any city
+- **Currency Converter**: Convert between any currencies with live rates
+- **Code Execution**: Run JavaScript safely
+- **Date/Time**: Get current time in any timezone
+- **Text Analysis**: Word count, reading time, etc.
+- **QR Codes**: Generate QR codes for any text/URL
+- **Data Tools**: JSON parsing, base64, hashing, UUIDs
 
-Your personality:
-- Professional but friendly
-- Concise but thorough
-- Security-conscious
-- Proactive in using tools when helpful
+INSTRUCTIONS:
+1. Use tools proactively when they help answer questions
+2. For math → use calculate tool
+3. For current info → use web_search or http_request
+4. For weather → use get_weather
+5. For currency → use convert_currency
+6. Explain briefly what you're doing
+7. Present results clearly
 
-When you need information or need to perform actions:
-1. Use the appropriate tool
-2. Explain what you're doing briefly
-3. Present results clearly
+LANGUAGE: Always respond in the same language the user writes in.
 
-Always respond in the same language the user writes in.
-Use tools proactively when they would help answer the user's question.`;
+PERSONALITY: Professional but friendly, concise but thorough, security-conscious.`;
 
 // Tool execution functions
 function executeDataTool(name: string, args: Record<string, unknown>): unknown {
@@ -225,52 +306,100 @@ async function executeHttpTool(name: string, args: Record<string, unknown>): Pro
 }
 
 async function executeWebSearch(query: string): Promise<unknown> {
-  // Use a simple web search via DuckDuckGo HTML (no API key needed)
+  // Try multiple search methods
+  
+  // Method 1: Wikipedia API (reliable, always works)
   try {
-    const searchUrl = `https://html.duckduckgo.com/html/?q=${encodeURIComponent(query)}`;
-    const response = await fetch(searchUrl, {
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (compatible; SecureAgent/1.0)',
-      },
-    });
-    const html = await response.text();
+    const wikiUrl = `https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(query)}&format=json&srlimit=5&origin=*`;
+    const wikiResponse = await fetch(wikiUrl);
+    const wikiData = await wikiResponse.json();
     
-    // Extract search results from HTML
-    const results: Array<{ title: string; url: string; snippet: string }> = [];
-    const resultRegex = /<a[^>]+class="result__a"[^>]*href="([^"]+)"[^>]*>([^<]+)<\/a>[\s\S]*?<a[^>]+class="result__snippet"[^>]*>([^<]+)/g;
-    let match;
+    if (wikiData.query?.search?.length > 0) {
+      const results = wikiData.query.search.map((item: { title: string; snippet: string; pageid: number }) => ({
+        title: item.title,
+        url: `https://en.wikipedia.org/wiki/${encodeURIComponent(item.title.replace(/ /g, '_'))}`,
+        snippet: item.snippet.replace(/<[^>]*>/g, ''), // Remove HTML tags
+        source: 'Wikipedia',
+      }));
+      
+      return {
+        query,
+        source: 'Wikipedia',
+        results,
+      };
+    }
+  } catch (e) {
+    console.error('Wikipedia search failed:', e);
+  }
+
+  // Method 2: DuckDuckGo Instant Answer API
+  try {
+    const ddgUrl = `https://api.duckduckgo.com/?q=${encodeURIComponent(query)}&format=json&no_html=1&skip_disambig=1`;
+    const ddgResponse = await fetch(ddgUrl);
+    const ddgData = await ddgResponse.json();
     
-    while ((match = resultRegex.exec(html)) !== null && results.length < 5) {
+    const results: Array<{ title: string; url: string; snippet: string; source: string }> = [];
+    
+    // Abstract (main result)
+    if (ddgData.Abstract) {
       results.push({
-        url: match[1],
-        title: match[2].trim(),
-        snippet: match[3].trim(),
+        title: ddgData.Heading || query,
+        url: ddgData.AbstractURL || '',
+        snippet: ddgData.Abstract,
+        source: ddgData.AbstractSource || 'DuckDuckGo',
       });
     }
-
-    // Fallback: simpler extraction
-    if (results.length === 0) {
-      const simpleRegex = /class="result__title"[^>]*>[\s\S]*?<a[^>]*href="([^"]+)"[^>]*>([^<]+)/g;
-      while ((match = simpleRegex.exec(html)) !== null && results.length < 5) {
-        results.push({
-          url: match[1],
-          title: match[2].trim(),
-          snippet: '',
-        });
+    
+    // Related topics
+    if (ddgData.RelatedTopics) {
+      for (const topic of ddgData.RelatedTopics.slice(0, 4)) {
+        if (topic.Text && topic.FirstURL) {
+          results.push({
+            title: topic.Text.split(' - ')[0] || topic.Text.substring(0, 50),
+            url: topic.FirstURL,
+            snippet: topic.Text,
+            source: 'DuckDuckGo',
+          });
+        }
       }
     }
-
-    return {
-      query,
-      results: results.length > 0 ? results : [{ title: 'No results found', url: '', snippet: 'Try a different search query' }],
-    };
-  } catch (error) {
-    return {
-      query,
-      error: `Search failed: ${(error as Error).message}`,
-      results: [],
-    };
+    
+    if (results.length > 0) {
+      return { query, source: 'DuckDuckGo', results };
+    }
+  } catch (e) {
+    console.error('DuckDuckGo search failed:', e);
   }
+
+  // Method 3: Use http_request to get a webpage and extract info
+  try {
+    // Try to get current info from a news API or reliable source
+    const newsUrl = `https://newsapi.org/v2/everything?q=${encodeURIComponent(query)}&pageSize=5&apiKey=demo`;
+    const newsResponse = await fetch(newsUrl);
+    if (newsResponse.ok) {
+      const newsData = await newsResponse.json();
+      if (newsData.articles?.length > 0) {
+        return {
+          query,
+          source: 'News',
+          results: newsData.articles.map((a: { title: string; url: string; description: string; source: { name: string } }) => ({
+            title: a.title,
+            url: a.url,
+            snippet: a.description,
+            source: a.source?.name || 'News',
+          })),
+        };
+      }
+    }
+  } catch (e) {
+    // News API might not work without key, that's ok
+  }
+
+  return {
+    query,
+    message: 'No direct search results found. Try using http_request to fetch specific URLs or ask me to help with the query.',
+    results: [],
+  };
 }
 
 function executeCode(code: string): unknown {
@@ -341,6 +470,170 @@ function executeCalculate(expression: string): unknown {
   }
 }
 
+// Date/time tool
+function executeDateTime(args: Record<string, unknown>): unknown {
+  const timezone = (args.timezone as string) || 'UTC';
+  const format = (args.format as string) || 'full';
+  
+  try {
+    const now = new Date();
+    const options: Intl.DateTimeFormatOptions = { timeZone: timezone };
+    
+    if (format === 'date') {
+      options.dateStyle = 'full';
+      return { timezone, date: now.toLocaleDateString('en-US', options) };
+    } else if (format === 'time') {
+      options.timeStyle = 'long';
+      return { timezone, time: now.toLocaleTimeString('en-US', options) };
+    } else if (format === 'iso') {
+      return { timezone, iso: now.toISOString() };
+    } else {
+      options.dateStyle = 'full';
+      options.timeStyle = 'long';
+      return { 
+        timezone, 
+        datetime: now.toLocaleString('en-US', options),
+        iso: now.toISOString(),
+        unix: Math.floor(now.getTime() / 1000),
+      };
+    }
+  } catch {
+    return { error: `Invalid timezone: ${timezone}` };
+  }
+}
+
+// Text analysis tool
+function analyzeText(text: string): unknown {
+  const words = text.trim().split(/\s+/).filter(w => w.length > 0);
+  const sentences = text.split(/[.!?]+/).filter(s => s.trim().length > 0);
+  const paragraphs = text.split(/\n\n+/).filter(p => p.trim().length > 0);
+  const readingTimeMinutes = Math.ceil(words.length / 200); // ~200 words per minute
+  
+  return {
+    characters: text.length,
+    charactersNoSpaces: text.replace(/\s/g, '').length,
+    words: words.length,
+    sentences: sentences.length,
+    paragraphs: paragraphs.length,
+    readingTime: `${readingTimeMinutes} min`,
+    averageWordLength: words.length > 0 ? (text.replace(/\s/g, '').length / words.length).toFixed(1) : 0,
+  };
+}
+
+// URL parser
+function parseUrl(url: string): unknown {
+  try {
+    const parsed = new URL(url);
+    const params: Record<string, string> = {};
+    parsed.searchParams.forEach((value, key) => { params[key] = value; });
+    
+    return {
+      protocol: parsed.protocol,
+      host: parsed.host,
+      hostname: parsed.hostname,
+      port: parsed.port || 'default',
+      pathname: parsed.pathname,
+      search: parsed.search,
+      hash: parsed.hash,
+      queryParams: params,
+    };
+  } catch {
+    return { error: `Invalid URL: ${url}` };
+  }
+}
+
+// QR code generator (using public API)
+function generateQR(data: string, size: number = 200): unknown {
+  const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=${size}x${size}&data=${encodeURIComponent(data)}`;
+  return {
+    data,
+    size,
+    qrCodeUrl: qrUrl,
+    note: 'Click or copy the URL to view/download the QR code',
+  };
+}
+
+// Weather tool (using Open-Meteo - free, no API key)
+async function getWeather(city: string, country?: string): Promise<unknown> {
+  try {
+    // First, geocode the city
+    const geoUrl = `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(city)}&count=1${country ? `&country=${country}` : ''}`;
+    const geoResponse = await fetch(geoUrl);
+    const geoData = await geoResponse.json();
+    
+    if (!geoData.results || geoData.results.length === 0) {
+      return { error: `City not found: ${city}` };
+    }
+    
+    const location = geoData.results[0];
+    const { latitude, longitude, name, country: countryName } = location;
+    
+    // Get weather
+    const weatherUrl = `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m&temperature_unit=celsius`;
+    const weatherResponse = await fetch(weatherUrl);
+    const weatherData = await weatherResponse.json();
+    
+    const current = weatherData.current;
+    const weatherCodes: Record<number, string> = {
+      0: 'Clear sky', 1: 'Mainly clear', 2: 'Partly cloudy', 3: 'Overcast',
+      45: 'Foggy', 48: 'Depositing rime fog', 51: 'Light drizzle', 53: 'Moderate drizzle',
+      55: 'Dense drizzle', 61: 'Slight rain', 63: 'Moderate rain', 65: 'Heavy rain',
+      71: 'Slight snow', 73: 'Moderate snow', 75: 'Heavy snow', 80: 'Slight rain showers',
+      81: 'Moderate rain showers', 82: 'Violent rain showers', 95: 'Thunderstorm',
+    };
+    
+    return {
+      location: `${name}, ${countryName}`,
+      temperature: `${current.temperature_2m}°C (${(current.temperature_2m * 9/5 + 32).toFixed(1)}°F)`,
+      humidity: `${current.relative_humidity_2m}%`,
+      wind: `${current.wind_speed_10m} km/h`,
+      conditions: weatherCodes[current.weather_code] || 'Unknown',
+      coordinates: { latitude, longitude },
+    };
+  } catch (error) {
+    return { error: `Weather lookup failed: ${(error as Error).message}` };
+  }
+}
+
+// Currency conversion (using exchangerate.host - free)
+async function convertCurrency(amount: number, from: string, to: string): Promise<unknown> {
+  try {
+    const url = `https://api.exchangerate.host/convert?from=${from.toUpperCase()}&to=${to.toUpperCase()}&amount=${amount}`;
+    const response = await fetch(url);
+    const data = await response.json();
+    
+    if (data.success === false) {
+      // Fallback to frankfurter.app (another free API)
+      const fallbackUrl = `https://api.frankfurter.app/latest?amount=${amount}&from=${from.toUpperCase()}&to=${to.toUpperCase()}`;
+      const fallbackResponse = await fetch(fallbackUrl);
+      const fallbackData = await fallbackResponse.json();
+      
+      if (fallbackData.rates && fallbackData.rates[to.toUpperCase()]) {
+        return {
+          amount,
+          from: from.toUpperCase(),
+          to: to.toUpperCase(),
+          result: fallbackData.rates[to.toUpperCase()],
+          rate: fallbackData.rates[to.toUpperCase()] / amount,
+          source: 'Frankfurter API',
+        };
+      }
+      return { error: 'Currency conversion failed' };
+    }
+    
+    return {
+      amount,
+      from: from.toUpperCase(),
+      to: to.toUpperCase(),
+      result: data.result,
+      rate: data.info?.rate || (data.result / amount),
+      source: 'ExchangeRate API',
+    };
+  } catch (error) {
+    return { error: `Currency conversion failed: ${(error as Error).message}` };
+  }
+}
+
 // Main tool executor
 async function executeTool(name: string, args: Record<string, unknown>): Promise<unknown> {
   // Data tools
@@ -366,6 +659,36 @@ async function executeTool(name: string, args: Record<string, unknown>): Promise
   // Calculator
   if (name === 'calculate') {
     return executeCalculate(args.expression as string);
+  }
+
+  // Date/time
+  if (name === 'get_datetime') {
+    return executeDateTime(args);
+  }
+
+  // Text analysis
+  if (name === 'analyze_text') {
+    return analyzeText(args.text as string);
+  }
+
+  // URL parser
+  if (name === 'parse_url') {
+    return parseUrl(args.url as string);
+  }
+
+  // QR code
+  if (name === 'generate_qr') {
+    return generateQR(args.data as string, args.size as number);
+  }
+
+  // Weather
+  if (name === 'get_weather') {
+    return getWeather(args.city as string, args.country as string);
+  }
+
+  // Currency
+  if (name === 'convert_currency') {
+    return convertCurrency(args.amount as number, args.from as string, args.to as string);
   }
 
   throw new Error(`Unknown tool: ${name}`);
