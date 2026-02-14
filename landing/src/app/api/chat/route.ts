@@ -1,8 +1,37 @@
 import { NextResponse } from 'next/server';
+import Anthropic from '@anthropic-ai/sdk';
+
+// Initialize Anthropic client
+const anthropic = new Anthropic({
+  apiKey: process.env.ANTHROPIC_API_KEY || '',
+});
+
+// System prompt for SecureAgent
+const SYSTEM_PROMPT = `You are SecureAgent, an enterprise-grade AI assistant.
+
+Your capabilities:
+- Answer questions clearly and helpfully
+- Summarize text and documents
+- Explain complex topics simply
+- Translate content between languages
+- Rewrite and improve text
+- Help with coding and technical questions
+- Assist with productivity tasks
+
+Your personality:
+- Professional but friendly
+- Concise but thorough
+- Security-conscious
+- Helpful and proactive
+
+Always respond in the same language the user writes in.
+If asked about your capabilities, explain what SecureAgent can do.
+Never pretend to have capabilities you don't have.`;
 
 interface ChatRequest {
   message: string;
   conversationId?: string;
+  history?: Array<{ role: 'user' | 'assistant'; content: string }>;
   action?: 'chat' | 'summarize' | 'translate' | 'explain' | 'rewrite';
   context?: {
     pageUrl?: string;
@@ -18,117 +47,45 @@ interface ChatResponse {
   timestamp: number;
 }
 
-// Simple response generation (in production, connect to actual AI API)
-function generateResponse(message: string, action?: string, context?: ChatRequest['context']): string {
-  const lowerMessage = message.toLowerCase();
-
-  // Handle specific actions
+// Build prompt based on action and context
+function buildPrompt(message: string, action?: string, context?: ChatRequest['context']): string {
   if (action === 'summarize' && context?.selectedText) {
-    return generateSummary(context.selectedText);
+    return `Please summarize the following text concisely:\n\n${context.selectedText}`;
   }
-
+  
   if (action === 'translate' && context?.selectedText) {
-    return `**Translation:**\n\n"${context.selectedText}"\n\n*Note: This is a demo. In production, this would use a translation API to translate the text.*`;
+    return `Please translate the following text. Detect the source language and translate to English (or to Spanish if it's already in English):\n\n${context.selectedText}`;
   }
-
+  
   if (action === 'explain' && context?.selectedText) {
-    return generateExplanation(context.selectedText);
+    return `Please explain the following text in simple terms:\n\n${context.selectedText}`;
   }
-
+  
   if (action === 'rewrite' && context?.selectedText) {
-    return `**Rewritten:**\n\n${rewriteText(context.selectedText)}`;
+    return `Please rewrite the following text to be clearer and more professional:\n\n${context.selectedText}`;
   }
-
-  // Handle page summarization
-  if (lowerMessage.includes('summarize') && lowerMessage.includes('page')) {
-    return `I'd be happy to summarize this page for you.\n\n**Page:** ${context?.pageTitle || 'Current page'}\n\nTo get a full summary, please select the text you'd like me to summarize, or I can provide general information about the page content.`;
+  
+  // Add page context if available
+  if (context?.pageTitle && context?.pageUrl) {
+    return `[Context: User is on page ${context.pageTitle} at ${context.pageUrl}]\n\nUser: ${message}`;
   }
-
-  // Handle greetings
-  if (lowerMessage.match(/^(hi|hello|hey|greetings)/)) {
-    return "Hello! I'm SecureAgent, your AI assistant. I can help you:\n\n- **Summarize** text or web pages\n- **Explain** complex topics\n- **Translate** content\n- **Rewrite** text for clarity\n\nJust select text on any webpage and ask me about it, or type your question here!";
-  }
-
-  // Handle help requests
-  if (lowerMessage.includes('help') || lowerMessage.includes('what can you do')) {
-    return "I'm SecureAgent, and I can assist you with:\n\n1. **Text Selection**: Highlight text on any webpage, then ask me to explain, translate, or summarize it\n2. **Page Summaries**: Click 'Summarize Page' to get key points\n3. **Quick Actions**: Use the buttons above for common tasks\n4. **Chat**: Ask me anything!\n\n**Tips:**\n- Right-click on selected text for quick actions\n- Use keyboard shortcut Ctrl+Shift+S to open me quickly";
-  }
-
-  // Handle code-related questions
-  if (lowerMessage.includes('code') || lowerMessage.includes('function') || lowerMessage.includes('program')) {
-    return `I can help with coding questions!\n\nFor the best results:\n1. Share the specific code you're working with\n2. Describe what you're trying to achieve\n3. Mention any error messages\n\nI'm ready to assist with debugging, explaining code, or suggesting improvements.`;
-  }
-
-  // Default conversational response
-  return generateConversationalResponse(message);
-}
-
-function generateSummary(text: string): string {
-  const words = text.split(/\s+/).length;
-  const sentences = text.split(/[.!?]+/).filter(s => s.trim()).length;
-
-  if (words < 20) {
-    return `This is a brief text with ${words} words. Here's what it says:\n\n> ${text}`;
-  }
-
-  // Extract key phrases (simplified)
-  const keyPhrases = text
-    .split(/[.!?]+/)
-    .filter(s => s.trim().length > 20)
-    .slice(0, 3)
-    .map(s => s.trim());
-
-  return `**Summary** (${words} words, ${sentences} sentences)\n\n**Key Points:**\n${keyPhrases.map(p => `- ${p.substring(0, 100)}...`).join('\n')}\n\n*This is a demo summary. In production, this would use AI to generate a comprehensive summary.*`;
-}
-
-function generateExplanation(text: string): string {
-  const words = text.split(/\s+/).length;
-
-  if (words < 5) {
-    return `**"${text}"**\n\nThis appears to be a term or short phrase. To provide a detailed explanation, I would typically:\n\n1. Define the term\n2. Provide context and examples\n3. Explain related concepts\n\n*In production, this would connect to an AI model for comprehensive explanations.*`;
-  }
-
-  return `**Explanation:**\n\nYou've asked about:\n> "${text.substring(0, 200)}${text.length > 200 ? '...' : ''}"\n\n**Analysis:**\nThis text contains ${words} words and discusses a specific topic. A thorough explanation would break down:\n\n1. **Main concepts** - The key ideas presented\n2. **Context** - Background information\n3. **Implications** - What this means in practice\n\n*This is a demo. In production, I would provide a detailed AI-powered explanation.*`;
-}
-
-function rewriteText(text: string): string {
-  // Simple rewrite (capitalize sentences properly, clean up spacing)
-  const cleaned = text
-    .replace(/\s+/g, ' ')
-    .trim()
-    .split(/(?<=[.!?])\s+/)
-    .map(sentence => {
-      const trimmed = sentence.trim();
-      return trimmed.charAt(0).toUpperCase() + trimmed.slice(1);
-    })
-    .join(' ');
-
-  return `${cleaned}\n\n*This is a basic cleanup. In production, I would use AI to improve clarity, tone, and structure while preserving the original meaning.*`;
-}
-
-function generateConversationalResponse(message: string): string {
-  const responses = [
-    "That's an interesting question! Let me think about this.",
-    "I understand what you're asking. Here's my perspective:",
-    "Great question! I'd be happy to help with that.",
-  ];
-
-  const randomResponse = responses[Math.floor(Math.random() * responses.length)];
-
-  return `${randomResponse}\n\nYou asked: "${message}"\n\nI'm a demo version of SecureAgent. In production, I would:\n\n1. **Analyze** your question thoroughly\n2. **Search** relevant knowledge bases\n3. **Provide** a comprehensive, accurate response\n\nFor now, try using the quick actions (Summarize, Translate, Explain, Rewrite) with selected text for the best experience!`;
+  
+  return message;
 }
 
 export async function POST(request: Request) {
   try {
-    // Check for API key (optional for demo)
-    const authHeader = request.headers.get('authorization');
-    const apiKey = authHeader?.replace('Bearer ', '');
-
-    // In production, validate API key here
-    // For demo, we'll accept any key or no key
+    // Check API key
+    if (!process.env.ANTHROPIC_API_KEY) {
+      console.error('ANTHROPIC_API_KEY not configured');
+      return NextResponse.json(
+        { error: 'AI service not configured. Please contact support.' },
+        { status: 503 }
+      );
+    }
 
     const body = await request.json();
-    const { message, conversationId, action, context } = body as ChatRequest;
+    const { message, conversationId, history, action, context } = body as ChatRequest;
 
     // Validate request
     if (!message || typeof message !== 'string') {
@@ -145,24 +102,62 @@ export async function POST(request: Request) {
       );
     }
 
-    // Simulate some processing time
-    await new Promise(resolve => setTimeout(resolve, 300 + Math.random() * 500));
+    // Build the prompt
+    const userPrompt = buildPrompt(message, action, context);
 
-    // Generate response
-    const response = generateResponse(message, action, context);
+    // Build messages array with history
+    const messages: Array<{ role: 'user' | 'assistant'; content: string }> = [];
+    
+    if (history && Array.isArray(history)) {
+      // Add last 10 messages for context
+      const recentHistory = history.slice(-10);
+      messages.push(...recentHistory);
+    }
+    
+    messages.push({ role: 'user', content: userPrompt });
+
+    // Call Claude
+    const response = await anthropic.messages.create({
+      model: 'claude-sonnet-4-20250514',
+      max_tokens: 2048,
+      system: SYSTEM_PROMPT,
+      messages: messages,
+    });
+
+    // Extract text response
+    const textContent = response.content.find(block => block.type === 'text');
+    const assistantMessage = textContent?.type === 'text' ? textContent.text : 'I apologize, but I could not generate a response.';
 
     const chatResponse: ChatResponse = {
       id: crypto.randomUUID(),
-      message: response,
+      message: assistantMessage,
       conversationId: conversationId || crypto.randomUUID(),
       timestamp: Date.now(),
     };
 
     return NextResponse.json(chatResponse);
+    
   } catch (error) {
     console.error('Chat error:', error);
+    
+    // Handle specific Anthropic errors
+    if (error instanceof Anthropic.APIError) {
+      if (error.status === 401) {
+        return NextResponse.json(
+          { error: 'AI service authentication failed. Please contact support.' },
+          { status: 503 }
+        );
+      }
+      if (error.status === 429) {
+        return NextResponse.json(
+          { error: 'Too many requests. Please try again in a moment.' },
+          { status: 429 }
+        );
+      }
+    }
+    
     return NextResponse.json(
-      { error: 'Failed to process chat message' },
+      { error: 'Failed to process chat message. Please try again.' },
       { status: 500 }
     );
   }
@@ -171,13 +166,15 @@ export async function POST(request: Request) {
 export async function GET() {
   return NextResponse.json({
     message: 'SecureAgent Chat API',
-    version: '1.0.0',
+    version: '2.0.0',
+    status: process.env.ANTHROPIC_API_KEY ? 'ready' : 'not_configured',
     endpoints: {
       'POST /api/chat': {
         description: 'Send a chat message',
         body: {
           message: 'string (required)',
           conversationId: 'string (optional)',
+          history: 'array of {role, content} (optional)',
           action: 'chat | summarize | translate | explain | rewrite (optional)',
           context: {
             pageUrl: 'string (optional)',
