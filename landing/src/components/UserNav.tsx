@@ -10,24 +10,24 @@ export default function UserNav() {
 
   if (status === 'loading') {
     return (
-      <div className="w-8 h-8 rounded-full bg-gray-700 animate-pulse" />
+      <div className="w-8 h-8 rounded-full bg-gray-200 animate-pulse" />
     );
   }
 
   if (!session) {
     return (
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-2">
         <Link
           href="/login"
-          className="px-4 py-2 text-sm text-gray-300 hover:text-white transition-colors"
+          className="px-5 py-2.5 text-sm font-medium text-[var(--navy)] border-[1.5px] border-[rgba(15,23,42,.15)] rounded-xl no-underline hover:border-[var(--teal)] hover:text-[var(--teal)] transition-all"
         >
-          Login
+          Log In
         </Link>
         <Link
-          href="/register"
-          className="px-4 py-2 bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-500 hover:to-cyan-500 rounded-lg font-medium text-sm text-white transition-all"
+          href="/login"
+          className="px-5 py-2.5 text-sm font-semibold text-white bg-[var(--teal)] rounded-xl no-underline shadow-[0_2px_12px_var(--teal-glow)] hover:-translate-y-0.5 hover:shadow-[0_6px_24px_var(--teal-glow)] transition-all"
         >
-          Get Started
+          Start Free Trial
         </Link>
       </div>
     );
@@ -39,7 +39,7 @@ export default function UserNav() {
     <div className="relative">
       <button
         onClick={() => setShowDropdown(!showDropdown)}
-        className="flex items-center gap-2 p-1 rounded-full hover:bg-gray-800 transition-colors"
+        className="flex items-center gap-2 p-1 rounded-full hover:bg-[rgba(15,23,42,.04)] transition-colors"
       >
         {session.user?.image ? (
           <img
@@ -48,12 +48,12 @@ export default function UserNav() {
             className="w-8 h-8 rounded-full"
           />
         ) : (
-          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center text-white font-medium text-sm">
+          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[var(--teal)] to-[var(--teal-dark)] flex items-center justify-center text-white font-medium text-sm">
             {userInitial}
           </div>
         )}
         <svg
-          className={`w-4 h-4 text-gray-400 transition-transform ${showDropdown ? 'rotate-180' : ''}`}
+          className={`w-4 h-4 text-[var(--slate)] transition-transform ${showDropdown ? 'rotate-180' : ''}`}
           fill="none"
           stroke="currentColor"
           viewBox="0 0 24 24"
@@ -68,12 +68,12 @@ export default function UserNav() {
             className="fixed inset-0 z-40"
             onClick={() => setShowDropdown(false)}
           />
-          <div className="absolute right-0 mt-2 w-56 bg-gray-900 border border-gray-800 rounded-xl shadow-lg z-50 overflow-hidden">
-            <div className="px-4 py-3 border-b border-gray-800">
-              <p className="text-sm font-medium text-white truncate">
+          <div className="absolute right-0 mt-2 w-56 bg-white border border-[rgba(15,23,42,.08)] rounded-xl shadow-lg z-50 overflow-hidden">
+            <div className="px-4 py-3 border-b border-[rgba(15,23,42,.06)]">
+              <p className="text-sm font-medium text-[var(--navy)] truncate">
                 {session.user?.name || 'User'}
               </p>
-              <p className="text-xs text-gray-400 truncate">
+              <p className="text-xs text-[var(--slate)] truncate">
                 {session.user?.email}
               </p>
             </div>
@@ -81,7 +81,7 @@ export default function UserNav() {
               <Link
                 href="/dashboard"
                 onClick={() => setShowDropdown(false)}
-                className="flex items-center gap-3 px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-gray-800 transition-colors"
+                className="flex items-center gap-3 px-4 py-2 text-sm text-[var(--slate)] hover:text-[var(--navy)] hover:bg-[rgba(15,23,42,.04)] transition-colors no-underline"
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
@@ -91,7 +91,7 @@ export default function UserNav() {
               <Link
                 href="/dashboard/settings"
                 onClick={() => setShowDropdown(false)}
-                className="flex items-center gap-3 px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-gray-800 transition-colors"
+                className="flex items-center gap-3 px-4 py-2 text-sm text-[var(--slate)] hover:text-[var(--navy)] hover:bg-[rgba(15,23,42,.04)] transition-colors no-underline"
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
@@ -100,10 +100,10 @@ export default function UserNav() {
                 Settings
               </Link>
             </div>
-            <div className="border-t border-gray-800 py-2">
+            <div className="border-t border-[rgba(15,23,42,.06)] py-2">
               <button
                 onClick={() => signOut({ callbackUrl: '/' })}
-                className="flex items-center gap-3 w-full px-4 py-2 text-sm text-red-400 hover:text-red-300 hover:bg-gray-800 transition-colors"
+                className="flex items-center gap-3 w-full px-4 py-2 text-sm text-red-500 hover:text-red-600 hover:bg-red-50 transition-colors"
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />

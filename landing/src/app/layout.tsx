@@ -1,21 +1,40 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { DM_Sans, Playfair_Display } from "next/font/google";
 import "./globals.css";
 import Providers from "@/components/Providers";
 
-const inter = Inter({
+const dmSans = DM_Sans({
   subsets: ["latin"],
-  variable: "--font-inter",
+  variable: "--font-dm-sans",
+  weight: ["300", "400", "500", "600", "700"],
+});
+
+const playfair = Playfair_Display({
+  subsets: ["latin"],
+  variable: "--font-playfair",
+  weight: ["400", "500", "600", "700"],
+  style: ["normal", "italic"],
 });
 
 export const metadata: Metadata = {
-  title: "SecureAgent - Enterprise-Grade AI Assistant",
-  description: "Enterprise-Grade AI Assistant with OWASP Top 10 Compliance, Zero Trust Architecture, and Multi-Channel Support",
-  keywords: ["AI", "Enterprise", "Security", "OWASP", "Zero Trust", "Discord", "Slack", "WhatsApp"],
-  authors: [{ name: "SecureAgent Team" }],
+  title: "SecureAgent — HIPAA-Compliant AI for Behavioral Health",
+  description:
+    "Built by BCBAs, for BCBAs. Session notes, pre-authorizations, parent training summaries — all from Telegram, all HIPAA-compliant.",
+  keywords: [
+    "HIPAA",
+    "ABA Therapy",
+    "BCBA",
+    "RBT",
+    "AI Assistant",
+    "Session Notes",
+    "Behavioral Health",
+    "Telegram",
+  ],
+  authors: [{ name: "SecureAgent" }],
   openGraph: {
-    title: "SecureAgent - Enterprise-Grade AI Assistant",
-    description: "Enterprise-Grade AI Assistant with OWASP Top 10 Compliance",
+    title: "SecureAgent — HIPAA-Compliant AI for Behavioral Health",
+    description:
+      "Built by BCBAs, for BCBAs. The AI assistant that understands your clinical practice.",
     type: "website",
   },
 };
@@ -26,8 +45,10 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="dark">
-      <body className={`${inter.variable} font-sans antialiased bg-gray-950 text-gray-100`}>
+    <html lang="en" className="scroll-smooth">
+      <body
+        className={`${dmSans.variable} ${playfair.variable} font-sans antialiased`}
+      >
         <Providers>{children}</Providers>
       </body>
     </html>
