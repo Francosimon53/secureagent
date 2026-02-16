@@ -38,7 +38,7 @@ export class AriaBrowserAutomation {
    */
   async initialize(): Promise<void> {
     // Dynamic import to avoid bundling issues
-    const puppeteer = await import('puppeteer');
+    const puppeteer = await import('puppeteer-core');
     this.browser = await puppeteer.default.launch({
       headless: true,
       args: [
