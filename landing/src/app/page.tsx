@@ -28,7 +28,7 @@ function useScrollReveal() {
   return ref;
 }
 
-// ===== COUNTER COMPONENT (self-contained with scroll check) =====
+// ===== COUNTER COMPONENT =====
 function AnimatedCounter({
   target,
   suffix,
@@ -40,52 +40,26 @@ function AnimatedCounter({
   prefix: string;
   label: string;
 }) {
-  const [display, setDisplay] = useState(prefix + '0' + suffix);
-  const ref = useRef<HTMLDivElement>(null);
-  const animated = useRef(false);
+  const [value, setValue] = useState(0);
 
   useEffect(() => {
-    const el = ref.current;
-    if (!el) return;
-
-    const runAnimation = () => {
-      if (animated.current) return;
-      animated.current = true;
-      let current = 0;
-      const increment = target / 40;
-      const timer = setInterval(() => {
-        current += increment;
-        if (current >= target) {
-          current = target;
-          clearInterval(timer);
-        }
-        setDisplay(prefix + Math.ceil(current) + suffix);
-      }, 30);
-    };
-
-    const checkVisible = () => {
-      const rect = el.getBoundingClientRect();
-      if (rect.top < window.innerHeight * 0.9 && rect.bottom > 0) {
-        runAnimation();
-        window.removeEventListener('scroll', checkVisible);
+    let current = 0;
+    const increment = target / 40;
+    const timer = setInterval(() => {
+      current += increment;
+      if (current >= target) {
+        current = target;
+        clearInterval(timer);
       }
-    };
-
-    window.addEventListener('scroll', checkVisible, { passive: true });
-    // Check immediately and after short delay (for already-visible elements)
-    checkVisible();
-    const fallback = setTimeout(checkVisible, 500);
-
-    return () => {
-      window.removeEventListener('scroll', checkVisible);
-      clearTimeout(fallback);
-    };
-  }, [target, suffix, prefix]);
+      setValue(Math.ceil(current));
+    }, 30);
+    return () => clearInterval(timer);
+  }, [target]);
 
   return (
-    <div className="text-center" ref={ref}>
+    <div className="text-center">
       <div className="font-serif text-[2.6rem] font-bold text-[var(--teal)] leading-none">
-        {display}
+        {prefix}{value}{suffix}
       </div>
       <div
         className="text-[.82rem] text-[var(--slate)] mt-1.5"
