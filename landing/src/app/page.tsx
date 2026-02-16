@@ -28,46 +28,13 @@ function useScrollReveal() {
   return ref;
 }
 
-// ===== COUNTER COMPONENT =====
-function AnimatedCounter({
-  target,
-  suffix,
-  prefix,
-  label,
-}: {
-  target: number;
-  suffix: string;
-  prefix: string;
-  label: string;
-}) {
-  const [value, setValue] = useState(0);
-
-  useEffect(() => {
-    let current = 0;
-    const increment = target / 40;
-    const timer = setInterval(() => {
-      current += increment;
-      if (current >= target) {
-        current = target;
-        clearInterval(timer);
-      }
-      setValue(Math.ceil(current));
-    }, 30);
-    return () => clearInterval(timer);
-  }, [target]);
-
-  return (
-    <div className="text-center">
-      <div className="font-serif text-[2.6rem] font-bold text-[var(--teal)] leading-none">
-        {prefix}{value}{suffix}
-      </div>
-      <div
-        className="text-[.82rem] text-[var(--slate)] mt-1.5"
-        dangerouslySetInnerHTML={{ __html: label }}
-      />
-    </div>
-  );
-}
+// ===== STATS DATA =====
+const stats = [
+  { value: '6+', label: 'Hours saved per week<br>on documentation' },
+  { value: '95%', label: '% insurance approval rate<br>on generated pre-auths' },
+  { value: '<2', label: 'Minutes to generate<br>a session note' },
+  { value: '100%', label: '% of PHI encrypted<br>at rest and in transit' },
+];
 
 // ===== CHAT ANIMATION COMPONENT =====
 function AnimatedChat() {
@@ -279,30 +246,17 @@ function SocialProofSection() {
         </div>
 
         <div className="reveal flex justify-center gap-16 mt-14 flex-wrap max-[768px]:gap-8">
-          <AnimatedCounter
-            target={6}
-            suffix="+"
-            prefix=""
-            label="Hours saved per week<br>on documentation"
-          />
-          <AnimatedCounter
-            target={95}
-            suffix="%"
-            prefix=""
-            label="% insurance approval rate<br>on generated pre-auths"
-          />
-          <AnimatedCounter
-            target={2}
-            suffix=""
-            prefix="<"
-            label="Minutes to generate<br>a session note"
-          />
-          <AnimatedCounter
-            target={100}
-            suffix="%"
-            prefix=""
-            label="% of PHI encrypted<br>at rest and in transit"
-          />
+          {stats.map((stat) => (
+            <div key={stat.value} className="text-center">
+              <div className="font-serif text-[2.6rem] font-bold text-[var(--teal)] leading-none">
+                {stat.value}
+              </div>
+              <div
+                className="text-[.82rem] text-[var(--slate)] mt-1.5"
+                dangerouslySetInnerHTML={{ __html: stat.label }}
+              />
+            </div>
+          ))}
         </div>
       </div>
     </section>
