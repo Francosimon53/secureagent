@@ -28,30 +28,71 @@ function useScrollReveal() {
   return ref;
 }
 
-// ===== SECTION VISIBILITY HOOK =====
-function useSectionVisible() {
-  const [visible, setVisible] = useState(false);
+// ===== COUNTER COMPONENT (self-contained with scroll check) =====
+function AnimatedCounter({
+  target,
+  suffix,
+  prefix,
+  label,
+}: {
+  target: number;
+  suffix: string;
+  prefix: string;
+  label: string;
+}) {
+  const [display, setDisplay] = useState(prefix + '0' + suffix);
   const ref = useRef<HTMLDivElement>(null);
+  const animated = useRef(false);
 
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            setVisible(true);
-            observer.unobserve(el);
-          }
-        });
-      },
-      { threshold: 0.15, rootMargin: '0px 0px -20px 0px' }
-    );
-    observer.observe(el);
-    return () => observer.disconnect();
-  }, []);
 
-  return { ref, visible };
+    const runAnimation = () => {
+      if (animated.current) return;
+      animated.current = true;
+      let current = 0;
+      const increment = target / 40;
+      const timer = setInterval(() => {
+        current += increment;
+        if (current >= target) {
+          current = target;
+          clearInterval(timer);
+        }
+        setDisplay(prefix + Math.ceil(current) + suffix);
+      }, 30);
+    };
+
+    const checkVisible = () => {
+      const rect = el.getBoundingClientRect();
+      if (rect.top < window.innerHeight * 0.9 && rect.bottom > 0) {
+        runAnimation();
+        window.removeEventListener('scroll', checkVisible);
+      }
+    };
+
+    window.addEventListener('scroll', checkVisible, { passive: true });
+    // Check immediately and after short delay (for already-visible elements)
+    checkVisible();
+    const fallback = setTimeout(checkVisible, 500);
+
+    return () => {
+      window.removeEventListener('scroll', checkVisible);
+      clearTimeout(fallback);
+    };
+  }, [target, suffix, prefix]);
+
+  return (
+    <div className="text-center" ref={ref}>
+      <div className="font-serif text-[2.6rem] font-bold text-[var(--teal)] leading-none">
+        {display}
+      </div>
+      <div
+        className="text-[.82rem] text-[var(--slate)] mt-1.5"
+        dangerouslySetInnerHTML={{ __html: label }}
+      />
+    </div>
+  );
 }
 
 // ===== CHAT ANIMATION COMPONENT =====
@@ -244,56 +285,8 @@ function AnimatedChat() {
   );
 }
 
-// ===== STAT COUNTER COMPONENT =====
-function StatCounter({
-  target,
-  suffix,
-  prefix,
-  label,
-  started,
-}: {
-  target: number;
-  suffix: string;
-  prefix: string;
-  label: string;
-  started: boolean;
-}) {
-  const [display, setDisplay] = useState(prefix + '0' + suffix);
-  const animated = useRef(false);
-
-  useEffect(() => {
-    if (!started || animated.current) return;
-    animated.current = true;
-    let current = 0;
-    const increment = target / 40;
-    const timer = setInterval(() => {
-      current += increment;
-      if (current >= target) {
-        current = target;
-        clearInterval(timer);
-      }
-      setDisplay(prefix + Math.ceil(current) + suffix);
-    }, 30);
-    return () => clearInterval(timer);
-  }, [started, target, suffix, prefix]);
-
-  return (
-    <div className="text-center">
-      <div className="font-serif text-[2.6rem] font-bold text-[var(--teal)] leading-none">
-        {display}
-      </div>
-      <div
-        className="text-[.82rem] text-[var(--slate)] mt-1.5"
-        dangerouslySetInnerHTML={{ __html: label }}
-      />
-    </div>
-  );
-}
-
 // ===== SOCIAL PROOF SECTION =====
 function SocialProofSection() {
-  const { ref: statsRef, visible: statsVisible } = useSectionVisible();
-
   return (
     <section className="bg-white border-t border-b border-[rgba(15,23,42,.04)]">
       <div className="max-w-[1240px] mx-auto py-[100px] px-10 text-center max-[768px]:px-6">
@@ -311,37 +304,30 @@ function SocialProofSection() {
           </p>
         </div>
 
-        <div
-          ref={statsRef}
-          className="reveal flex justify-center gap-16 mt-14 flex-wrap max-[768px]:gap-8"
-        >
-          <StatCounter
+        <div className="reveal flex justify-center gap-16 mt-14 flex-wrap max-[768px]:gap-8">
+          <AnimatedCounter
             target={6}
             suffix="+"
             prefix=""
             label="Hours saved per week<br>on documentation"
-            started={statsVisible}
           />
-          <StatCounter
+          <AnimatedCounter
             target={95}
             suffix="%"
             prefix=""
             label="% insurance approval rate<br>on generated pre-auths"
-            started={statsVisible}
           />
-          <StatCounter
+          <AnimatedCounter
             target={2}
             suffix=""
             prefix="<"
             label="Minutes to generate<br>a session note"
-            started={statsVisible}
           />
-          <StatCounter
+          <AnimatedCounter
             target={100}
             suffix="%"
             prefix=""
             label="% of PHI encrypted<br>at rest and in transit"
-            started={statsVisible}
           />
         </div>
       </div>
