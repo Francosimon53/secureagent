@@ -28,11 +28,10 @@ function useScrollReveal() {
   return ref;
 }
 
-// ===== COUNTER ANIMATION HOOK =====
-function useCounterAnimation(target: number, suffix: string, prefix: string) {
-  const [display, setDisplay] = useState('0');
+// ===== SECTION VISIBILITY HOOK =====
+function useSectionVisible() {
+  const [visible, setVisible] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
-  const animated = useRef(false);
 
   useEffect(() => {
     const el = ref.current;
@@ -40,29 +39,19 @@ function useCounterAnimation(target: number, suffix: string, prefix: string) {
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
-          if (entry.isIntersecting && !animated.current) {
-            animated.current = true;
-            let current = 0;
-            const increment = target / 40;
-            const timer = setInterval(() => {
-              current += increment;
-              if (current >= target) {
-                current = target;
-                clearInterval(timer);
-              }
-              setDisplay(prefix + Math.ceil(current) + suffix);
-            }, 30);
+          if (entry.isIntersecting) {
+            setVisible(true);
             observer.unobserve(el);
           }
         });
       },
-      { threshold: 0.5 }
+      { threshold: 0.15, rootMargin: '0px 0px -20px 0px' }
     );
     observer.observe(el);
     return () => observer.disconnect();
-  }, [target, suffix, prefix]);
+  }, []);
 
-  return { ref, display };
+  return { ref, visible };
 }
 
 // ===== CHAT ANIMATION COMPONENT =====
@@ -261,19 +250,36 @@ function StatCounter({
   suffix,
   prefix,
   label,
+  started,
 }: {
   target: number;
   suffix: string;
   prefix: string;
   label: string;
+  started: boolean;
 }) {
-  const { ref, display } = useCounterAnimation(target, suffix, prefix);
+  const [display, setDisplay] = useState(prefix + '0' + suffix);
+  const animated = useRef(false);
+
+  useEffect(() => {
+    if (!started || animated.current) return;
+    animated.current = true;
+    let current = 0;
+    const increment = target / 40;
+    const timer = setInterval(() => {
+      current += increment;
+      if (current >= target) {
+        current = target;
+        clearInterval(timer);
+      }
+      setDisplay(prefix + Math.ceil(current) + suffix);
+    }, 30);
+    return () => clearInterval(timer);
+  }, [started, target, suffix, prefix]);
+
   return (
     <div className="text-center">
-      <div
-        ref={ref}
-        className="font-serif text-[2.6rem] font-bold text-[var(--teal)] leading-none"
-      >
+      <div className="font-serif text-[2.6rem] font-bold text-[var(--teal)] leading-none">
         {display}
       </div>
       <div
@@ -281,6 +287,65 @@ function StatCounter({
         dangerouslySetInnerHTML={{ __html: label }}
       />
     </div>
+  );
+}
+
+// ===== SOCIAL PROOF SECTION =====
+function SocialProofSection() {
+  const { ref: statsRef, visible: statsVisible } = useSectionVisible();
+
+  return (
+    <section className="bg-white border-t border-b border-[rgba(15,23,42,.04)]">
+      <div className="max-w-[1240px] mx-auto py-[100px] px-10 text-center max-[768px]:px-6">
+        <div className="reveal">
+          <p className="font-serif text-[1.8rem] italic text-[var(--navy)] max-w-[700px] mx-auto mb-6 leading-[1.5] tracking-tight relative max-[768px]:text-[1.4rem]">
+            <span className="absolute -top-5 -left-[30px] text-[5rem] text-[var(--teal)] opacity-15 not-italic leading-none select-none">
+              &ldquo;
+            </span>
+            Finally, an AI tool I can actually use with patient data without
+            losing sleep over compliance.
+          </p>
+          <p className="text-[.9rem] text-[var(--slate)]">
+            <strong className="text-[var(--navy)]">— BCBA</strong>, ABA
+            Agency Owner, Southwest Florida
+          </p>
+        </div>
+
+        <div
+          ref={statsRef}
+          className="reveal flex justify-center gap-16 mt-14 flex-wrap max-[768px]:gap-8"
+        >
+          <StatCounter
+            target={6}
+            suffix="+"
+            prefix=""
+            label="Hours saved per week<br>on documentation"
+            started={statsVisible}
+          />
+          <StatCounter
+            target={95}
+            suffix="%"
+            prefix=""
+            label="% insurance approval rate<br>on generated pre-auths"
+            started={statsVisible}
+          />
+          <StatCounter
+            target={2}
+            suffix=""
+            prefix="<"
+            label="Minutes to generate<br>a session note"
+            started={statsVisible}
+          />
+          <StatCounter
+            target={100}
+            suffix="%"
+            prefix=""
+            label="% of PHI encrypted<br>at rest and in transit"
+            started={statsVisible}
+          />
+        </div>
+      </div>
+    </section>
   );
 }
 
@@ -772,50 +837,7 @@ export default function Home() {
       </section>
 
       {/* ===== SOCIAL PROOF ===== */}
-      <section className="bg-white border-t border-b border-[rgba(15,23,42,.04)]">
-        <div className="max-w-[1240px] mx-auto py-[100px] px-10 text-center max-[768px]:px-6">
-          <div className="reveal">
-            <p className="font-serif text-[1.8rem] italic text-[var(--navy)] max-w-[700px] mx-auto mb-6 leading-[1.5] tracking-tight relative max-[768px]:text-[1.4rem]">
-              <span className="absolute -top-5 -left-[30px] text-[5rem] text-[var(--teal)] opacity-15 not-italic leading-none select-none">
-                &ldquo;
-              </span>
-              Finally, an AI tool I can actually use with patient data without
-              losing sleep over compliance.
-            </p>
-            <p className="text-[.9rem] text-[var(--slate)]">
-              <strong className="text-[var(--navy)]">— BCBA</strong>, ABA
-              Agency Owner, Southwest Florida
-            </p>
-          </div>
-
-          <div className="reveal flex justify-center gap-16 mt-14 flex-wrap max-[768px]:gap-8">
-            <StatCounter
-              target={6}
-              suffix="+"
-              prefix=""
-              label="Hours saved per week<br>on documentation"
-            />
-            <StatCounter
-              target={95}
-              suffix="%"
-              prefix=""
-              label="% insurance approval rate<br>on generated pre-auths"
-            />
-            <StatCounter
-              target={2}
-              suffix=""
-              prefix="<"
-              label="Minutes to generate<br>a session note"
-            />
-            <StatCounter
-              target={100}
-              suffix="%"
-              prefix=""
-              label="% of PHI encrypted<br>at rest and in transit"
-            />
-          </div>
-        </div>
-      </section>
+      <SocialProofSection />
 
       {/* ===== PRICING ===== */}
       <section
