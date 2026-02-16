@@ -430,7 +430,7 @@ export default function Home() {
 
       {/* ===== HERO ===== */}
       <section className="min-h-screen flex items-center pt-[120px] pb-20 px-10 max-w-[1240px] mx-auto relative">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-20 items-center w-full">
+        <div className="hero-grid">
           {/* Hero text */}
           <div>
             <div className="inline-flex items-center gap-2.5 py-[7px] pl-2 pr-[18px] bg-[rgba(13,148,136,.06)] border border-[rgba(13,148,136,.12)] rounded-full text-[.78rem] font-semibold text-[var(--teal)] mb-7 opacity-0 animate-[fadeDown_.6s_.2s_cubic-bezier(.16,1,.3,1)_forwards]">
@@ -486,7 +486,7 @@ export default function Home() {
           </div>
 
           {/* Hero visual */}
-          <div className="hidden lg:block">
+          <div className="hero-visual">
             <AnimatedChat />
           </div>
         </div>
@@ -567,7 +567,7 @@ export default function Home() {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+        <div className="feature-grid">
           {[
             {
               icon: '📝',
@@ -685,7 +685,7 @@ export default function Home() {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="comparison-grid">
             {/* Bad - Generic AI */}
             <div className="reveal reveal-delay-1 rounded-[20px] py-10 px-9 bg-[rgba(220,38,38,.06)] border border-[rgba(220,38,38,.1)] relative overflow-hidden">
               <div className="flex items-center gap-3 mb-7">
@@ -775,7 +775,7 @@ export default function Home() {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-left">
+        <div className="pricing-grid">
           {[
             {
               tier: 'Solo',
