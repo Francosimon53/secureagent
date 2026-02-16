@@ -7,6 +7,8 @@
 
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import Anthropic from '@anthropic-ai/sdk';
+import { checkRateLimit } from '../src/lib/rate-limit.js';
+import { auditLog } from '../src/lib/audit.js';
 
 // ============================================================================
 // Multi-Agent Configuration
@@ -157,13 +159,16 @@ export function detectAgent(message: string): string {
   return bestAgent;
 }
 
-// Initialize Anthropic client
+// Initialize Anthropic client with PHI protection header
 const getClient = () => {
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) {
     throw new Error('ANTHROPIC_API_KEY not configured');
   }
-  return new Anthropic({ apiKey });
+  return new Anthropic({
+    apiKey,
+    defaultHeaders: { 'anthropic-no-log': 'true' },
+  });
 };
 
 // Conversation storage (in-memory for demo - resets on cold start)
@@ -199,6 +204,21 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   try {
+    // ── Rate limiting (100 req/min per IP) ───────────────────────────────
+    const clientIp =
+      (req.headers['x-forwarded-for'] as string)?.split(',')[0]?.trim() ??
+      req.socket?.remoteAddress ??
+      'unknown';
+
+    const rateResult = checkRateLimit(clientIp, 100, 60_000);
+    if (!rateResult.allowed) {
+      return res.status(429).json({
+        error: 'Rate Limited',
+        message: 'Too many requests. Please try again later.',
+        retryAfterMs: rateResult.resetAt - Date.now(),
+      });
+    }
+
     const { message, conversationId, agentId, autoDetect } = req.body as {
       message?: string;
       conversationId?: string;
@@ -250,6 +270,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     // Update agent if changed
     conversationData.agentId = selectedAgentId;
 
+    // Audit: message sent (never log content)
+    void auditLog({
+      action: 'chat.message_sent',
+      resourceType: 'conversation',
+      resourceId: convId,
+      ipAddress: clientIp,
+      details: { agentId: selectedAgentId, messageLength: message.length },
+    });
+
     // Call Claude with agent-specific system prompt
     const response = await client.messages.create({
       model: 'claude-sonnet-4-20250514',
@@ -277,6 +306,20 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     // Store updated conversation
     conversations.set(convId, conversationData);
+
+    // Audit: response received (never log content)
+    void auditLog({
+      action: 'chat.message_received',
+      resourceType: 'conversation',
+      resourceId: convId,
+      ipAddress: clientIp,
+      details: {
+        agentId: selectedAgentId,
+        model: response.model,
+        inputTokens: response.usage.input_tokens,
+        outputTokens: response.usage.output_tokens,
+      },
+    });
 
     return res.status(200).json({
       response: textContent,
