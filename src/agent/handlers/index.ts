@@ -24,3 +24,10 @@ export {
   type OpenAIHandlerConfig,
   type OpenAIModel,
 } from './openai-handler.js';
+
+// Motor Brain ABA Handler
+export {
+  MotorBrainHandler,
+  createMotorBrainHandler,
+  type MotorBrainConfig,
+} from './motorbrain-handler.js';

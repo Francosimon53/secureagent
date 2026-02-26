@@ -61,4 +61,8 @@ export {
   createGPT4oMiniHandler,
   type OpenAIHandlerConfig,
   type OpenAIModel,
+  // Motor Brain ABA
+  MotorBrainHandler,
+  createMotorBrainHandler,
+  type MotorBrainConfig,
 } from './handlers/index.js';
