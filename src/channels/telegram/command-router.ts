@@ -42,8 +42,6 @@ const HELP_TEXT = [
 export interface CommandRouterConfig {
   /** Motor Brain backend URL */
   motorBrainUrl: string;
-  /** Motor Brain API key */
-  motorBrainApiKey: string;
   /** Motor Brain request timeout in ms */
   motorBrainTimeout?: number;
   /** Bot username (for group chat command filtering) */
@@ -65,7 +63,6 @@ export class CommandRouter {
   constructor(config: CommandRouterConfig) {
     this.motorBrain = new MotorBrainHandler({
       baseUrl: config.motorBrainUrl,
-      apiKey: config.motorBrainApiKey,
       timeout: config.motorBrainTimeout,
     });
     this.botUsername = config.botUsername;
@@ -173,7 +170,7 @@ export class CommandRouter {
   ): Promise<void> {
     try {
       await sendAction(chatId, 'typing');
-      const response = await this.motorBrain.sendToMotorBrain(message);
+      const response = await this.motorBrain.analyze(message);
       await send(chatId, response);
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : String(error);
