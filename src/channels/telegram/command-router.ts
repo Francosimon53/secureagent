@@ -7,6 +7,7 @@
 
 import type { Message } from '../base.js';
 import { MotorBrainHandler } from '../../agent/handlers/motorbrain-handler.js';
+import { buildSoapPrompt } from '../../templates/soap-templates.js';
 import { getLogger } from '../../observability/logger.js';
 
 const logger = getLogger().child({ module: 'CommandRouter' });
@@ -14,9 +15,6 @@ const logger = getLogger().child({ module: 'CommandRouter' });
 // =============================================================================
 // Constants
 // =============================================================================
-
-const SOAP_PREFIX =
-  'Generate a SOAP note for this ABA therapy session. Format with Subjective, Objective, Assessment, Plan sections. Session details: ';
 
 const HELP_TEXT = [
   '\u{1F9E0} *Motor Brain - ABA Clinical Assistant*',
@@ -53,6 +51,24 @@ export interface CommandRouterConfig {
 type SendFn = (chatId: string, content: string, options?: Record<string, unknown>) => Promise<void>;
 type SendActionFn = (chatId: string, action: string) => Promise<void>;
 type DefaultHandler = (message: Message) => Promise<void>;
+
+// =============================================================================
+// Helpers
+// =============================================================================
+
+/** Strip markdown formatting from LLM output for clean Telegram plain text. */
+function stripMarkdown(text: string): string {
+  return text
+    .replace(/\*\*(.*?)\*\*/g, '$1')   // **bold**
+    .replace(/\*(.*?)\*/g, '$1')        // *italic*
+    .replace(/_{2}(.*?)_{2}/g, '$1')    // __underline__
+    .replace(/~~(.*?)~~/g, '$1')        // ~~strikethrough~~
+    .replace(/^#{1,6}\s+/gm, '')        // ## headings
+    .replace(/^>\s?/gm, '')             // > blockquotes
+    .replace(/`{3}[\s\S]*?`{3}/g, m => // ```code blocks``` → keep content
+      m.replace(/^`{3}\w*\n?/, '').replace(/\n?`{3}$/, ''))
+    .replace(/`([^`]+)`/g, '$1');       // `inline code`
+}
 
 // =============================================================================
 // Command Router Implementation
@@ -114,12 +130,8 @@ export class CommandRouter {
             await send(message.channelId, 'Usage: /nota <session details>');
             return;
           }
-          await this.handleMotorBrain(
-            message.channelId,
-            SOAP_PREFIX + parsed.args,
-            send,
-            sendAction
-          );
+          const soapPrompt = buildSoapPrompt(parsed.args);
+          await this.handleMotorBrain(message.channelId, soapPrompt, send, sendAction);
           return;
         }
 
@@ -173,7 +185,8 @@ export class CommandRouter {
   ): Promise<void> {
     try {
       await sendAction(chatId, 'typing');
-      const response = await this.motorBrain.consulta(message);
+      const raw = await this.motorBrain.consulta(message);
+      const response = stripMarkdown(raw);
       await send(chatId, response);
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : String(error);
