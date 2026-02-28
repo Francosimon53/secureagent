@@ -143,6 +143,164 @@ export async function sendTelegramMessage(
 }
 
 // =============================================================================
+// Motor Brain Integration (ABA Clinical AI)
+// =============================================================================
+
+const MOTOR_BRAIN_URL =
+  process.env.MOTOR_BRAIN_URL ?? 'https://abasensei-motor-brain-production.up.railway.app';
+const MOTOR_BRAIN_TIMEOUT = Number(process.env.MOTOR_BRAIN_TIMEOUT) || 45000;
+
+/** Strip markdown formatting from LLM output for clean Telegram plain text. */
+function stripMarkdown(text: string): string {
+  return text
+    .replace(/\*\*(.*?)\*\*/g, '$1')
+    .replace(/\*(.*?)\*/g, '$1')
+    .replace(/_{2}(.*?)_{2}/g, '$1')
+    .replace(/~~(.*?)~~/g, '$1')
+    .replace(/^#{1,6}\s+/gm, '')
+    .replace(/^>\s?/gm, '')
+    .replace(/`{3}[\s\S]*?`{3}/g, m =>
+      m.replace(/^`{3}\w*\n?/, '').replace(/\n?`{3}$/, ''))
+    .replace(/`([^`]+)`/g, '$1');
+}
+
+/** Detect ABA session type from user input for SOAP note generation. */
+function detectSessionType(text: string): string {
+  const lower = text.toLowerCase();
+  if (/\b(dtt|discrete trial|trials)\b/.test(lower)) return 'DTT';
+  if (/\b(net|natural environment|naturalistic)\b/.test(lower)) return 'NET';
+  if (/\b(parent|caregiver|training|guardian)\b/.test(lower)) return 'PARENT_TRAINING';
+  if (/\b(supervision|supervised|rbt supervision)\b/.test(lower)) return 'SUPERVISION';
+  return 'GENERAL';
+}
+
+/** Build a SOAP note prompt from session details. */
+function buildSoapPrompt(userText: string): string {
+  const sessionType = detectSessionType(userText);
+  const headers: Record<string, string> = {
+    DTT: 'Discrete Trial Training',
+    NET: 'Natural Environment Teaching',
+    PARENT_TRAINING: 'Caregiver Training',
+    SUPERVISION: 'RBT Supervision',
+    GENERAL: 'ABA Therapy Session',
+  };
+  return `You are a clinical documentation assistant for ABA therapy. Generate a SOAP note for a ${headers[sessionType]} session. Structure with S (Subjective), O (Objective), A (Assessment), P (Plan) sections. Use ABA terminology. Use [Client] as placeholder for patient name. Output PLAIN TEXT only - no markdown. Make it insurance-ready: specific, measurable, clinically justified. Session details from the BCBA: ${userText}`;
+}
+
+/** Call Motor Brain /consulta endpoint. */
+async function callMotorBrain(texto: string): Promise<string> {
+  const apiKey = process.env.MOTOR_BRAIN_API_KEY;
+  if (!apiKey) {
+    throw new Error('MOTOR_BRAIN_API_KEY not configured');
+  }
+
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), MOTOR_BRAIN_TIMEOUT);
+
+  try {
+    const res = await fetch(`${MOTOR_BRAIN_URL}/consulta`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-API-Key': apiKey,
+      },
+      body: JSON.stringify({ texto }),
+      signal: controller.signal,
+    });
+
+    if (!res.ok) {
+      const errorText = await res.text().catch(() => 'Unknown error');
+      throw new Error(`Motor Brain API error (${res.status}): ${errorText}`);
+    }
+
+    const data = await res.json() as { respuesta: string };
+    return data.respuesta;
+  } catch (error) {
+    if ((error as Error).name === 'AbortError') {
+      throw new Error(`Motor Brain request timed out after ${MOTOR_BRAIN_TIMEOUT}ms`);
+    }
+    throw error;
+  } finally {
+    clearTimeout(timeoutId);
+  }
+}
+
+/** Handle /aba command — route to Motor Brain. */
+async function handleAbaCommand(
+  chatId: string,
+  args: string,
+  botToken: string
+): Promise<void> {
+  if (!args.trim()) {
+    await telegramRequest(botToken, 'sendMessage', {
+      chat_id: chatId,
+      text: 'Usage: /aba <your ABA question>\n\nExample: /aba what is manding in ABA?',
+    });
+    return;
+  }
+
+  await telegramRequest(botToken, 'sendChatAction', { chat_id: chatId, action: 'typing' });
+
+  try {
+    const raw = await callMotorBrain(args);
+    const response = stripMarkdown(raw);
+    await telegramRequest(botToken, 'sendMessage', { chat_id: chatId, text: response });
+  } catch (error) {
+    const errorMsg = error instanceof Error ? error.message : String(error);
+    console.error('Motor Brain error:', errorMsg);
+    await telegramRequest(botToken, 'sendMessage', {
+      chat_id: chatId,
+      text: `ABA Assistant error: ${errorMsg}\n\nPlease try again or send a regular message for the general assistant.`,
+    });
+  }
+}
+
+/** Handle /nota and /soap commands — generate SOAP note via Motor Brain. */
+async function handleNotaCommand(
+  chatId: string,
+  args: string,
+  botToken: string
+): Promise<void> {
+  if (!args.trim()) {
+    await telegramRequest(botToken, 'sendMessage', {
+      chat_id: chatId,
+      text: 'Usage: /nota <session details>\n\nExample: /nota DTT session with Juan, worked on manding, 15/20 correct trials',
+    });
+    return;
+  }
+
+  await telegramRequest(botToken, 'sendChatAction', { chat_id: chatId, action: 'typing' });
+
+  try {
+    const soapPrompt = buildSoapPrompt(args);
+    const raw = await callMotorBrain(soapPrompt);
+    const response = stripMarkdown(raw);
+
+    // Split if too long for Telegram
+    const maxLength = 4096;
+    if (response.length <= maxLength) {
+      await telegramRequest(botToken, 'sendMessage', { chat_id: chatId, text: response });
+    } else {
+      let remaining = response;
+      while (remaining.length > 0) {
+        await telegramRequest(botToken, 'sendMessage', {
+          chat_id: chatId,
+          text: remaining.slice(0, maxLength),
+        });
+        remaining = remaining.slice(maxLength);
+      }
+    }
+  } catch (error) {
+    const errorMsg = error instanceof Error ? error.message : String(error);
+    console.error('Motor Brain SOAP error:', errorMsg);
+    await telegramRequest(botToken, 'sendMessage', {
+      chat_id: chatId,
+      text: `ABA Assistant error: ${errorMsg}\n\nPlease try again or send a regular message for the general assistant.`,
+    });
+  }
+}
+
+// =============================================================================
 // Agent Integration
 // =============================================================================
 
@@ -1024,6 +1182,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       commands: [
         { command: 'start', description: 'Start chatting with SecureAgent' },
         { command: 'help', description: 'Show help message' },
+        { command: 'aba', description: 'Ask the ABA clinical AI assistant' },
+        { command: 'nota', description: 'Generate a SOAP session note' },
+        { command: 'soap', description: 'Generate a SOAP session note (alias)' },
         { command: 'schedule', description: 'Schedule a task (e.g., /schedule 9am Check news)' },
         { command: 'tasks', description: 'List your scheduled tasks' },
         { command: 'cancel', description: 'Cancel a scheduled task' },
@@ -1091,12 +1252,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 I can help you with:
 • 💬 Answering questions
 • 🌐 Fetching data from the web
+• 🧠 <b>ABA clinical questions</b> via Motor Brain
+• 📋 <b>SOAP note generation</b> for ABA sessions
 • ⏰ <b>Scheduling tasks</b> to run automatically
 
-<b>New!</b> Schedule tasks with:
-<code>/schedule 9:00am Search for AI news and send summary</code>
+<b>ABA Commands:</b>
+/aba - Ask the ABA clinical AI
+/nota - Generate a SOAP session note
+/soap - Same as /nota
 
-<b>Commands:</b>
+<b>Other Commands:</b>
 /schedule - Schedule a task
 /tasks - View your scheduled tasks
 /cancel - Cancel a scheduled task
@@ -1115,7 +1280,12 @@ Just send me a message to get started!`,
               chat_id: chatId,
               text: `🤖 <b>SecureAgent Help</b>
 
-<b>Commands:</b>
+<b>ABA Clinical Commands:</b>
+/aba &lt;question&gt; - Ask the ABA clinical AI
+/nota &lt;session details&gt; - Generate a SOAP note
+/soap &lt;session details&gt; - Same as /nota
+
+<b>General Commands:</b>
 /start - Start chatting
 /help - Show this message
 /schedule - Schedule a task
@@ -1125,16 +1295,12 @@ Just send me a message to get started!`,
 /aria - ARIA patient management
 /clear - Clear conversation history
 
-<b>Scheduling Tasks:</b>
-<code>/schedule 9:00am Your task here</code>
-<code>/schedule monday 8am Weekly task</code>
-<code>/schedule tomorrow 3pm One-time reminder</code>
+<b>ABA Examples:</b>
+<code>/aba what is manding in ABA?</code>
+<code>/nota DTT session with Juan, 15/20 correct trials</code>
 
-<b>Features:</b>
-• Natural conversation with AI
-• Web data fetching
-• Automatic task execution
-• Proactive notifications
+<b>Scheduling:</b>
+<code>/schedule 9:00am Your task here</code>
 
 Just type your message and I'll respond!`,
               parse_mode: 'HTML',
@@ -1159,6 +1325,15 @@ Just type your message and I'll respond!`,
 
           case '/cancel':
             await handleCancelCommand(chatId, args, botToken);
+            return res.status(200).json({ ok: true });
+
+          case '/nota':
+          case '/soap':
+            await handleNotaCommand(chatId, args, botToken);
+            return res.status(200).json({ ok: true });
+
+          case '/aba':
+            await handleAbaCommand(chatId, args, botToken);
             return res.status(200).json({ ok: true });
 
           case '/clear':
