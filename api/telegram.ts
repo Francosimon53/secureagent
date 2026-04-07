@@ -33,6 +33,15 @@ import {
   getStats,
   type ScheduledTask,
 } from './lib/telegram-store.js';
+import {
+  addClient,
+  listClients,
+  findClientsByName,
+  getClientByName,
+  removeClient,
+  detectClientInText,
+  buildClientContext,
+} from './lib/client-store.js';
 
 // =============================================================================
 // Telegram Types
@@ -61,6 +70,10 @@ interface TelegramMessage {
   date: number;
   chat: TelegramChat;
   text?: string;
+  voice?: { file_id: string; file_unique_id: string; duration: number; mime_type?: string; file_size?: number };
+  audio?: { file_id: string; file_unique_id: string; duration: number; mime_type?: string; file_size?: number; title?: string };
+  video_note?: { file_id: string; file_unique_id: string; duration: number; length: number; file_size?: number };
+  caption?: string;
   reply_to_message?: TelegramMessage;
 }
 
@@ -89,7 +102,31 @@ function cleanupConversations(): void {
       conversations.delete(key);
     }
   });
+  // Also clean up stale addclient flows
+  addClientFlows.forEach((flow, key) => {
+    if (flow.startedAt < oneHourAgo) {
+      addClientFlows.delete(key);
+    }
+  });
 }
+
+// =============================================================================
+// Client Memory — Conversational Flow State
+// =============================================================================
+
+interface AddClientFlow {
+  step: 'age' | 'diagnosis' | 'goals' | 'insurance';
+  name: string;
+  age?: number;
+  diagnosis?: string;
+  goals?: string;
+  startedAt: number;
+}
+
+const addClientFlows = new Map<string, AddClientFlow>();
+
+/** Pending removal confirmations keyed by chatId */
+const removeConfirmations = new Map<string, string>(); // chatId → client name
 
 // =============================================================================
 // Telegram API Helper
@@ -258,6 +295,7 @@ async function handleAbaCommand(
 /** Handle /nota and /soap commands — generate SOAP note via Motor Brain. */
 async function handleNotaCommand(
   chatId: string,
+  userId: number,
   args: string,
   botToken: string
 ): Promise<void> {
@@ -272,7 +310,24 @@ async function handleNotaCommand(
   await telegramRequest(botToken, 'sendChatAction', { chat_id: chatId, action: 'typing' });
 
   try {
-    const soapPrompt = buildSoapPrompt(args);
+    // Detect client in text and prepend context
+    let enrichedArgs = args;
+    try {
+      const { client, ambiguous } = await detectClientInText(userId, args);
+      if (client) {
+        enrichedArgs = buildClientContext(client) + '\n\n' + args;
+      } else if (ambiguous && ambiguous.length > 0) {
+        const names = ambiguous.map(c => c.name).join(' or ');
+        await telegramRequest(botToken, 'sendMessage', {
+          chat_id: chatId,
+          text: `Multiple clients detected: ${names}. Generating note without client context.`,
+        });
+      }
+    } catch {
+      // Client detection failed — proceed without context
+    }
+
+    const soapPrompt = buildSoapPrompt(enrichedArgs);
     const raw = await callMotorBrain(soapPrompt);
     const response = stripMarkdown(raw);
 
@@ -296,6 +351,158 @@ async function handleNotaCommand(
     await telegramRequest(botToken, 'sendMessage', {
       chat_id: chatId,
       text: `ABA Assistant error: ${errorMsg}\n\nPlease try again or send a regular message for the general assistant.`,
+    });
+  }
+}
+
+// =============================================================================
+// Voice Note Support (Whisper Transcription)
+// =============================================================================
+
+const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
+
+/** Download a file from Telegram and transcribe it via OpenAI Whisper. */
+async function transcribeAudio(botToken: string, fileId: string): Promise<string> {
+  if (!OPENAI_API_KEY) {
+    throw new Error('OPENAI_API_KEY not configured');
+  }
+
+  // Step 1: Get file path from Telegram
+  const fileInfo = await telegramRequest(botToken, 'getFile', { file_id: fileId }) as {
+    file_id: string;
+    file_path: string;
+  };
+
+  // Step 2: Download the file
+  const fileUrl = `https://api.telegram.org/file/bot${botToken}/${fileInfo.file_path}`;
+  const fileResponse = await fetch(fileUrl);
+  if (!fileResponse.ok) {
+    throw new Error(`Failed to download file from Telegram: ${fileResponse.status}`);
+  }
+  const fileBuffer = await fileResponse.arrayBuffer();
+
+  // Determine extension from file_path (e.g. "voice/file_123.oga" → "oga")
+  const ext = fileInfo.file_path.split('.').pop() || 'ogg';
+  const mimeMap: Record<string, string> = {
+    oga: 'audio/ogg', ogg: 'audio/ogg', mp3: 'audio/mpeg',
+    m4a: 'audio/mp4', wav: 'audio/wav', mp4: 'video/mp4',
+  };
+  const mimeType = mimeMap[ext] || 'audio/ogg';
+
+  // Step 3: Send to Whisper
+  const formData = new FormData();
+  formData.append('file', new Blob([fileBuffer], { type: mimeType }), `voice.${ext}`);
+  formData.append('model', 'whisper-1');
+
+  const whisperResponse = await fetch('https://api.openai.com/v1/audio/transcriptions', {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${OPENAI_API_KEY}` },
+    body: formData,
+  });
+
+  if (!whisperResponse.ok) {
+    const errText = await whisperResponse.text().catch(() => 'Unknown error');
+    throw new Error(`Whisper API error (${whisperResponse.status}): ${errText}`);
+  }
+
+  const result = await whisperResponse.json() as { text: string };
+  return result.text;
+}
+
+/** Detect intent from a voice transcription to route appropriately. */
+function detectVoiceCommand(text: string): 'nota' | 'aba' | 'general' {
+  const lower = text.toLowerCase().trimStart();
+  if (/^(nota|soap|session note|notas de sesi[oó]n)/.test(lower)) return 'nota';
+  if (/^(aba|question|pregunta)/.test(lower)) return 'aba';
+  // Default: treat voice notes as session dictations (SOAP notes)
+  return 'nota';
+}
+
+/** Handle a voice/audio/video_note message: transcribe and route to Motor Brain. */
+async function handleVoiceMessage(
+  chatId: string,
+  userId: number,
+  fileId: string,
+  duration: number,
+  botToken: string,
+  userName: string,
+): Promise<void> {
+  // Acknowledge receipt
+  await telegramRequest(botToken, 'sendMessage', {
+    chat_id: chatId,
+    text: '🎙️ Transcribing your voice note...',
+  });
+
+  if (duration > 300) {
+    await telegramRequest(botToken, 'sendMessage', {
+      chat_id: chatId,
+      text: '⚠️ Long recording detected (>5 min). This may take a moment.',
+    });
+  }
+
+  try {
+    const transcription = await transcribeAudio(botToken, fileId);
+
+    if (!transcription.trim()) {
+      await telegramRequest(botToken, 'sendMessage', {
+        chat_id: chatId,
+        text: 'Could not detect any speech in the voice note. Please try again.',
+      });
+      return;
+    }
+
+    // Show typing while processing
+    await telegramRequest(botToken, 'sendChatAction', { chat_id: chatId, action: 'typing' });
+
+    // Detect client in transcription and enrich if it's a nota
+    let enrichedTranscription = transcription;
+    try {
+      const { client } = await detectClientInText(userId, transcription);
+      if (client) {
+        enrichedTranscription = buildClientContext(client) + '\n\n' + transcription;
+      }
+    } catch {
+      // Client detection failed — proceed without context
+    }
+
+    const intent = detectVoiceCommand(transcription);
+    let raw: string;
+
+    if (intent === 'nota') {
+      const soapPrompt = buildSoapPrompt(enrichedTranscription);
+      raw = await callMotorBrain(soapPrompt);
+    } else if (intent === 'aba') {
+      raw = await callMotorBrain(transcription);
+    } else {
+      raw = await callMotorBrain(transcription);
+    }
+
+    const preview = transcription.length > 100
+      ? transcription.slice(0, 100) + '...'
+      : transcription;
+    const header = `🎙️ Transcribed: "${preview}"\n\n`;
+    const response = header + stripMarkdown(raw);
+
+    // Split if too long for Telegram
+    const maxLength = 4096;
+    if (response.length <= maxLength) {
+      await telegramRequest(botToken, 'sendMessage', { chat_id: chatId, text: response });
+    } else {
+      let remaining = response;
+      while (remaining.length > 0) {
+        await telegramRequest(botToken, 'sendMessage', {
+          chat_id: chatId,
+          text: remaining.slice(0, maxLength),
+        });
+        remaining = remaining.slice(maxLength);
+      }
+    }
+  } catch (error) {
+    const errorMsg = error instanceof Error ? error.message : String(error);
+    console.error('Voice transcription error:', errorMsg);
+    await telegramRequest(botToken, 'sendMessage', {
+      chat_id: chatId,
+      text: `❌ Voice note error: ${errorMsg}\n\nPlease try again or type your message instead.`,
     });
   }
 }
@@ -766,6 +973,274 @@ ${data.post.excerpt}
 }
 
 // =============================================================================
+// Client Memory Commands
+// =============================================================================
+
+/** Handle /addclient command — start conversational flow to add a client. */
+async function handleAddClientCommand(
+  chatId: string,
+  userId: number,
+  args: string,
+  botToken: string
+): Promise<void> {
+  const name = args.trim();
+  if (!name) {
+    await telegramRequest(botToken, 'sendMessage', {
+      chat_id: chatId,
+      text: 'Usage: /addclient <name>\n\nExample: /addclient Maria',
+    });
+    return;
+  }
+
+  // Check if client already exists
+  const existing = await getClientByName(userId, name);
+  if (existing) {
+    await telegramRequest(botToken, 'sendMessage', {
+      chat_id: chatId,
+      text: `A client named "${existing.name}" already exists. Use /client ${existing.name} to see details.`,
+    });
+    return;
+  }
+
+  // Start conversational flow
+  addClientFlows.set(chatId, { step: 'age', name, startedAt: Date.now() });
+  await telegramRequest(botToken, 'sendMessage', {
+    chat_id: chatId,
+    text: `Adding ${name}. How old is ${name}?`,
+  });
+}
+
+/** Handle a reply during the /addclient conversational flow. Returns true if handled. */
+async function handleAddClientFlow(
+  chatId: string,
+  userId: number,
+  text: string,
+  botToken: string
+): Promise<boolean> {
+  const flow = addClientFlows.get(chatId);
+  if (!flow) return false;
+
+  const input = text.trim();
+
+  switch (flow.step) {
+    case 'age': {
+      const age = parseInt(input, 10);
+      if (isNaN(age) || age < 0 || age > 120) {
+        await telegramRequest(botToken, 'sendMessage', {
+          chat_id: chatId,
+          text: 'Please enter a valid age (number).',
+        });
+        return true;
+      }
+      flow.age = age;
+      flow.step = 'diagnosis';
+      await telegramRequest(botToken, 'sendMessage', {
+        chat_id: chatId,
+        text: 'Diagnosis? (e.g. "ASD Level 2" or type "skip")',
+      });
+      return true;
+    }
+
+    case 'diagnosis': {
+      flow.diagnosis = input.toLowerCase() === 'skip' ? undefined : input;
+      flow.step = 'goals';
+      await telegramRequest(botToken, 'sendMessage', {
+        chat_id: chatId,
+        text: 'Current treatment goals? (e.g. "manding, tacting, social skills" or type "skip")',
+      });
+      return true;
+    }
+
+    case 'goals': {
+      flow.goals = input.toLowerCase() === 'skip' ? undefined : input;
+      flow.step = 'insurance';
+      await telegramRequest(botToken, 'sendMessage', {
+        chat_id: chatId,
+        text: 'Insurance provider? (or type "skip")',
+      });
+      return true;
+    }
+
+    case 'insurance': {
+      const insurance = input.toLowerCase() === 'skip' ? undefined : input;
+
+      // Save to Supabase
+      const client = await addClient(userId, {
+        name: flow.name,
+        age: flow.age,
+        diagnosis: flow.diagnosis,
+        current_goals: flow.goals,
+        insurance,
+      });
+
+      addClientFlows.delete(chatId);
+
+      if (!client) {
+        await telegramRequest(botToken, 'sendMessage', {
+          chat_id: chatId,
+          text: `Failed to save client. Please try again later.`,
+        });
+        return true;
+      }
+
+      // Build confirmation
+      const parts = [`${client.name} added!`];
+      if (client.age) parts.push(`Age ${client.age}`);
+      if (client.diagnosis) parts.push(client.diagnosis);
+      if (client.current_goals) parts.push(`Goals: ${client.current_goals}`);
+      if (client.insurance) parts.push(client.insurance);
+
+      await telegramRequest(botToken, 'sendMessage', {
+        chat_id: chatId,
+        text: `✅ ${parts.join('. ')}.`,
+      });
+      return true;
+    }
+
+    default:
+      addClientFlows.delete(chatId);
+      return false;
+  }
+}
+
+/** Handle /clients command — list all clients for this BCBA. */
+async function handleClientsCommand(
+  chatId: string,
+  userId: number,
+  botToken: string
+): Promise<void> {
+  const clients = await listClients(userId);
+
+  if (clients.length === 0) {
+    await telegramRequest(botToken, 'sendMessage', {
+      chat_id: chatId,
+      text: 'No clients saved yet.\n\nUse /addclient <name> to add one.',
+    });
+    return;
+  }
+
+  let msg = `📋 Your clients (${clients.length}):\n\n`;
+  for (const c of clients) {
+    const parts = [c.name];
+    if (c.age) parts.push(`${c.age}y`);
+    if (c.diagnosis) parts.push(c.diagnosis);
+    msg += `• ${parts.join(' — ')}\n`;
+  }
+  msg += '\nUse /client <name> for full details.';
+
+  await telegramRequest(botToken, 'sendMessage', { chat_id: chatId, text: msg });
+}
+
+/** Handle /client <name> command — show full details of a specific client. */
+async function handleClientDetailCommand(
+  chatId: string,
+  userId: number,
+  args: string,
+  botToken: string
+): Promise<void> {
+  const name = args.trim();
+  if (!name) {
+    await telegramRequest(botToken, 'sendMessage', {
+      chat_id: chatId,
+      text: 'Usage: /client <name>\n\nExample: /client Maria',
+    });
+    return;
+  }
+
+  const matches = await findClientsByName(userId, name);
+
+  if (matches.length === 0) {
+    await telegramRequest(botToken, 'sendMessage', {
+      chat_id: chatId,
+      text: `No client found matching "${name}".\n\nUse /clients to see all your clients.`,
+    });
+    return;
+  }
+
+  if (matches.length > 1) {
+    const names = matches.map(c => c.name).join(', ');
+    await telegramRequest(botToken, 'sendMessage', {
+      chat_id: chatId,
+      text: `Multiple clients match "${name}": ${names}\n\nPlease be more specific.`,
+    });
+    return;
+  }
+
+  const c = matches[0];
+  let msg = `📋 ${c.name}\n\n`;
+  if (c.age) msg += `Age: ${c.age}\n`;
+  if (c.diagnosis) msg += `Diagnosis: ${c.diagnosis}\n`;
+  if (c.current_goals) msg += `Goals: ${c.current_goals}\n`;
+  if (c.insurance) msg += `Insurance: ${c.insurance}\n`;
+  if (c.hours_authorized) msg += `Hours authorized: ${c.hours_authorized}\n`;
+  if (c.notes) msg += `Notes: ${c.notes}\n`;
+  msg += `\nAdded: ${new Date(c.created_at).toLocaleDateString()}`;
+
+  await telegramRequest(botToken, 'sendMessage', { chat_id: chatId, text: msg });
+}
+
+/** Handle /removeclient <name> command — delete a client after confirmation. */
+async function handleRemoveClientCommand(
+  chatId: string,
+  userId: number,
+  args: string,
+  botToken: string
+): Promise<void> {
+  const name = args.trim();
+  if (!name) {
+    await telegramRequest(botToken, 'sendMessage', {
+      chat_id: chatId,
+      text: 'Usage: /removeclient <name>\n\nExample: /removeclient Maria',
+    });
+    return;
+  }
+
+  const client = await getClientByName(userId, name);
+  if (!client) {
+    await telegramRequest(botToken, 'sendMessage', {
+      chat_id: chatId,
+      text: `No client found named "${name}".\n\nUse /clients to see all your clients.`,
+    });
+    return;
+  }
+
+  removeConfirmations.set(chatId, client.name);
+  await telegramRequest(botToken, 'sendMessage', {
+    chat_id: chatId,
+    text: `Are you sure you want to remove ${client.name}? Reply "yes" to confirm or anything else to cancel.`,
+  });
+}
+
+/** Handle a pending remove confirmation. Returns true if handled. */
+async function handleRemoveConfirmation(
+  chatId: string,
+  userId: number,
+  text: string,
+  botToken: string
+): Promise<boolean> {
+  const pendingName = removeConfirmations.get(chatId);
+  if (!pendingName) return false;
+
+  removeConfirmations.delete(chatId);
+
+  if (text.trim().toLowerCase() === 'yes') {
+    const success = await removeClient(userId, pendingName);
+    await telegramRequest(botToken, 'sendMessage', {
+      chat_id: chatId,
+      text: success
+        ? `✅ ${pendingName} has been removed.`
+        : `Failed to remove ${pendingName}. Please try again.`,
+    });
+  } else {
+    await telegramRequest(botToken, 'sendMessage', {
+      chat_id: chatId,
+      text: 'Removal cancelled.',
+    });
+  }
+  return true;
+}
+
+// =============================================================================
 // ARIA Integration State (In-memory for serverless)
 // =============================================================================
 
@@ -1185,6 +1660,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         { command: 'aba', description: 'Ask the ABA clinical AI assistant' },
         { command: 'nota', description: 'Generate a SOAP session note' },
         { command: 'soap', description: 'Generate a SOAP session note (alias)' },
+        { command: 'addclient', description: 'Save a client profile (e.g., /addclient Maria)' },
+        { command: 'clients', description: 'List your saved clients' },
+        { command: 'client', description: 'View client details (e.g., /client Maria)' },
+        { command: 'removeclient', description: 'Remove a client (e.g., /removeclient Maria)' },
         { command: 'schedule', description: 'Schedule a task (e.g., /schedule 9am Check news)' },
         { command: 'tasks', description: 'List your scheduled tasks' },
         { command: 'cancel', description: 'Cancel a scheduled task' },
@@ -1222,12 +1701,25 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
       // Process message
       const message = update.message ?? update.edited_message;
-      if (!message || !message.text) {
+      if (!message) {
         return res.status(200).json({ ok: true });
       }
 
       const chatId = message.chat.id.toString();
       const userName = message.from?.first_name || message.from?.username || 'User';
+
+      const userId = message.from?.id ?? 0;
+
+      // Handle voice/audio/video_note messages
+      const voiceFile = message.voice ?? message.audio ?? message.video_note;
+      if (voiceFile) {
+        await handleVoiceMessage(chatId, userId, voiceFile.file_id, voiceFile.duration, botToken, userName);
+        return res.status(200).json({ ok: true });
+      }
+
+      if (!message.text) {
+        return res.status(200).json({ ok: true });
+      }
       const text = message.text;
 
       // Register/update user for proactive messaging
@@ -1236,6 +1728,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         firstName: message.from?.first_name,
         lastName: message.from?.last_name,
       });
+
+      // Handle conversational flows (addclient, removeclient confirmation)
+      if (!text.startsWith('/')) {
+        const handledRemove = await handleRemoveConfirmation(chatId, userId, text, botToken);
+        if (handledRemove) return res.status(200).json({ ok: true });
+
+        const handledAdd = await handleAddClientFlow(chatId, userId, text, botToken);
+        if (handledAdd) return res.status(200).json({ ok: true });
+      }
 
       // Handle commands
       if (text.startsWith('/')) {
@@ -1254,12 +1755,20 @@ I can help you with:
 • 🌐 Fetching data from the web
 • 🧠 <b>ABA clinical questions</b> via Motor Brain
 • 📋 <b>SOAP note generation</b> for ABA sessions
+• 🎙️ <b>Voice notes</b> — dictate session notes hands-free
+• 👤 <b>Client memory</b> — save client profiles for smarter notes
 • ⏰ <b>Scheduling tasks</b> to run automatically
 
 <b>ABA Commands:</b>
 /aba - Ask the ABA clinical AI
 /nota - Generate a SOAP session note
 /soap - Same as /nota
+🎙️ Voice note → auto-transcribed SOAP note
+
+<b>Client Memory:</b>
+/addclient - Save a client profile
+/clients - List your clients
+/client - View client details
 
 <b>Other Commands:</b>
 /schedule - Schedule a task
@@ -1284,6 +1793,15 @@ Just send me a message to get started!`,
 /aba &lt;question&gt; - Ask the ABA clinical AI
 /nota &lt;session details&gt; - Generate a SOAP note
 /soap &lt;session details&gt; - Same as /nota
+🎙️ Voice note → auto-transcribed SOAP note
+
+<b>Client Memory:</b>
+/addclient &lt;name&gt; - Save a client profile
+/clients - List your clients
+/client &lt;name&gt; - View client details
+/removeclient &lt;name&gt; - Remove a client
+
+Mention a client's name in /nota or voice notes and their profile is auto-included in the SOAP note.
 
 <b>General Commands:</b>
 /start - Start chatting
@@ -1295,12 +1813,10 @@ Just send me a message to get started!`,
 /aria - ARIA patient management
 /clear - Clear conversation history
 
-<b>ABA Examples:</b>
+<b>Examples:</b>
+<code>/addclient Maria</code>
+<code>/nota DTT session with Maria, 15/20 correct trials</code>
 <code>/aba what is manding in ABA?</code>
-<code>/nota DTT session with Juan, 15/20 correct trials</code>
-
-<b>Scheduling:</b>
-<code>/schedule 9:00am Your task here</code>
 
 Just type your message and I'll respond!`,
               parse_mode: 'HTML',
@@ -1329,11 +1845,27 @@ Just type your message and I'll respond!`,
 
           case '/nota':
           case '/soap':
-            await handleNotaCommand(chatId, args, botToken);
+            await handleNotaCommand(chatId, userId, args, botToken);
             return res.status(200).json({ ok: true });
 
           case '/aba':
             await handleAbaCommand(chatId, args, botToken);
+            return res.status(200).json({ ok: true });
+
+          case '/addclient':
+            await handleAddClientCommand(chatId, userId, args, botToken);
+            return res.status(200).json({ ok: true });
+
+          case '/clients':
+            await handleClientsCommand(chatId, userId, botToken);
+            return res.status(200).json({ ok: true });
+
+          case '/client':
+            await handleClientDetailCommand(chatId, userId, args, botToken);
+            return res.status(200).json({ ok: true });
+
+          case '/removeclient':
+            await handleRemoveClientCommand(chatId, userId, args, botToken);
             return res.status(200).json({ ok: true });
 
           case '/clear':

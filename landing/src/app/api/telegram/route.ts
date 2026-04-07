@@ -381,6 +381,54 @@ Escribe /help para ver todos los comandos.`;
 ¡Todo funcionando! 🚀`;
   }
 
+  // Handle /scan command - VLayer HIPAA scan
+  if (lowerText.startsWith("/scan")) {
+    const repoUrl = text.slice(5).trim();
+    if (!repoUrl) return "❌ Uso: /scan <github_repo_url>";
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_APP_URL || "https://secureagent-hazel.vercel.app"}/api/vlayer/scan`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ repoUrl })
+      });
+      const data = await res.json();
+      if (data.ok) {
+        const r = data.report;
+        return `🔍 *HIPAA Scan Completo*\n\nRepo: ${repoUrl}\nViolaciones: ${JSON.stringify(r).slice(0, 3000)}`;
+      }
+      return `❌ Error: ${data.error}`;
+    } catch (e: any) { return `❌ Scan falló: ${e.message}`; }
+  }
+
+  // Handle /quiz command - ABA Sensei quiz
+  if (lowerText.startsWith("/quiz")) {
+    const topic = text.slice(5).trim() || "reinforcement";
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_APP_URL || "https://secureagent-hazel.vercel.app"}/api/abasensei/quiz`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ topic, difficulty: "medium" })
+      });
+      const data = await res.json();
+      return data.ok ? `📚 *Quiz ABA*\n\n${JSON.stringify(data).slice(0, 3000)}` : `❌ ${data.error}`;
+    } catch (e: any) { return `❌ Quiz falló: ${e.message}`; }
+  }
+
+  // Handle /bip command - BIPflow generate
+  if (lowerText.startsWith("/bip")) {
+    const clientName = text.slice(4).trim();
+    if (!clientName) return "❌ Uso: /bip <nombre_cliente>";
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_APP_URL || "https://secureagent-hazel.vercel.app"}/api/bipflow/generate`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ clientName })
+      });
+      const data = await res.json();
+      return data.ok ? `📋 *BIP Generado*\n\nCliente: ${clientName}\n${JSON.stringify(data).slice(0, 3000)}` : `❌ ${data.error}`;
+    } catch (e: any) { return `❌ BIP falló: ${e.message}`; }
+  }
+
   // Handle /schedule command
   if (lowerText.startsWith('/schedule')) {
     const args = text.slice(9).trim();
