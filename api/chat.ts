@@ -281,7 +281,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     // Call Claude with agent-specific system prompt
     const response = await client.messages.create({
-      model: 'claude-sonnet-4-20250514',
+      model: 'claude-sonnet-4-6',
       max_tokens: 4096,
       system: agent.systemPrompt,
       messages: conversationData.messages,

@@ -143,7 +143,7 @@ async function executeTask(task: ScheduledTask): Promise<{ success: boolean; res
       turns++;
 
       response = await client.messages.create({
-        model: 'claude-sonnet-4-20250514',
+        model: 'claude-sonnet-4-6',
         max_tokens: 2048,
         system: `You are SecureAgent, executing a scheduled task for ${userName}.
 

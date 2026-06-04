@@ -324,7 +324,7 @@ export class AriaApiClient {
 
     try {
       const response = await client.messages.create({
-        model: 'claude-sonnet-4-20250514',
+        model: 'claude-sonnet-4-6',
         max_tokens: 2048,
         system: `Eres un asistente clínico especializado en documentación terapéutica. Genera reportes profesionales, éticos y bien estructurados para profesionales de salud mental.
 

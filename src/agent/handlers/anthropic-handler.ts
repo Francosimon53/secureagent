@@ -37,8 +37,8 @@ export interface AnthropicHandlerConfig {
 }
 
 export type AnthropicModel =
-  | 'claude-opus-4-20250514'
-  | 'claude-sonnet-4-20250514'
+  | 'claude-opus-4-7'
+  | 'claude-sonnet-4-6'
   | 'claude-3-5-sonnet-20241022'
   | 'claude-3-5-haiku-20241022'
   | 'claude-3-opus-20240229'
@@ -76,7 +76,7 @@ export class AnthropicHandler implements MessageHandler {
 
     this.config = {
       apiKey,
-      model: config.model ?? 'claude-sonnet-4-20250514',
+      model: config.model ?? 'claude-sonnet-4-6',
       maxTokens: config.maxTokens ?? 4096,
       temperature: config.temperature ?? 0.7,
       streaming: config.streaming ?? false,
@@ -432,7 +432,7 @@ export function createAnthropicHandler(config?: AnthropicHandlerConfig): Anthrop
 export function createClaudeSonnetHandler(config?: Omit<AnthropicHandlerConfig, 'model'>): AnthropicHandler {
   return new AnthropicHandler({
     ...config,
-    model: 'claude-sonnet-4-20250514',
+    model: 'claude-sonnet-4-6',
   });
 }
 
@@ -442,7 +442,7 @@ export function createClaudeSonnetHandler(config?: Omit<AnthropicHandlerConfig, 
 export function createClaudeOpusHandler(config?: Omit<AnthropicHandlerConfig, 'model'>): AnthropicHandler {
   return new AnthropicHandler({
     ...config,
-    model: 'claude-opus-4-20250514',
+    model: 'claude-opus-4-7',
   });
 }
 

@@ -609,7 +609,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         turns++;
 
         response = await client.messages.create({
-          model: 'claude-sonnet-4-20250514',
+          model: 'claude-sonnet-4-6',
           max_tokens: 4096,
           system: `You are SecureAgent, a helpful AI assistant with access to tools for data processing, HTTP requests, browser automation, and custom skills. Use tools when appropriate to help the user. Be concise and helpful.
 
@@ -692,7 +692,7 @@ When using tools, explain what you're doing briefly.`,
         conversationId: convId,
         response: responseText,
         toolsUsed: toolResults.length > 0 ? toolResults : undefined,
-        model: 'claude-sonnet-4-20250514',
+        model: 'claude-sonnet-4-6',
         usage: {
           inputTokens: response!.usage.input_tokens,
           outputTokens: response!.usage.output_tokens,

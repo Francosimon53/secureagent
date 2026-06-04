@@ -637,7 +637,7 @@ async function processWithAgent(
       turns++;
 
       response = await client.messages.create({
-        model: 'claude-sonnet-4-20250514',
+        model: 'claude-sonnet-4-6',
         max_tokens: 1024,
         system: `You are SecureAgent, a helpful AI assistant available on Telegram. You're chatting with ${userName}.
 
@@ -1473,7 +1473,7 @@ Procesando con IA...`,
 
         const client = new Anthropic({ apiKey });
         const response = await client.messages.create({
-          model: 'claude-sonnet-4-20250514',
+          model: 'claude-sonnet-4-6',
           max_tokens: 2048,
           system: `Eres un asistente clínico especializado en documentación terapéutica para profesionales de salud mental. Genera reportes profesionales, éticos y bien estructurados en español.
 
