@@ -72,7 +72,7 @@ async function main() {
     },
     {
       messageHandler: new AnthropicHandler({
-        model: 'claude-sonnet-4-20250514',
+        model: 'claude-sonnet-4-6',
         maxTokens: 2048,
         temperature: 0.7,
       }),

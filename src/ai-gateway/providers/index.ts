@@ -96,7 +96,7 @@ export const PROVIDER_ENV_KEYS: Record<string, string> = {
  */
 export const DEFAULT_PROVIDER_MODELS: Record<string, string> = {
   openai: 'gpt-4o',
-  anthropic: 'claude-sonnet-4-20250514',
+  anthropic: 'claude-sonnet-4-6',
   google: 'gemini-2.5-pro',
   groq: 'llama-3.3-70b',
   deepseek: 'deepseek-chat',
@@ -184,7 +184,7 @@ export const MODEL_DISPLAY_INFO: ModelDisplayInfo[] = [
 
   // Premium models
   {
-    id: 'claude-sonnet-4-20250514',
+    id: 'claude-sonnet-4-6',
     name: 'Claude Sonnet 4',
     provider: 'anthropic',
     providerName: 'Anthropic',

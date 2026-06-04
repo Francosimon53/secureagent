@@ -77,8 +77,8 @@ export const MODEL_PRICING: Record<string, { input: number; output: number }> = 
 
   // Anthropic models
   'claude-opus-4-5-20251101': { input: 1500, output: 7500 },
-  'claude-opus-4-20250514': { input: 1500, output: 7500 },
-  'claude-sonnet-4-20250514': { input: 300, output: 1500 },
+  'claude-opus-4-7': { input: 1500, output: 7500 },
+  'claude-sonnet-4-6': { input: 300, output: 1500 },
   'claude-3-5-sonnet-20241022': { input: 300, output: 1500 },
   'claude-3-opus-20240229': { input: 1500, output: 7500 },
   'claude-3-sonnet-20240229': { input: 300, output: 1500 },
@@ -225,7 +225,7 @@ export const DEFAULT_MODELS: ModelInfo[] = [
     enabled: true,
   },
   {
-    id: 'claude-sonnet-4-20250514',
+    id: 'claude-sonnet-4-6',
     provider: 'anthropic',
     name: 'Claude Sonnet 4',
     tier: 'premium',

@@ -747,7 +747,7 @@ export async function POST(request: Request) {
       turns++;
 
       response = await anthropic.messages.create({
-        model: 'claude-sonnet-4-20250514',
+        model: 'claude-sonnet-4-6',
         max_tokens: 4096,
         system: SYSTEM_PROMPT,
         messages,
@@ -814,7 +814,7 @@ export async function POST(request: Request) {
       conversationId: convId,
       timestamp: Date.now(),
       toolsUsed: toolResults.length > 0 ? toolResults : undefined,
-      model: 'claude-sonnet-4-20250514',
+      model: 'claude-sonnet-4-6',
     });
 
   } catch (error) {

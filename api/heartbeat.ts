@@ -109,7 +109,7 @@ async function generateHeartbeatMessage(
 
   try {
     const response = await client.messages.create({
-      model: 'claude-sonnet-4-20250514',
+      model: 'claude-sonnet-4-6',
       max_tokens: 500,
       system: `You are SecureAgent, a helpful AI assistant that sends proactive heartbeat messages to users.
 The current time context is: ${timeContext[type]}.

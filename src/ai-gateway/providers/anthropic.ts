@@ -39,7 +39,7 @@ export class AnthropicProvider extends BaseAIProvider {
 
   async chat(request: AIRequestOptions): Promise<AIResponse> {
     const startTime = Date.now();
-    const model = request.model ?? 'claude-sonnet-4-20250514';
+    const model = request.model ?? 'claude-sonnet-4-6';
 
     const body = this.buildRequestBody(request, model);
 
@@ -55,7 +55,7 @@ export class AnthropicProvider extends BaseAIProvider {
   }
 
   async *chatStream(request: AIRequestOptions): AsyncGenerator<AIStreamChunk, void, unknown> {
-    const model = request.model ?? 'claude-sonnet-4-20250514';
+    const model = request.model ?? 'claude-sonnet-4-6';
     const body = this.buildRequestBody(request, model, true);
 
     const response = await this.fetch(`${this.baseUrl}/messages`, {

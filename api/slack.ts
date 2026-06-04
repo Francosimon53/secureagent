@@ -279,7 +279,7 @@ async function processWithAgent(
       turns++;
 
       response = await client.messages.create({
-        model: 'claude-sonnet-4-20250514',
+        model: 'claude-sonnet-4-6',
         max_tokens: 1024,
         system: `You are SecureAgent, a helpful AI assistant available on Slack. You're chatting with ${userName}.
 

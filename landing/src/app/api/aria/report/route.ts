@@ -73,7 +73,7 @@ export async function POST(request: NextRequest) {
     const client = new Anthropic({ apiKey });
 
     const response = await client.messages.create({
-      model: 'claude-sonnet-4-20250514',
+      model: 'claude-sonnet-4-6',
       max_tokens: 2048,
       system: `Eres un asistente clínico especializado en documentación terapéutica para profesionales de salud mental. Genera reportes profesionales, éticos y bien estructurados en español.
 
