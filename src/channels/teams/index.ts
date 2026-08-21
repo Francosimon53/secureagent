@@ -47,7 +47,7 @@ export interface TeamsTeam {
   createdDateTime?: string;
 }
 
-export interface TeamsChannel {
+export interface TeamsChannelInfo {
   id: string;
   displayName: string;
   description?: string;
@@ -524,7 +524,7 @@ export class TeamsChannel extends BaseChannel {
     return response.json() as Promise<TeamsTeam>;
   }
 
-  async listChannels(teamId: string): Promise<TeamsChannel[]> {
+  async listChannels(teamId: string): Promise<TeamsChannelInfo[]> {
     await this.ensureAuthenticated();
 
     const response = await fetch(`${TeamsChannel.GRAPH_BASE}/teams/${teamId}/channels`, {
@@ -535,11 +535,11 @@ export class TeamsChannel extends BaseChannel {
       throw new Error(`Failed to list channels: ${response.status}`);
     }
 
-    const data = await response.json() as { value: TeamsChannel[] };
+    const data = await response.json() as { value: TeamsChannelInfo[] };
     return data.value;
   }
 
-  async getChannel(teamId: string, channelId: string): Promise<TeamsChannel> {
+  async getChannel(teamId: string, channelId: string): Promise<TeamsChannelInfo> {
     await this.ensureAuthenticated();
 
     const response = await fetch(`${TeamsChannel.GRAPH_BASE}/teams/${teamId}/channels/${channelId}`, {
@@ -550,7 +550,7 @@ export class TeamsChannel extends BaseChannel {
       throw new Error(`Failed to get channel: ${response.status}`);
     }
 
-    return response.json() as Promise<TeamsChannel>;
+    return response.json() as Promise<TeamsChannelInfo>;
   }
 
   // ============================================================================
