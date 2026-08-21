@@ -1,0 +1,60 @@
+name: Fix Teams lint conflict (temporary)
+
+on:
+  push:
+    branches:
+      - docs/recruiter-positioning
+
+permissions:
+  contents: write
+
+jobs:
+  fix:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout branch
+        uses: actions/checkout@v4
+        with:
+          ref: docs/recruiter-positioning
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Rename Teams channel data type
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          path = Path('src/channels/teams/index.ts')
+          text = path.read_text()
+          replacements = {
+              'export interface TeamsChannel {': 'export interface TeamsChannelInfo {',
+              'Promise<TeamsChannel[]>': 'Promise<TeamsChannelInfo[]>',
+              '{ value: TeamsChannel[] }': '{ value: TeamsChannelInfo[] }',
+              'Promise<TeamsChannel> {': 'Promise<TeamsChannelInfo> {',
+              'as Promise<TeamsChannel>;': 'as Promise<TeamsChannelInfo>;',
+          }
+          for old, new in replacements.items():
+              if old not in text:
+                  raise SystemExit(f'Expected pattern not found: {old}')
+              text = text.replace(old, new)
+          path.write_text(text)
+          PY
+
+      - name: Verify lint
+        run: npm run lint
+
+      - name: Commit verified fix
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/channels/teams/index.ts
+          git commit -m "fix: separate Teams channel type from channel class"
+          git push origin HEAD:docs/recruiter-positioning
